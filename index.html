@@ -575,7 +575,15 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   border-color:rgba(212,168,67,.7);
   background:linear-gradient(145deg,rgba(212,168,67,.14),rgba(0,0,0,.6));
   color:var(--gold-l);box-shadow:0 0 16px rgba(212,168,67,.14)}
-.ai-color-btn .ci{font-size:1.3rem;display:block;margin-bottom:4px}
+.ai-color-btn .ci{width:28px;height:28px;border-radius:50%;display:block;margin:0 auto 6px;
+  box-shadow:0 2px 8px rgba(0,0,0,.5);animation:ci-float 2.8s ease-in-out infinite}
+.ai-color-btn:not(.sel) .ci{animation-play-state:paused;opacity:.7}
+.ai-color-btn.sel .ci{animation-play-state:running}
+@keyframes ci-float{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-4px)}}
+.ci-blue{background:radial-gradient(circle at 32% 28%,#90C8FF,#2979FF 45%,#1040B0)}
+.ci-red{background:radial-gradient(circle at 32% 28%,#FFB0A0,#F03020 35%,#A01010 65%,#700808)}
 
 .ai-start{
   width:100%;padding:14px;border-radius:12px;border:none;
@@ -2565,11 +2573,11 @@ function aiEndGame(winner){
       <div class="ai-lbl">♟ အရောင် ရွေးချယ်ပါ</div>
       <div class="ai-color-row">
         <button class="ai-color-btn sel" id="ai-col-b" onclick="selectAiColor('b')">
-          <span class="ci">⬛</span>
+          <span class="ci ci-blue"></span>
           <span>ပြာ (ဦးစွာ)</span>
         </button>
         <button class="ai-color-btn" id="ai-col-w" onclick="selectAiColor('w')">
-          <span class="ci">⬜</span>
+          <span class="ci ci-red"></span>
           <span>နီ</span>
         </button>
       </div>
