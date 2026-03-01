@@ -167,14 +167,14 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .pc.act::before{background:linear-gradient(90deg,transparent,var(--gold),transparent)}
 .pav{width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(212,168,67,.28);
   display:flex;align-items:center;justify-content:center;font-size:1rem;margin-bottom:7px}
-.av-b{background:radial-gradient(circle at 35% 30%,#3A2010,#050100)}
-.av-w{background:radial-gradient(circle at 35% 30%,#FFFDF5,#C8A870)}
+.av-b{background:radial-gradient(circle at 35% 30%,#5090E0,#102060)}
+.av-w{background:radial-gradient(circle at 35% 30%,#E06060,#800808)}
 .pnm{font-size:.8rem;font-weight:600;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .prl{font-size:.6rem;color:var(--dim);margin:1px 0 7px}
 .drow{display:flex;flex-wrap:wrap;gap:2px;min-height:14px}
 .mdot{width:10px;height:10px;border-radius:50%;transition:opacity .3s}
-.mdot.b{background:radial-gradient(circle at 35% 30%,#555,#111);border:1px solid #333}
-.mdot.w{background:radial-gradient(circle at 35% 30%,#fff,#c8a870);border:1px solid #a08040}
+.mdot.b{background:radial-gradient(circle at 35% 30%,#90C8FF,#2060D0);border:1px solid #104090}
+.mdot.w{background:radial-gradient(circle at 35% 30%,#FFB0A0,#D02020);border:1px solid #901010}
 .mdot.dead{opacity:.09}
 .ic{background:rgba(12,6,0,.92);border:1px solid rgba(212,168,67,.1);
   border-radius:12px;padding:10px 11px;flex-shrink:0}
@@ -244,8 +244,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   opacity:0;flex-shrink:0;transition:opacity .3s}
 .pbar.act .pbdot,.pbar.my-turn .pbdot{opacity:1;animation:pg 1.5s infinite}
 .pbpc{width:18px;height:18px;border-radius:50%;flex-shrink:0}
-.pbpc.b{background:radial-gradient(circle at 35% 30%,#4A3020,#0D0300);border:1.5px solid #2A1008}
-.pbpc.w{background:radial-gradient(circle at 35% 30%,#FFFDF5,#C8953E);border:1.5px solid #B07820}
+.pbpc.b{background:radial-gradient(circle at 35% 30%,#90C8FF,#2060D0);border:1.5px solid #104090}
+.pbpc.w{background:radial-gradient(circle at 35% 30%,#FFB0A0,#D02020);border:1.5px solid #901010}
 .pbnm{font-size:.78rem;font-weight:600;color:var(--cream);flex:1;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pbrl{font-size:.58rem;color:var(--dim)}
@@ -302,12 +302,12 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   border-radius:50%;position:relative;z-index:2;
   cursor:pointer;transition:transform .12s,box-shadow .12s}
 .piece:hover{transform:scale(1.08)}
-.piece.wp{background:radial-gradient(circle at 32% 28%,#FFFDF5,#EDD5A3 30%,#C8953E 65%,#9A6A20);
-  border:2px solid #A87020;
-  box-shadow:0 3px 8px rgba(0,0,0,.7),inset 0 -2px 4px rgba(0,0,0,.2),inset 0 2px 4px rgba(255,255,255,.6)}
-.piece.bp{background:radial-gradient(circle at 32% 28%,#4A3020,#1E0E04 40%,#050200);
-  border:2px solid #281006;
-  box-shadow:0 3px 8px rgba(0,0,0,.9),inset 0 -2px 4px rgba(0,0,0,.7),inset 0 2px 4px rgba(255,255,255,.07)}
+.piece.wp{background:radial-gradient(circle at 32% 28%,#FFB0A0,#F03020 35%,#A01010 65%,#700808);
+  border:2px solid #800808;
+  box-shadow:0 3px 8px rgba(0,0,0,.7),inset 0 -2px 4px rgba(0,0,0,.2),inset 0 2px 4px rgba(255,255,255,.5)}
+.piece.bp{background:radial-gradient(circle at 32% 28%,#90C8FF,#2979FF 45%,#1040B0);
+  border:2px solid #0A2880;
+  box-shadow:0 3px 8px rgba(0,0,0,.7),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 4px rgba(255,255,255,.5)}
 .piece.kp::after{content:'♛';position:absolute;top:50%;left:50%;transform:translate(-50%,-53%);
   font-size:calc(var(--cell)*.3);color:var(--gold);
   text-shadow:0 0 6px rgba(212,168,67,.8),0 1px 2px rgba(0,0,0,.9);
@@ -424,10 +424,10 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .ghost-piece{position:fixed;border-radius:50%;pointer-events:none;z-index:900;
   transition:left .35s cubic-bezier(.4,0,.2,1), top .35s cubic-bezier(.4,0,.2,1);
   opacity:.85;box-shadow:0 0 18px 6px rgba(255,80,80,.55)}
-.ghost-piece.bp{background:radial-gradient(circle at 32% 28%,#4A3020,#1E0E04 40%,#050200);
-  border:2px solid rgba(229,115,115,.8)}
-.ghost-piece.wp{background:radial-gradient(circle at 32% 28%,#FFFDF5,#EDD5A3 30%,#C8953E 65%,#9A6A20);
-  border:2px solid rgba(229,115,115,.8)}
+.ghost-piece.bp{background:radial-gradient(circle at 32% 28%,#90C8FF,#2060D0 40%,#102880);
+  border:2px solid rgba(100,180,255,.8)}
+.ghost-piece.wp{background:radial-gradient(circle at 32% 28%,#FFB0A0,#E03020 35%,#900808 65%,#600000);
+  border:2px solid rgba(255,120,100,.8)}
 .ghost-piece.kp::after{content:'♛';position:absolute;top:50%;left:50%;
   transform:translate(-50%,-53%);font-size:40%;color:var(--gold);pointer-events:none}
 @keyframes ghost-fade-in{from{opacity:0;transform:scale(.5)}to{opacity:.85;transform:scale(1)}}
@@ -1360,13 +1360,13 @@ const cl=c=>String.fromCharCode(65+c);
 ═══════════════════════════════════ */
 function finish(tHuff,hPos,huffNotif){
   const{bc,wc}=cnt();
-  if(!bc){endGame(W,'ဖြူ');return;}
-  if(!wc){endGame(B,'မဲ');return;}
+  if(!bc){endGame(W,'နီ');return;}
+  if(!wc){endGame(B,'ပြာ');return;}
   const nxt=turn===B?W:B;
   const nc=allCaps(nxt,board);
   let hasM=nc.length>0;
   if(!hasM)for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(isOwn(board[r][c],nxt)&&normalMoves(r,c,nxt,board).length){hasM=true;break;}
-  if(!hasM){endGame(turn,turn===B?'မဲ':'ဖြူ');return;}
+  if(!hasM){endGame(turn,turn===B?'ပြာ':'နီ');return;}
   ver++;
   const payload={board:board.map(r=>[...r]),turn:nxt,ver,over:false,winner:null,
     capBy:{[B]:[...capBy[B]],[W]:[...capBy[W]]},
@@ -1400,7 +1400,7 @@ function clearHuff(){
 window.doResign=function(){
   if(over)return;
   if(!confirm('ဆုံးနိုင်ကြောင်း သေချာပါသလား?'))return;
-  endGame(myColor===B?W:B,myColor===B?'ဖြူ':'မဲ');
+  endGame(myColor===B?W:B,myColor===B?'နီ':'ပြာ');
 };
 
 /* ═══════════════════════════════════
@@ -1408,24 +1408,21 @@ window.doResign=function(){
 ═══════════════════════════════════ */
 window.requestRematch=function(){
   if(aiMode){
-    // AI mode rematch — alternate who goes first each game
-    gameCount++;
-    // Flip human color each game
-    const firstHumanColor=aiHumanColor; // color chosen in modal
-    myColor=(gameCount%2===0)?firstHumanColor:(firstHumanColor===B?W:B);
-    const aiCol=myColor===B?W:B;
+    // ပွဲတိုင်း flip — AI/Human အဆင့်မြောင်း ပြောင်း
+    aiGoesFirst=!aiGoesFirst;
+    // aiGoesFirst=true  → AI=မဲ(B), Human=ဖြူ(W) → AI အရင်ရွှေ့
+    // aiGoesFirst=false → Human=မဲ(B), AI=ဖြူ(W) → Human အရင်ရွှေ့
+    myColor=aiGoesFirst?W:B;
 
-    board=newBoard();turn=B;ver=0;over=false;winShown=false;
-    capBy={[B]:[],[W]:[]}; glog=[];sel=null;legals=[];lastF=null;lastT=null;
-    huffOn=false;huffAt=null;_animPending=null;_huffAnimPending=null;_animBusy=false;
-    huffPickMode=false;huffPickCands=[];huffPickResolve=null;
+    board=newBoard(); turn=B; ver=0; over=false; winShown=false;
+    capBy={[B]:[],[W]:[]}; glog=[]; sel=null; legals=[]; lastF=null; lastT=null;
+    huffOn=false; huffAt=null; _animPending=null; _huffAnimPending=null; _animBusy=false;
+    huffPickMode=false; huffPickCands=[]; huffPickResolve=null;
     $('wino').classList.remove('on');
-    // Update display colors
     showGame();
     const diffLabel={easy:'😊 Easy AI',normal:'🎯 Normal AI',hard:'🔥 Hard AI'}[aiDifficulty];
-    $s('opp-nm',diffLabel);$s('opp-pnm',diffLabel);
-    // If AI is Black this game, AI moves first
-    if(turn===aiCol) doAiMove();
+    $s('opp-nm',diffLabel); $s('opp-pnm',diffLabel);
+    if(aiGoesFirst) setTimeout(()=>doAiMove(),300);
     return;
   }
   if(!fbReady||!roomId)return;
@@ -1611,7 +1608,7 @@ async function applyRemote(st){
     showGame();
   // If human chose White, AI (Black) goes first
   if(myColor===W){ doAiMove(); }
-    sysChat(`🔄 ပွဲ ${gameCount} စတင်သည်! ${myColor===B?'⬛ မဲ':'⬜ ဖြူ'} ကစားမည်`);
+    sysChat(`🔄 ပွဲ ${gameCount} စတင်သည်! ${myColor===B?'🔵 ပြာ':'🔴 နီ'} ကစားမည်`);
     return;
   }
 
@@ -1678,7 +1675,7 @@ async function applyRemote(st){
 
   draw(); uiUpdate();
   if(ver>prevVer&&turn===myColor&&!st.over)vibrate([0,60,120,60,200,60,120]);
-  if(st.over&&st.winner!=null)showWin(st.winner===myColor,st.winner===B?'မဲ':'ဖြူ');
+  if(st.over&&st.winner!=null)showWin(st.winner===myColor,st.winner===B?'ပြာ':'နီ');
 }
 
 function loadSt(st){
@@ -1879,22 +1876,22 @@ function showGame(){
 
   // My card (left panel)
   $s('my-nm',myName);
-  $s('my-rl',isBlk?'⬛ မဲ':'⬜ ဖြူ');
+  $s('my-rl',isBlk?'🔵 ပြာ':'🔴 နီ');
   $('my-av').className=`pav ${isBlk?'av-b':'av-w'}`;
   $s('my-av',isBlk?'⬛':'⬜');
 
   // Opp card (right panel)
   $('opp-av').className=`pav ${isBlk?'av-w':'av-b'}`;
   $s('opp-av',isBlk?'⬜':'⬛');
-  $s('opp-rl',isBlk?'⬜ ဖြူ':'⬛ မဲ');
+  $s('opp-rl',isBlk?'🔴 နီ':'🔵 ပြာ');
 
   // My bar (bottom bar)
   $s('my-pnm',myName);
-  $s('my-prl',isBlk?'မဲ':'ဖြူ');
+  $s('my-prl',isBlk?'ပြာ':'နီ');
   $('my-pc').className=`pbpc ${isBlk?'b':'w'}`;
 
   // Opp bar (top bar)
-  $s('opp-prl',isBlk?'ဖြူ':'မဲ');
+  $s('opp-prl',isBlk?'နီ':'ပြာ');
   $('opp-pc').className=`pbpc ${isBlk?'w':'b'}`;
 
   buildCoords();draw();uiUpdate();
@@ -2314,6 +2311,7 @@ $('inp-code').addEventListener('input',e=>{e.target.value=e.target.value.toUpper
 let aiMode=false;
 let aiDifficulty='easy'; // 'easy'|'normal'|'hard'
 let _aiThinking=false;
+let aiGoesFirst=false; // tracks whether AI goes first this game
 
 /* ── Modal controls ── */
 window.openAiModal=function(){
@@ -2333,18 +2331,20 @@ window.selectAiColor=function(c){
 window.startAiGame=function(){
   $('ai-modal').classList.remove('show');
   myName=$('inp-name').value.trim()||'ကစားသမား';
-  myColor=aiHumanColor; isHost=true; roomId='AI'; aiMode=true; aiDifficulty=aiDifficulty||'easy';
+  isHost=true; roomId='AI'; aiMode=true;
+  aiGoesFirst=true;    // ပွဲ ၁: AI=မဲ(B) အရင်ရွှေ့, Human=ဖြူ(W)
+  myColor=W;           // Human=ဖြူ, AI=မဲ
   board=newBoard(); turn=B; ver=0; over=false; winShown=false; gameCount=0;
   capBy={[B]:[],[W]:[]}; glog=[]; sel=null; legals=[]; lastF=null; lastT=null;
   huffOn=false; huffAt=null; leaving=false;
   huffPickMode=false; huffPickCands=[]; huffPickResolve=null;
   _animPending=null; _huffAnimPending=null; _animBusy=false;
   showGame();
-  // Update opp name to AI label
   const diffLabel={easy:'😊 Easy AI',normal:'🎯 Normal AI',hard:'🔥 Hard AI'}[aiDifficulty];
   $s('opp-nm',diffLabel); $s('opp-pnm',diffLabel);
-  // Remove resign and huff UI for cleaner AI mode (keep them functional)
   uiUpdate(); draw();
+  // ပွဲ ၁: AI(မဲ) အရင်ရွှေ့
+  setTimeout(()=>doAiMove(),300);
 };
 
 /* ── Evaluation (board score from WHITE's perspective) ── */
@@ -2443,6 +2443,17 @@ function pickAiMove(aiColor){
   const aiCol=aiColor||W;
   const moves=allMoves(aiCol,board);
   if(!moves.length) return null;
+
+  // evalBoard returns score from WHITE's perspective:
+  //   AI=White → maximize score  (best=-Inf, pick highest)
+  //   AI=Black → minimize score  (best=+Inf, pick lowest)
+  const aiIsW=(aiCol===W);
+  // After AI moves, the NEXT turn is opponent's:
+  //   AI=White moved → opponent=Black minimizes → pass false
+  //   AI=Black moved → opponent=White maximizes → pass true
+  const nextMaxing=!aiIsW;
+  const better=(a,b)=>aiIsW?(a>b):(a<b);
+
   if(aiDifficulty==='easy'){
     // Random move, but prefer captures
     const caps=moves.filter(m=>m.type==='cap');
@@ -2450,22 +2461,21 @@ function pickAiMove(aiColor){
     return pool[Math.floor(Math.random()*pool.length)];
   }
   if(aiDifficulty==='normal'){
-    // Depth 3 minimax with some randomness
-    let best=-Infinity, bestMoves=[];
+    let best=aiIsW?-Infinity:Infinity, bestMoves=[];
     for(const mv of moves){
-      const nb=applyMoveToBoard(mv,board,W);
-      const sc=minimax(nb,3,-Infinity,Infinity,false);
-      if(sc>best){best=sc;bestMoves=[mv];}
+      const nb=applyMoveToBoard(mv,board,aiCol);
+      const sc=minimax(nb,3,-Infinity,Infinity,nextMaxing);
+      if(better(sc,best)){best=sc;bestMoves=[mv];}
       else if(sc===best) bestMoves.push(mv);
     }
     return bestMoves[Math.floor(Math.random()*bestMoves.length)];
   }
   // Hard — depth 5
-  let best=-Infinity, bestMoves=[];
+  let best=aiIsW?-Infinity:Infinity, bestMoves=[];
   for(const mv of moves){
-    const nb=applyMoveToBoard(mv,board,W);
-    const sc=minimax(nb,5,-Infinity,Infinity,false);
-    if(sc>best){best=sc;bestMoves=[mv];}
+    const nb=applyMoveToBoard(mv,board,aiCol);
+    const sc=minimax(nb,5,-Infinity,Infinity,nextMaxing);
+    if(better(sc,best)){best=sc;bestMoves=[mv];}
     else if(sc===best) bestMoves.push(mv);
   }
   return bestMoves[Math.floor(Math.random()*bestMoves.length)];
@@ -2491,7 +2501,7 @@ async function doAiMove(){
     board[mv.fr][mv.fc]=E;
     lastT={r:mv.tr,c:mv.tc};
     promote(mv.tr,mv.tc);
-    addLog('⬜ AI: '+cl(mv.fc)+(mv.fr+1)+'→'+cl(mv.tc)+(mv.tr+1));
+    addLog((aiColor===B?'⬛':'⬜')+' AI: '+cl(mv.fc)+(mv.fr+1)+'→'+cl(mv.tc)+(mv.tr+1));
     draw();
   }
   _aiThinking=false;
@@ -2517,7 +2527,7 @@ function aiFinish(){
 function aiEndGame(winner){
   over=true;
   const iWon=winner===myColor;
-  showWin(iWon,winner===B?'မဲ':'ဖြူ');
+  showWin(iWon,winner===B?'ပြာ':'နီ');
 }
 
 </script>
@@ -2556,11 +2566,11 @@ function aiEndGame(winner){
       <div class="ai-color-row">
         <button class="ai-color-btn sel" id="ai-col-b" onclick="selectAiColor('b')">
           <span class="ci">⬛</span>
-          <span>မဲ (ဦးစွာ)</span>
+          <span>ပြာ (ဦးစွာ)</span>
         </button>
         <button class="ai-color-btn" id="ai-col-w" onclick="selectAiColor('w')">
           <span class="ci">⬜</span>
-          <span>ဖြူ</span>
+          <span>နီ</span>
         </button>
       </div>
 
@@ -2572,4 +2582,4 @@ function aiEndGame(winner){
 </div>
 
 </body>
-  </html>
+</html>
