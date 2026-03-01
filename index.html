@@ -1,0 +1,2114 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>မြန်မာ ကျားကွက် | Multiplayer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@300;400;600;700&family=Cinzel+Decorative:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#D4A843; --gold-l:#F0CC72; --gold-d:#8A6410;
+  --ink:#080300; --bd-dark:#2A1000; --bd-light:#C8A055;
+  --cream:#F5E6C8; --cream2:#EDD9A3; --dim:#907030;
+  --green:#43A047; --red:#E57373; --cell:50px; --side:170px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#06020A;
+  font-family:'Noto Sans Myanmar',sans-serif;color:var(--cream);overflow:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 130% 80% at 50% -10%,#1a0a2e 0%,transparent 55%),
+    radial-gradient(ellipse 80% 60% at 0% 100%,#1e0800 0%,transparent 50%),
+    radial-gradient(ellipse 70% 50% at 100% 80%,#0d0520 0%,transparent 50%),
+    linear-gradient(180deg,#06020A 0%,#0c0418 40%,#100308 100%)}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23D4A843' stroke-opacity='.025'%3E%3Cpath d='M30 2L58 30L30 58L2 30Z' stroke-width='.5'/%3E%3Ccircle cx='30' cy='30' r='10' stroke-width='.3'/%3E%3Cpath d='M30 12L48 30L30 48L12 30Z' stroke-width='.3'/%3E%3C/g%3E%3C/svg%3E");
+  background-size:60px 60px}
+#mm-bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ── SCREENS: use display:none so NO space is taken ── */
+.scr{position:fixed;inset:0;z-index:10;display:none}
+.scr.show{display:flex}
+#lobby{align-items:center;justify-content:center;
+  background:transparent}
+#waiting{align-items:center;justify-content:center;
+  background:rgba(4,1,8,.55);backdrop-filter:blur(10px)}
+#game{flex-direction:column;padding:7px 11px 7px;gap:7px;background:transparent}
+
+/* ── LOBBY ── */
+.lbox{position:relative;z-index:1;
+  background:linear-gradient(150deg,#1C0E00,#0E0600);
+  border:1px solid rgba(212,168,67,.25);border-radius:20px;
+  padding:40px 48px;width:440px;max-width:92vw;
+  box-shadow:0 0 80px rgba(212,168,67,.07),0 40px 100px rgba(0,0,0,.95);
+  animation:fadeUp .7s cubic-bezier(.16,1,.3,1)}
+.lbox::before{content:'';position:absolute;inset:0;border-radius:20px;
+  background:linear-gradient(135deg,rgba(212,168,67,.15),transparent 50%);pointer-events:none}
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+.licon{text-align:center;font-size:2.4rem;margin-bottom:8px;
+  filter:drop-shadow(0 0 16px rgba(212,168,67,.6));animation:bob 4s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.ltitle{font-family:'Cinzel Decorative',cursive;font-size:1.65rem;color:var(--gold);
+  text-align:center;letter-spacing:4px;margin-bottom:3px;
+  text-shadow:0 0 40px rgba(212,168,67,.45)}
+.lsub{font-size:.85rem;color:rgba(212,168,67,.55);text-align:center;letter-spacing:1px}
+.ldiv{height:1px;margin:20px 0;background:linear-gradient(90deg,transparent,rgba(212,168,67,.35),transparent)}
+.llbl{font-size:.73rem;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px}
+.linp{width:100%;padding:12px 15px;background:rgba(0,0,0,.55);
+  border:1px solid rgba(212,168,67,.18);border-radius:10px;
+  color:var(--cream);font-family:'Noto Sans Myanmar',sans-serif;font-size:.9rem;
+  margin-bottom:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+.linp:focus{border-color:rgba(212,168,67,.55);box-shadow:0 0 0 3px rgba(212,168,67,.07)}
+.linp::placeholder{color:rgba(212,168,67,.2)}
+.brow{display:flex;gap:10px;margin-bottom:4px}
+.jrow{display:flex;gap:8px;margin-bottom:14px}
+.jrow .linp{margin-bottom:0;flex:1}
+.bgold{flex:1;padding:13px;border:none;border-radius:10px;
+  background:linear-gradient(135deg,#7A5010,#D4A843,#B88020);
+  color:#080300;font-family:'Noto Sans Myanmar',sans-serif;
+  font-size:.9rem;font-weight:700;cursor:pointer;
+  box-shadow:0 4px 20px rgba(212,168,67,.22);transition:all .2s}
+.bgold:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(212,168,67,.4);filter:brightness(1.08)}
+.bgold:active{transform:none}
+.bout{padding:11px 20px;background:rgba(212,168,67,.05);
+  border:1px solid rgba(212,168,67,.22);border-radius:10px;
+  color:var(--gold);font-family:'Noto Sans Myanmar',sans-serif;
+  font-size:.9rem;cursor:pointer;white-space:nowrap;transition:all .2s}
+.bout:hover{background:rgba(212,168,67,.1);border-color:rgba(212,168,67,.5)}
+.lor{text-align:center;color:var(--dim);font-size:.72rem;letter-spacing:2px;margin:6px 0}
+/* ── TG CONTACT BOX ── */
+@property --tg-angle{syntax:'<angle>';initial-value:0deg;inherits:false}
+@keyframes tg-spin{to{--tg-angle:360deg}}
+@keyframes tg-pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(41,182,246,.0)}
+  50%{box-shadow:0 0 14px 3px rgba(41,182,246,.18)}}
+@keyframes tg-dot{
+  0%,100%{opacity:.4;transform:scale(.8)}
+  50%{opacity:1;transform:scale(1.2)}}
+
+.tg-box{
+  position:relative;margin-top:14px;border-radius:11px;
+  padding:2px;z-index:0;isolation:isolate}
+.tg-box::before{
+  content:'';position:absolute;inset:0;border-radius:11px;
+  background:conic-gradient(from var(--tg-angle),
+    #29b6f6,#7c4dff,#f06292,#ffb300,#29b6f6);
+  animation:tg-spin 3.5s linear infinite;
+  z-index:-1;opacity:.75}
+.tg-link{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:10px 16px;border-radius:10px;
+  background:linear-gradient(135deg,rgba(8,4,18,.97),rgba(4,12,28,.97));
+  text-decoration:none;
+  animation:tg-pulse 2.2s ease-in-out infinite;
+  transition:filter .2s}
+.tg-link:hover{filter:brightness(1.15)}
+.tg-icon{
+  font-size:1.05rem;color:#29b6f6;
+  filter:drop-shadow(0 0 6px rgba(41,182,246,.7));
+  animation:tg-dot 2.2s ease-in-out infinite}
+.tg-text{
+  font-size:.8rem;color:rgba(200,220,255,.75);letter-spacing:.5px}
+.tg-text strong{
+  color:#90caf9;font-weight:700;letter-spacing:.8px;
+  text-shadow:0 0 10px rgba(41,182,246,.5)}
+.tg-arrow{
+  font-size:.75rem;color:rgba(41,182,246,.6);margin-left:2px}
+.lobby-status{
+  text-align:center;font-size:.78rem;color:var(--gold-l);
+  min-height:20px;margin-top:8px;transition:opacity .2s}
+
+/* ── WAITING ── */
+.wbox{text-align:center;animation:fadeUp .5s ease}
+.wspin{width:64px;height:64px;border-radius:50%;
+  border:2px solid rgba(212,168,67,.15);border-top-color:var(--gold);
+  animation:spin 1s linear infinite;margin:0 auto 22px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wlbl{font-size:.8rem;color:var(--cream2);margin-bottom:8px;letter-spacing:1px}
+.wcode{font-family:'Cinzel Decorative',cursive;font-size:2.8rem;color:var(--gold);
+  letter-spacing:12px;text-shadow:0 0 30px rgba(212,168,67,.5);margin:10px 0}
+.whint{color:var(--dim);font-size:.76rem;margin-top:10px}
+.bcanc{margin-top:22px;padding:9px 22px;
+  background:rgba(155,28,28,.18);border:1px solid rgba(155,28,28,.35);border-radius:8px;
+  color:var(--red);font-family:'Noto Sans Myanmar',sans-serif;font-size:.8rem;
+  cursor:pointer;transition:all .2s}
+.bcanc:hover{background:rgba(155,28,28,.35)}
+
+/* ── GAME LAYOUT ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;
+  padding:7px 15px;flex-shrink:0;
+  background:rgba(14,8,0,.95);border:1px solid rgba(212,168,67,.18);border-radius:11px;
+  box-shadow:0 2px 16px rgba(0,0,0,.6),inset 0 1px 0 rgba(212,168,67,.07);
+  backdrop-filter:blur(12px)}
+.tlogo{font-family:'Cinzel Decorative',cursive;font-size:.9rem;color:var(--gold);
+  letter-spacing:2px;text-shadow:0 0 12px rgba(212,168,67,.4)}
+.tlogo small{display:block;font-size:.55rem;color:var(--dim);letter-spacing:1px;
+  font-family:'Noto Sans Myanmar',sans-serif}
+.rpill{display:flex;align-items:center;gap:7px;background:rgba(0,0,0,.5);
+  border:1px solid rgba(212,168,67,.18);border-radius:8px;padding:5px 13px;
+  font-size:.75rem;color:var(--cream2)}
+.rpill strong{color:var(--gold);font-family:'Cinzel Decorative',cursive;letter-spacing:2px}
+.cwrap{display:flex;align-items:center;gap:5px;font-size:.7rem;color:var(--cream2)}
+.cdot{width:6px;height:6px;border-radius:50%;background:#81C784;animation:pg 2s infinite}
+.cdot.off{background:var(--red);animation:none}
+@keyframes pg{0%,100%{box-shadow:0 0 0 0 rgba(129,199,132,.4)}50%{box-shadow:0 0 0 3px rgba(129,199,132,0)}}
+
+.main{display:flex;gap:9px;flex:1;min-height:0;align-items:stretch;justify-content:center}
+
+/* ── PANELS ── */
+.panel{width:var(--side);flex-shrink:0;display:flex;flex-direction:column;gap:7px;overflow:hidden}
+.pc{background:linear-gradient(160deg,rgba(24,12,0,.96),rgba(12,6,0,.96));
+  border:1px solid rgba(212,168,67,.12);border-radius:12px;padding:11px;
+  position:relative;flex-shrink:0;transition:border-color .3s,box-shadow .3s}
+.pc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(212,168,67,.25),transparent)}
+.pc.act{border-color:rgba(212,168,67,.42);box-shadow:0 0 18px rgba(212,168,67,.07)}
+.pc.act::before{background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.pav{width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(212,168,67,.28);
+  display:flex;align-items:center;justify-content:center;font-size:1rem;margin-bottom:7px}
+.av-b{background:radial-gradient(circle at 35% 30%,#3A2010,#050100)}
+.av-w{background:radial-gradient(circle at 35% 30%,#FFFDF5,#C8A870)}
+.pnm{font-size:.8rem;font-weight:600;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prl{font-size:.6rem;color:var(--dim);margin:1px 0 7px}
+.drow{display:flex;flex-wrap:wrap;gap:2px;min-height:14px}
+.mdot{width:10px;height:10px;border-radius:50%;transition:opacity .3s}
+.mdot.b{background:radial-gradient(circle at 35% 30%,#555,#111);border:1px solid #333}
+.mdot.w{background:radial-gradient(circle at 35% 30%,#fff,#c8a870);border:1px solid #a08040}
+.mdot.dead{opacity:.09}
+.ic{background:rgba(12,6,0,.92);border:1px solid rgba(212,168,67,.1);
+  border-radius:12px;padding:10px 11px;flex-shrink:0}
+.ich{font-size:.6rem;color:rgba(212,168,67,.5);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px}
+.tb{text-align:center}
+.tlbl{font-size:.72rem;color:var(--cream2)}
+.twho{font-size:.82rem;font-weight:700;color:var(--gold);margin:2px 0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hn{background:rgba(155,28,28,.12);border:1px solid rgba(155,28,28,.28);
+  border-radius:8px;padding:6px 8px;font-size:.67rem;color:#F48FB1;
+  text-align:center;margin-bottom:5px;display:none}
+.hn.on{display:block;animation:fadeUp .25s ease}
+.brsg{width:100%;padding:7px;background:transparent;
+  border:1px solid rgba(155,28,28,.22);border-radius:8px;
+  color:rgba(229,115,115,.4);font-family:'Noto Sans Myanmar',sans-serif;
+  font-size:.68rem;cursor:pointer;transition:all .2s}
+.brsg:hover{border-color:rgba(155,28,28,.55);color:var(--red)}
+.logul{list-style:none;max-height:100px;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:rgba(212,168,67,.15) transparent}
+.logul li{font-size:.63rem;color:var(--cream2);padding:2px 0;
+  border-bottom:1px solid rgba(212,168,67,.04);animation:slr .2s ease}
+.logul li:first-child{color:var(--gold-l)}
+@keyframes slr{from{opacity:0;transform:translateX(-4px)}to{opacity:1}}
+.crow{display:flex;flex-wrap:wrap;gap:2px;min-height:12px}
+
+/* ── CENTER / BOARD ── */
+.center{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px}
+.pbar{display:flex;align-items:center;gap:9px;
+  padding:6px 12px;border-radius:9px;width:100%;
+  background:rgba(12,6,0,.8);border:1px solid transparent;transition:background .35s;position:relative;z-index:0}
+
+/* Normal active (opponent turn indicator) */
+.pbar.act:not(.my-turn){
+  border-color:rgba(212,168,67,.32);
+  background:rgba(22,11,0,.92);
+  box-shadow:0 0 12px rgba(212,168,67,.07)}
+
+/* MY TURN — RGB conic border spin */
+@property --pbar-angle{syntax:'<angle>';initial-value:0deg;inherits:false}
+@keyframes pbar-spin{to{--pbar-angle:360deg}}
+.pbar.my-turn{
+  background:rgba(20,10,0,.97);
+  border-color:transparent;
+  isolation:isolate}
+.pbar.my-turn::before{
+  content:'';position:absolute;inset:-2px;border-radius:11px;
+  background:conic-gradient(from var(--pbar-angle),
+    #ff3860,#ff7700,#ffd000,#00e676,#00bcd4,#7c4dff,#ff3860);
+  animation:pbar-spin 2.4s linear infinite;
+  z-index:-2}
+.pbar.my-turn::after{
+  content:'';position:absolute;inset:1.5px;border-radius:9px;
+  background:rgba(20,10,0,.97);
+  z-index:-1}
+
+/* Your Turn badge — no blink, just visible */
+.your-turn-badge{
+  display:none;align-items:center;gap:4px;
+  padding:2px 8px;border-radius:20px;
+  background:rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.12);
+  font-size:.56rem;font-weight:700;color:rgba(255,255,255,.75);
+  letter-spacing:.6px;white-space:nowrap}
+.pbar.my-turn .your-turn-badge{display:flex}
+
+.pbdot{width:6px;height:6px;border-radius:50%;background:var(--gold);
+  opacity:0;flex-shrink:0;transition:opacity .3s}
+.pbar.act .pbdot,.pbar.my-turn .pbdot{opacity:1;animation:pg 1.5s infinite}
+.pbpc{width:18px;height:18px;border-radius:50%;flex-shrink:0}
+.pbpc.b{background:radial-gradient(circle at 35% 30%,#4A3020,#0D0300);border:1.5px solid #2A1008}
+.pbpc.w{background:radial-gradient(circle at 35% 30%,#FFFDF5,#C8953E);border:1.5px solid #B07820}
+.pbnm{font-size:.78rem;font-weight:600;color:var(--cream);flex:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pbrl{font-size:.58rem;color:var(--dim)}
+
+.bframe{background:linear-gradient(145deg,#4A2200,#2A1000);
+  border:2px solid rgba(212,168,67,.48);border-radius:10px;padding:13px;
+  position:relative;z-index:0;isolation:isolate;
+  box-shadow:0 0 0 1px rgba(212,168,67,.1),0 0 50px rgba(212,168,67,.07),
+             0 18px 50px rgba(0,0,0,.9),inset 0 0 24px rgba(0,0,0,.3)}
+
+.bfc{position:absolute;font-size:10px;color:rgba(212,168,67,.55);
+  width:16px;height:16px;display:flex;align-items:center;justify-content:center}
+.bfc.tl{top:3px;left:3px}.bfc.tr{top:3px;right:3px}
+.bfc.bl{bottom:3px;left:3px}.bfc.br{bottom:3px;right:3px}
+.bwrap{display:flex;flex-direction:column}
+.bcols{display:flex;padding-left:15px}
+.bcols span{width:var(--cell);text-align:center;font-size:.5rem;
+  color:rgba(212,168,67,.4);font-family:'Cinzel Decorative',cursive}
+.bmain{display:flex}
+.brows{display:flex;flex-direction:column}
+.brows span{height:var(--cell);display:flex;align-items:center;justify-content:center;
+  width:15px;font-size:.5rem;color:rgba(212,168,67,.4)}
+#board{display:grid;
+  grid-template-columns:repeat(8,var(--cell));
+  grid-template-rows:repeat(8,var(--cell));
+  border:1px solid rgba(212,168,67,.28);
+  box-shadow:inset 0 0 8px rgba(0,0,0,.4)}
+.cell{width:var(--cell);height:var(--cell);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;cursor:pointer}
+.cell.light{background:var(--bd-light)}
+.cell.dark{background:var(--bd-dark)}
+.cell.dark:hover:not(.nc){background:#3A1600}
+.cell.sel{background:rgba(212,168,67,.42)!important}
+.cell.mvto{background:rgba(60,210,80,.28)!important}
+.cell.cpto{background:rgba(220,50,50,.32)!important}
+.cell.skipto{background:rgba(180,140,60,.22)!important}
+.cell.fr::after,.cell.to::after{content:'';position:absolute;inset:2px;
+  border:1px solid rgba(212,168,67,.28);border-radius:1px;pointer-events:none}
+.dotmv{width:13px;height:13px;border-radius:50%;
+  background:rgba(80,220,100,.85);border:1.5px solid rgba(100,255,120,.9);
+  box-shadow:0 0 7px rgba(80,220,100,.5);pointer-events:none;
+  animation:pd 1.2s ease-in-out infinite}
+.dotcp{width:13px;height:13px;border-radius:50%;
+  background:rgba(220,50,50,.9);border:1.5px solid rgba(255,80,80,.9);
+  box-shadow:0 0 7px rgba(220,50,50,.5);pointer-events:none;
+  animation:pd .8s ease-in-out infinite}
+.dotskip{width:10px;height:10px;border-radius:50%;
+  background:rgba(200,170,80,.6);border:1.5px solid rgba(220,190,100,.7);
+  pointer-events:none;opacity:.7}
+@keyframes pd{0%,100%{transform:scale(.85);opacity:.7}50%{transform:scale(1.15);opacity:1}}
+
+.piece{width:calc(var(--cell) - 7px);height:calc(var(--cell) - 7px);
+  border-radius:50%;position:relative;z-index:2;
+  cursor:pointer;transition:transform .12s,box-shadow .12s}
+.piece:hover{transform:scale(1.08)}
+.piece.wp{background:radial-gradient(circle at 32% 28%,#FFFDF5,#EDD5A3 30%,#C8953E 65%,#9A6A20);
+  border:2px solid #A87020;
+  box-shadow:0 3px 8px rgba(0,0,0,.7),inset 0 -2px 4px rgba(0,0,0,.2),inset 0 2px 4px rgba(255,255,255,.6)}
+.piece.bp{background:radial-gradient(circle at 32% 28%,#4A3020,#1E0E04 40%,#050200);
+  border:2px solid #281006;
+  box-shadow:0 3px 8px rgba(0,0,0,.9),inset 0 -2px 4px rgba(0,0,0,.7),inset 0 2px 4px rgba(255,255,255,.07)}
+.piece.kp::after{content:'♛';position:absolute;top:50%;left:50%;transform:translate(-50%,-53%);
+  font-size:calc(var(--cell)*.3);color:var(--gold);
+  text-shadow:0 0 6px rgba(212,168,67,.8),0 1px 2px rgba(0,0,0,.9);
+  line-height:1;pointer-events:none}
+.piece.sp{animation:sg .9s ease-in-out infinite}
+@keyframes sg{
+  0%,100%{box-shadow:0 3px 8px rgba(0,0,0,.7),0 0 0 2px var(--gold),0 0 14px rgba(212,168,67,.4)}
+  50%    {box-shadow:0 3px 8px rgba(0,0,0,.7),0 0 0 3px var(--gold-l),0 0 22px rgba(212,168,67,.7)}}
+.piece.hp{animation:hg .6s ease-in-out infinite;outline:2px solid var(--red);outline-offset:2px}
+@keyframes hg{0%,100%{box-shadow:0 0 0 0 rgba(229,115,115,.5)}50%{box-shadow:0 0 12px 4px rgba(229,115,115,.3)}}
+
+/* ── CAPTURE PATH OVERLAY ── */
+#cap-overlay{position:absolute;top:0;left:0;pointer-events:none;z-index:10;overflow:visible}
+.cap-path-line{stroke:rgba(255,200,50,.55);stroke-width:2.5;stroke-dasharray:6 4;
+  fill:none;animation:dash-anim 1s linear infinite;marker-end:url(#arr)}
+@keyframes dash-anim{to{stroke-dashoffset:-20}}
+.cap-path-line.alt{stroke:rgba(100,200,255,.55)}
+.cell.chain-step{background:rgba(255,180,0,.18)!important}
+.cell.alt-step{background:rgba(80,180,255,.18)!important}
+
+/* Capture count badge on pieces */
+.cap-badge{position:absolute;top:-4px;right:-4px;background:#E53935;color:#fff;
+  border-radius:50%;width:16px;height:16px;font-size:.55rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;z-index:5;
+  border:1.5px solid #fff;pointer-events:none;animation:badge-pop .2s ease}
+@keyframes badge-pop{from{transform:scale(0)}to{transform:scale(1)}}
+
+/* Multi-capture animation */
+.piece.jumping{
+  animation:jump-piece .25s cubic-bezier(.4,0,.2,1);
+  position:relative;z-index:20;
+}
+@keyframes jump-piece{
+  0%  {transform:scale(1)}
+  40% {transform:scale(1.25) translateY(-4px)}
+  100%{transform:scale(1)}
+}
+.cap-flash{
+  position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,80,80,.9),transparent 70%);
+  animation:cap-pop .35s ease-out forwards;
+  pointer-events:none;z-index:15;
+}
+@keyframes cap-pop{
+  0%  {transform:scale(0.2);opacity:1}
+  60% {transform:scale(1.8);opacity:.7}
+  100%{transform:scale(2.5);opacity:0}
+}
+
+/* ── CHAT ── */
+.chat{background:rgba(10,5,0,.97);border:1px solid rgba(212,168,67,.12);
+  border-radius:12px;overflow:hidden;width:100%}
+.chdr{display:flex;align-items:center;gap:7px;padding:7px 12px;
+  background:rgba(0,0,0,.4);border-bottom:1px solid rgba(212,168,67,.07)}
+.chtit{font-size:.67rem;color:rgba(212,168,67,.55);letter-spacing:1.5px;text-transform:uppercase;flex:1}
+.onl{font-size:.63rem;color:var(--green);display:flex;align-items:center;gap:3px}
+.onl::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--green);animation:pg 2s infinite}
+.cmsgs{height:76px;overflow-y:auto;padding:7px 12px;
+  display:flex;flex-direction:column;gap:3px;
+  scrollbar-width:thin;scrollbar-color:rgba(212,168,67,.12) transparent}
+.cm{display:flex;gap:5px;align-items:flex-start;animation:mi .16s ease}
+@keyframes mi{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
+.cm.own{flex-direction:row-reverse}
+.cb{max-width:76%;padding:4px 9px;border-radius:8px;font-size:.7rem;line-height:1.4}
+.cm.oth .cb{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);
+  color:var(--cream2);border-radius:2px 8px 8px 8px}
+.cm.own .cb{background:rgba(212,168,67,.07);border:1px solid rgba(212,168,67,.13);
+  color:var(--gold-l);border-radius:8px 2px 8px 8px}
+.cm.sys .cb{background:rgba(27,94,32,.14);border:1px solid rgba(46,125,50,.2);
+  color:#81C784;font-style:italic;font-size:.65rem;border-radius:8px}
+.cm.sys{justify-content:center}
+.csn{font-size:.57rem;color:var(--dim);margin-bottom:1px}
+.erow{display:flex;gap:4px;padding:5px 12px;border-top:1px solid rgba(212,168,67,.04)}
+.eb{padding:2px 6px;font-size:.85rem;background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.05);border-radius:5px;cursor:pointer;transition:all .12s}
+.eb:hover{background:rgba(212,168,67,.08);transform:scale(1.1)}
+.cinr{display:flex;gap:6px;padding:7px 12px;border-top:1px solid rgba(212,168,67,.06);overflow:hidden}
+.cinp{flex:1;min-width:0;padding:6px 11px;background:rgba(0,0,0,.5);
+  border:1px solid rgba(212,168,67,.14);border-radius:8px;
+  color:var(--cream);font-family:'Noto Sans Myanmar',sans-serif;font-size:.76rem;
+  outline:none;transition:border-color .2s}
+.cinp:focus{border-color:rgba(212,168,67,.38)}
+.cinp::placeholder{color:rgba(212,168,67,.18)}
+.csnd{padding:6px 13px;background:linear-gradient(135deg,var(--gold-d),var(--gold));
+  border:none;border-radius:8px;color:#080300;font-size:.85rem;font-weight:bold;
+  cursor:pointer;transition:all .2s}
+.csnd:hover{transform:scale(1.06);filter:brightness(1.08)}
+
+.wbtn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.brematch{padding:12px 28px;border:none;border-radius:10px;
+  background:linear-gradient(135deg,#1A6A1A,#2ECC40);
+  color:#fff;font-family:'Noto Sans Myanmar',sans-serif;
+  font-size:.88rem;font-weight:700;cursor:pointer;
+  box-shadow:0 4px 18px rgba(46,204,64,.3);transition:all .2s}
+.brematch:hover{transform:translateY(-2px);filter:brightness(1.1)}
+.brematch:disabled{opacity:.45;cursor:default;transform:none}
+.rematch-status{font-size:.75rem;color:rgba(212,168,67,.6);margin-top:10px;min-height:18px}
+
+/* ── HUFF PICK CANDIDATES ── */
+.piece.huff-cand{cursor:pointer;outline:3px solid rgba(255,140,0,.95);outline-offset:3px;z-index:5;
+  animation:huff-cand-pulse .65s ease-in-out infinite}
+@keyframes huff-cand-pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(255,140,0,.4),0 3px 8px rgba(0,0,0,.7)}
+  50%{box-shadow:0 0 18px 6px rgba(255,140,0,.5),0 3px 8px rgba(0,0,0,.7)}}
+.huff-pick-bar{display:none;align-items:center;justify-content:center;gap:7px;
+  padding:8px 14px;border-radius:10px;width:100%;
+  background:rgba(255,80,0,.12);border:1.5px solid rgba(255,140,0,.45);
+  font-size:.78rem;color:rgba(255,190,80,.95);text-align:center;
+  animation:fadeUp .25s ease;pointer-events:none}
+.huff-pick-bar.on{display:flex}
+/* ── GHOST PIECE (huff replay) ── */
+.ghost-piece{position:fixed;border-radius:50%;pointer-events:none;z-index:900;
+  transition:left .35s cubic-bezier(.4,0,.2,1), top .35s cubic-bezier(.4,0,.2,1);
+  opacity:.85;box-shadow:0 0 18px 6px rgba(255,80,80,.55)}
+.ghost-piece.bp{background:radial-gradient(circle at 32% 28%,#4A3020,#1E0E04 40%,#050200);
+  border:2px solid rgba(229,115,115,.8)}
+.ghost-piece.wp{background:radial-gradient(circle at 32% 28%,#FFFDF5,#EDD5A3 30%,#C8953E 65%,#9A6A20);
+  border:2px solid rgba(229,115,115,.8)}
+.ghost-piece.kp::after{content:'♛';position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-53%);font-size:40%;color:var(--gold);pointer-events:none}
+@keyframes ghost-fade-in{from{opacity:0;transform:scale(.5)}to{opacity:.85;transform:scale(1)}}
+@keyframes ghost-pop{0%{transform:scale(1)}40%{transform:scale(1.3)}100%{transform:scale(0);opacity:0}}
+
+/* ── COPY CODE ── */
+.copy-code{cursor:pointer;user-select:none;position:relative;display:inline-block}
+.copy-code:hover{opacity:.8}
+.copy-tip{position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+  background:rgba(212,168,67,.9);color:#080300;font-size:.62rem;font-weight:700;
+  padding:3px 8px;border-radius:5px;white-space:nowrap;opacity:0;pointer-events:none;
+  transition:opacity .2s}
+.copy-tip.show{opacity:1}
+
+/* ── WIN ── */
+#wino{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0);backdrop-filter:blur(0);
+  transition:all .45s;pointer-events:none;visibility:hidden}
+#wino.on{background:rgba(0,0,0,.9);backdrop-filter:blur(10px);pointer-events:all;visibility:visible}
+.wb{background:linear-gradient(145deg,#1C0E00,#080300);
+  border:1px solid rgba(212,168,67,.38);border-radius:18px;padding:42px 54px;text-align:center;
+  transform:scale(.7) translateY(28px);transition:transform .45s cubic-bezier(.16,1,.3,1);
+  box-shadow:0 0 70px rgba(212,168,67,.12),0 40px 90px rgba(0,0,0,.95)}
+#wino.on .wb{transform:scale(1) translateY(0)}
+.wi{font-size:3rem;margin-bottom:12px;filter:drop-shadow(0 0 18px rgba(212,168,67,.5))}
+.wt{font-family:'Cinzel Decorative',cursive;font-size:1.45rem;color:var(--gold);
+  text-shadow:0 0 22px rgba(212,168,67,.4);margin-bottom:7px}
+.wm{font-size:.88rem;color:var(--cream2);margin-bottom:24px}
+
+/* ── TOAST ── */
+.toast{position:fixed;top:10px;left:50%;transform:translateX(-50%) translateY(-64px);
+  background:rgba(18,9,0,.97);border:1px solid rgba(212,168,67,.32);
+  border-radius:10px;padding:9px 19px;font-size:.82rem;color:var(--cream);
+  z-index:600;transition:transform .26s ease;
+  box-shadow:0 4px 18px rgba(0,0,0,.8);pointer-events:none;white-space:nowrap}
+.toast.on{transform:translateX(-50%) translateY(0)}
+
+@media(max-width:960px){:root{--cell:44px;--side:152px}.main{gap:7px}}
+@media(max-width:780px){:root{--cell:38px}.panel{display:none}.main{justify-content:center}}
+@media(max-width:500px){:root{--cell:34px}.lbox{padding:28px 26px}}
+</style>
+</head>
+<body>
+<canvas id="mm-bg"></canvas>
+<div id="lobby" class="scr show">
+  <div class="lbox">
+    <div class="licon">🎭</div>
+    <div class="ltitle">KYAR KWAT</div>
+    <div class="lsub">မြန်မာ ကျားကွက် · Online Multiplayer</div>
+    <div class="ldiv"></div>
+    <div class="llbl">👤 သင့်အမည်</div>
+    <input class="linp" id="inp-name" type="text" placeholder="အမည်ထည့်ပါ..." maxlength="20">
+    <div class="brow">
+      <button class="bgold" onclick="createRoom()">🏠 Room ဖန်တီး</button>
+    </div>
+    <div class="lor">─── သို့မဟုတ် ───</div>
+    <div class="llbl">🔑 Room Code ဖြင့် ဝင်ပါ</div>
+    <div class="jrow">
+      <input class="linp" id="inp-code" type="text" placeholder="CODE..." maxlength="6"
+             style="text-transform:uppercase;letter-spacing:3px;text-align:center">
+      <button class="bout" onclick="joinRoom()">ဝင်မည်</button>
+    </div>
+    <div class="tg-box" id="lst">
+      <a class="tg-link" href="https://t.me/Nytheris_q" target="_blank" rel="noopener">
+        <span class="tg-icon">✈</span>
+        <span class="tg-text">TG &nbsp;·&nbsp; <strong>@Nytheris_q</strong></span>
+        <span class="tg-arrow">↗</span>
+      </a>
+    </div>
+    <div class="lobby-status" id="lobby-st"></div>
+  </div>
+</div>
+
+<!-- WAITING -->
+<div id="waiting" class="scr">
+  <div class="wbox">
+    <div class="wspin"></div>
+    <div class="wlbl">Room Code</div>
+    <div class="wcode copy-code" id="w-code" onclick="copyRoomCode()" title="ကူးရန် နှိပ်ပါ">------
+      <div class="copy-tip" id="copy-tip">✓ ကူးပြီး!</div>
+    </div>
+    <div class="wlbl">ဤ Code ကို သူငယ်ချင်းထံ ပို့ပါ · နှိပ်ပြီး ကူးနိုင်သည်</div>
+    <div class="whint">ပြိုင်ဘက် Join ရန် စောင့်နေသည်...</div>
+    <button class="bcanc" onclick="cancelRoom()">ဖျက်သိမ်းမည်</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game" class="scr">
+  <div class="topbar">
+    <div class="tlogo">🎭 KYAR KWAT<small>မြန်မာ ကျားကွက်</small></div>
+    <div class="rpill copy-code" onclick="copyRoomCode()" title="ကူးရန် နှိပ်ပါ" style="cursor:pointer">Room: <strong id="top-room">----</strong> <span style="font-size:.6rem;opacity:.5">📋</span>
+      <div class="copy-tip" id="copy-tip2">✓ ကူးပြီး!</div>
+    </div>
+    <div class="cwrap"><div class="cdot" id="cdot"></div><span>Online</span></div>
+  </div>
+
+  <div class="main">
+    <!-- LEFT -->
+    <div class="panel">
+      <div class="pc" id="my-card">
+        <div class="pav av-b" id="my-av">⬛</div>
+        <div class="pnm" id="my-nm">-</div>
+        <div class="prl" id="my-rl">-</div>
+        <div class="drow" id="my-dots"></div>
+      </div>
+      <div class="ic">
+        <div class="ich">⏱ အလှည့်</div>
+        <div class="tb">
+          <div class="tlbl" id="tlbl">-</div>
+          <div class="twho" id="twho">-</div>
+        </div>
+      </div>
+      <div class="ic">
+        <div class="hn" id="hn">💨 ပြိုင်ဘက်က ဖမ်းမစားခဲ့ပါ!<br><span id="huff-piece-lbl" style="color:var(--gold);font-weight:700"></span> ကောင်ကို ဖမ်းကောက်လိုက်သည်!</div>
+        <button class="brsg" onclick="doResign()">🏳️ ဆုံးနိုင်ခြင်း</button>
+      </div>
+      <div class="ic">
+        <div class="ich">💀 ကိုယ်ဖမ်းမိသောကျောက်</div>
+        <div class="crow" id="my-cap"></div>
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="center">
+      <!-- Opponent bar (top of board) -->
+      <div class="pbar" id="opp-bar">
+        <div class="pbdot"></div>
+        <div class="pbpc" id="opp-pc"></div>
+        <div><div class="pbnm" id="opp-pnm">ပြိုင်ဘက်...</div><div class="pbrl" id="opp-prl">-</div></div>
+        <div style="flex:1"></div>
+      </div>
+
+      <!-- Board -->
+      <div class="bframe">
+        <span class="bfc tl">✦</span><span class="bfc tr">✦</span>
+        <span class="bfc bl">✦</span><span class="bfc br">✦</span>
+        <div class="bwrap">
+          <div class="bcols" id="col-lbl"></div>
+          <div class="bmain">
+            <div class="brows" id="row-lbl"></div>
+            <div id="board" style="position:relative">
+              <svg id="cap-overlay" width="0" height="0" style="position:absolute;top:0;left:0;pointer-events:none;z-index:10;overflow:visible">
+                <defs>
+                  <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L6,3 z" fill="rgba(255,200,50,.75)"/>
+                  </marker>
+                  <marker id="arr-alt" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L6,3 z" fill="rgba(100,200,255,.75)"/>
+                  </marker>
+                </defs>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="huff-pick-bar" id="huff-pick-bar">
+        👆 <span id="huff-pick-msg">ဖမ်းကောက်မည့်ကျားကို Board ပေါ်တွင် ရွေးပါ</span>
+      </div>
+
+      <!-- My bar (bottom of board) -->
+      <div class="pbar" id="my-bar">
+        <div class="pbdot"></div>
+        <div class="pbpc" id="my-pc"></div>
+        <div><div class="pbnm" id="my-pnm">-</div><div class="pbrl" id="my-prl">-</div></div>
+        <div style="flex:1"></div>
+        <div class="your-turn-badge">⚡ Your Turn</div>
+      </div>
+
+      <!-- Chat -->
+      <div class="chat">
+        <div class="chdr">
+          <div class="chtit">💬 Chat</div>
+          <div class="onl" id="onl">2 Online</div>
+        </div>
+        <div class="cmsgs" id="cmsgs"></div>
+        <div class="erow">
+          <button class="eb" onclick="qmsg('👏')">👏</button>
+          <button class="eb" onclick="qmsg('😄')">😄</button>
+          <button class="eb" onclick="qmsg('🤔')">🤔</button>
+          <button class="eb" onclick="qmsg('😅')">😅</button>
+          <button class="eb" onclick="qmsg('🔥')">🔥</button>
+          <button class="eb" onclick="qmsg('🙏')">🙏</button>
+          <button class="eb" onclick="qmsg('Good game!')">GG</button>
+        </div>
+        <div class="cinr">
+          <input class="cinp" id="cinp" type="text" placeholder="Message ရေးပါ..." maxlength="100"
+                 onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="csnd" onclick="sendChat()">↑</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="panel">
+      <div class="pc" id="opp-card">
+        <div class="pav av-w" id="opp-av">⬜</div>
+        <div class="pnm" id="opp-nm">ပြိုင်ဘက်...</div>
+        <div class="prl" id="opp-rl">-</div>
+        <div class="drow" id="opp-dots"></div>
+      </div>
+      <div class="ic">
+        <div class="ich">📜 မှတ်တမ်း</div>
+        <ul class="logul" id="logul"></ul>
+      </div>
+      <div class="ic">
+        <div class="ich">💀 ပြိုင်ဘက်ဖမ်းမိသောကျောက်</div>
+        <div class="crow" id="opp-cap"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WIN -->
+<div id="wino">
+  <div class="wb">
+    <div class="wi" id="wi">🏆</div>
+    <div class="wt" id="wt">-</div>
+    <div class="wm" id="wm">-</div>
+    <div class="wbtn-row">
+      <button class="brematch" id="btn-rematch" onclick="requestRematch()">🔄 ထပ်ကစားမည်</button>
+      <button class="bgold" style="padding:12px 20px;width:auto;flex:none;display:inline-block" onclick="doLeave()">🚪 Lobby</button>
+    </div>
+    <div class="rematch-status" id="rematch-status"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getDatabase,ref,set,get,onValue,push,remove,update,onDisconnect}
+  from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+const cfg={apiKey:"AIzaSyC-LM-rRPfgxIlYH9fpuZwUkSCCOPidg5g",
+  authDomain:"kyarkwat-57298.firebaseapp.com",
+  databaseURL:"https://kyarkwat-57298-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"kyarkwat-57298",storageBucket:"kyarkwat-57298.firebasestorage.app",
+  messagingSenderId:"143473069573",appId:"1:143473069573:web:127d6c9320195f10afd66c"};
+const db=getDatabase(initializeApp(cfg));
+window._FB={db,ref,set,get,onValue,push,remove,update,onDisconnect};
+window.dispatchEvent(new Event('fbReady'));
+</script>
+
+<script>
+/* ═══════════════════════════════════
+   PIECE IDs
+═══════════════════════════════════ */
+const E=0,B=1,W=2,BK=3,WK=4;
+const isB=p=>p===B||p===BK;
+const isW=p=>p===W||p===WK;
+const isK=p=>p===BK||p===WK;
+const isOwn=(p,t)=>t===B?isB(p):isW(p);
+const isOpp=(p,t)=>t===B?isW(p):isB(p);
+
+/* ═══════════════════════════════════
+   BOARD SETUP
+   ───────────────────────────────────
+   board[row][col] where row 0 = top of the canonical board.
+
+   INITIAL POSITIONS (pieces on dark squares where (r+c)%2===1):
+     BLACK (player 1): rows 0,1,2  — starts at canonical TOP
+     WHITE (player 2): rows 5,6,7  — starts at canonical BOTTOM
+
+   PAWN MOVEMENT (canonical):
+     BLACK pawns move DOWN → row increases (0→7)
+     WHITE pawns move UP   → row decreases (7→0)
+
+   PROMOTION:
+     BLACK promotes at row 7 (reached canonical bottom)
+     WHITE promotes at row 0 (reached canonical top)
+
+   DISPLAY — each player sees OWN pieces at BOTTOM of screen:
+
+     ┌────────────────────────────────────────────────┐
+     │ WHITE player screen (no flip needed):           │
+     │   displayRow = boardRow                         │
+     │   displayCol = boardCol                         │
+     │   → WHITE pieces (rows 5-7) at display bottom ✓│
+     │   → BLACK pieces (rows 0-2) at display top    ✓│
+     └────────────────────────────────────────────────┘
+
+     ┌────────────────────────────────────────────────┐
+     │ BLACK player screen (flip 180°):                │
+     │   displayRow = 7 - boardRow                     │
+     │   displayCol = 7 - boardCol                     │
+     │   → BLACK pieces (rows 0-2) → display rows 5-7 │
+     │     = BOTTOM of screen ✓                        │
+     │   → WHITE pieces (rows 5-7) → display rows 0-2 │
+     │     = TOP of screen ✓                           │
+     └────────────────────────────────────────────────┘
+═══════════════════════════════════ */
+
+/* ═══════════════════════════════════
+   STATE
+═══════════════════════════════════ */
+let board=[];
+let turn=B;           // whose turn (B or W)
+let sel=null;         // selected cell {r,c}
+let legals=[];        // legal moves for selected piece
+let over=false;
+let glog=[];
+let capBy={[B]:[],[W]:[]};
+let lastF=null,lastT=null;
+
+let myName='',myColor=null,roomId='',isHost=false;
+let fbReady=false;
+let unsub=null,unsubChat=null;
+let ver=0;
+let huffOn=false,huffAt=null;
+let leaving=false,winShown=false;
+let gameCount=0; // increments each rematch — used to alternate first-move and color
+
+window.addEventListener('fbReady',()=>{fbReady=true;$s('lobby-st','');});
+
+/* ═══════════════════════════════════
+   VIBRATION HELPER
+═══════════════════════════════════ */
+function vibrate(pattern){
+  try{if(navigator.vibrate)navigator.vibrate(pattern);}catch(e){}
+}
+
+/* ═══════════════════════════════════
+   HELPERS
+═══════════════════════════════════ */
+const $=id=>document.getElementById(id);
+const $s=(id,v)=>{const e=$(id);if(e)e.textContent=v;};
+function showScr(id){
+  ['lobby','waiting','game'].forEach(s=>$(s).classList.remove('show'));
+  $(id).classList.add('show');
+}
+
+let _tt=null;
+function toast(t){
+  const e=$('toast');e.textContent=t;e.classList.add('on');
+  clearTimeout(_tt);_tt=setTimeout(()=>e.classList.remove('on'),2500);
+}
+
+/* ═══════════════════════════════════
+   BOARD INIT
+═══════════════════════════════════ */
+function newBoard(){
+  const b=Array(8).fill(null).map(()=>Array(8).fill(E));
+  for(let r=0;r<3;r++) for(let c=0;c<8;c++) if((r+c)%2===1) b[r][c]=B;
+  for(let r=5;r<8;r++) for(let c=0;c<8;c++) if((r+c)%2===1) b[r][c]=W;
+  return b;
+}
+
+/* ═══════════════════════════════════
+   MOVE GENERATION
+═══════════════════════════════════ */
+function capPaths(r,c,t,bs,vis,isChain){
+  const p=bs[r][c],king=isK(p);
+  // King: all 4 diagonal directions
+  // Pawn first hop: FORWARD only
+  // Pawn subsequent hops (isChain=true): ALL 4 directions (international draughts multi-hop rule)
+  const dirs=king
+    ?[[-1,-1],[-1,1],[1,-1],[1,1]]
+    :(t===B?[[1,-1],[1,1]]:[[-1,-1],[-1,1]]); // pawns always forward only
+  let out=[];
+  for(const[dr,dc]of dirs){
+    if(king){
+      // Slide to find opponent, then land on any free square beyond
+      let d=1,or=-1,oc=-1,found=false;
+      while(true){
+        const nr=r+dr*d,nc=c+dc*d;
+        if(nr<0||nr>=8||nc<0||nc>=8)break;
+        if(bs[nr][nc]!==E){
+          if(isOpp(bs[nr][nc],t)&&!vis.has(`${nr},${nc}`)){or=nr;oc=nc;found=true;d++;}
+          else break;
+          break;
+        }
+        d++;
+      }
+      if(!found)continue;
+      const nb0=bs.map(x=>[...x]);nb0[or][oc]=E;nb0[r][c]=E;
+      const nv0=new Set(vis);nv0.add(`${or},${oc}`);
+      let ld=d;
+      while(true){
+        const lr=r+dr*ld,lc=c+dc*ld;
+        if(lr<0||lr>=8||lc<0||lc>=8)break;
+        if(bs[lr][lc]!==E)break;
+        const nb=nb0.map(x=>[...x]);nb[lr][lc]=p;
+        const sub=capPaths(lr,lc,t,nb,nv0,true);
+        if(!sub.length)out.push([{r:lr,c:lc,cap:[or,oc]}]);
+        else for(const s of sub)out.push([{r:lr,c:lc,cap:[or,oc]},...s]);
+        ld++;
+      }
+    } else {
+      // Pawn: one diagonal jump
+      const mr=r+dr,mc=c+dc,lr=r+dr*2,lc=c+dc*2;
+      if(lr<0||lr>=8||lc<0||lc>=8)continue;
+      const k=`${mr},${mc}`;
+      if(vis.has(k)||!isOpp(bs[mr][mc],t)||bs[lr][lc]!==E)continue;
+      const nb=bs.map(x=>[...x]);
+      nb[mr][mc]=E;nb[r][c]=E;nb[lr][lc]=p;
+      const nv=new Set(vis);nv.add(k);
+      const sub=capPaths(lr,lc,t,nb,nv,true); // subsequent hops allow all dirs
+      if(!sub.length)out.push([{r:lr,c:lc,cap:[mr,mc]}]);
+      else for(const s of sub)out.push([{r:lr,c:lc,cap:[mr,mc]},...s]);
+    }
+  }
+  return out;
+}
+
+function allCaps(t,bs){
+  const res=[];
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++)
+    if(bs[r][c]!==E&&isOwn(bs[r][c],t)){
+      const p=capPaths(r,c,t,bs,new Set(),false);
+      if(p.length)res.push({r,c,paths:p});
+    }
+  return res;
+}
+
+function maxCapLen(ac){
+  let m=0;for(const{paths}of ac)for(const p of paths)if(p.length>m)m=p.length;
+  return m;
+}
+
+function normalMoves(r,c,t,bs){
+  const p=bs[r][c],king=isK(p);
+  // Pawn direction: BLACK moves to higher row (DOWN in array), WHITE moves to lower row (UP)
+  const dirs=king?[[-1,-1],[-1,1],[1,-1],[1,1]]:t===B?[[1,-1],[1,1]]:[[-1,-1],[-1,1]];
+  const mv=[];
+  for(const[dr,dc]of dirs){
+    if(king){let s=1;while(true){const nr=r+dr*s,nc=c+dc*s;if(nr<0||nr>=8||nc<0||nc>=8||bs[nr][nc]!==E)break;mv.push({r:nr,c:nc});s++;}}
+    else{const nr=r+dr,nc=c+dc;if(nr>=0&&nr<8&&nc>=0&&nc<8&&bs[nr][nc]===E)mv.push({r:nr,c:nc});}
+  }
+  return mv;
+}
+
+
+/* ═══════════════════════════════════
+   CELL CLICK + EXECUTE MOVE
+   ───────────────────────────────────
+   Multi-hop capture flow:
+   1. Player clicks own piece → pick() shows first-step targets
+   2. Player clicks a target  → if more hops exist, show next targets
+                                 if no more hops, animate full path
+   3. Player can branch (2 ways to eat 3 pieces) → both shown, player chooses
+
+   State:
+     chainOrigin  = {r,c} where the piece started
+     chainPaths   = all max-length paths still in play
+     chainDone    = steps committed so far (index into paths)
+═══════════════════════════════════ */
+
+let chainOrigin=null;  // board coords of piece being moved
+let chainPaths=[];     // current candidate paths (each is array of steps)
+let chainDone=0;       // how many steps committed
+
+// Huff pick state
+let huffPickMode=false;       // waiting for player to click a huff candidate
+let huffPickCands=[];          // [{or,oc,path,piece,victimR,victimC}]
+let huffPickResolve=null;
+
+// Animation data pending to push to Firebase
+let _animPending=null;         // {type:'cap'|'move', ...}
+let _huffAnimPending=null;     // huff ghost data
+let _animBusy=false;           // prevent double-replay on receiver
+
+function onCell(r,c){
+  if(over)return;
+  // In huff pick mode: player A selects which of opponent's pieces to huff
+  if(huffPickMode){
+    const hit=huffPickCands.find(h=>h.victimR===r&&h.victimC===c);
+    if(hit&&huffPickResolve)huffPickResolve(hit);
+    return;
+  }
+  if(turn!==myColor){toast('⏳ သင့်အလှည့် မဟုတ်သေးပါ');return;}
+
+  if(sel){
+    const hit=legals.find(m=>m.r===r&&m.c===c);
+    if(hit){
+      // A legal destination was clicked
+      if(hit.isCap){
+        commitCapStep(hit);
+      } else {
+        doNormalMove(sel.r,sel.c,hit);
+      }
+      return;
+    }
+    // Clicked own piece while in selection (and NOT mid-chain) → reselect
+    if(chainDone===0&&board[r][c]!==E&&isOwn(board[r][c],turn)){
+      clearSel();pick(r,c);return;
+    }
+    // Clicked elsewhere mid-chain: ignore (must continue chain or nothing)
+    if(chainDone===0){clearSel();draw();}
+    return;
+  }
+  if(board[r][c]!==E&&isOwn(board[r][c],turn))pick(r,c);
+}
+
+/* Start selection on a piece */
+function pick(r,c){
+  clearCapOverlay();
+  const ac=allCaps(turn,board);
+  const ml=maxCapLen(ac);
+  const capEntry=ac.find(e=>e.r===r&&e.c===c);
+
+  if(ml>0 && capEntry){
+    // This piece CAN capture — show capture moves + normal moves (skip allowed, huff applies)
+    const mp=capEntry.paths.filter(p=>p.length===ml);
+    if(!mp.length){toast('⚠️ ဖမ်းနိုင်သောလမ်း မရှိ');return;}
+    chainOrigin={r,c};chainPaths=mp;chainDone=0;
+    sel={r,c};
+    legals=buildLegalsAtStep(mp,0);
+    // Also add normal moves marked as skip (huff will fire if chosen)
+    const nmv=normalMoves(r,c,turn,board);
+    for(const m of nmv)legals.push({r:m.r,c:m.c,isCap:false,isSkip:true});
+    // Show path overlay
+    const seen=new Set();const uniqPaths=[];
+    for(const p of mp){const k=p.map(s=>`${s.r},${s.c}`).join('|');if(!seen.has(k)){seen.add(k);uniqPaths.push(p);}}
+    if(uniqPaths.length)showCapPaths(r,c,uniqPaths.slice(0,4));
+  } else if(ml>0 && !capEntry){
+    // Other piece must capture — this piece can still move but huff applies
+    const mv=normalMoves(r,c,turn,board);
+    if(!mv.length){toast('⚠️ ဤကျားမှ ရွေ့နိုင်သောနေရာ မရှိ');return;}
+    chainOrigin=null;chainPaths=[];chainDone=0;
+    sel={r,c};legals=mv.map(m=>({r:m.r,c:m.c,isCap:false,isSkip:true}));
+  } else {
+    // No captures anywhere — plain normal moves
+    const mv=normalMoves(r,c,turn,board);
+    if(!mv.length){toast('⚠️ ဤကျားမှ ရွေ့နိုင်သောနေရာ မရှိ');return;}
+    chainOrigin=null;chainPaths=[];chainDone=0;
+    sel={r,c};legals=mv.map(m=>({r:m.r,c:m.c,isCap:false,isSkip:false}));
+  }
+  draw();
+}
+
+/* Build the set of legal landing squares at step index `step` from `paths` */
+function buildLegalsAtStep(paths,step){
+  const seen=new Set(),out=[];
+  for(const path of paths){
+    if(path.length<=step)continue;
+    const s=path[step],key=`${s.r},${s.c}`;
+    if(!seen.has(key)){
+      seen.add(key);
+      out.push({r:s.r,c:s.c,isCap:true,
+        subPaths:paths.filter(p=>p.length>step&&p[step].r===s.r&&p[step].c===s.c)
+      });
+    }
+  }
+  return out;
+}
+
+/* Commit one capture step; show next options or finalise */
+function commitCapStep(hit){
+  const stepIdx=chainDone;
+  chainDone++;
+
+  // Filter paths that went through this step
+  chainPaths=hit.subPaths;
+
+  // Are there more steps in any of these paths?
+  const hasMore=chainPaths.some(p=>p.length>chainDone);
+
+  if(hasMore){
+    // Show next capture options from the current landing square
+    sel={r:hit.r,c:hit.c};
+    legals=buildLegalsAtStep(chainPaths,chainDone);
+    draw();
+  } else {
+    // All paths end here — execute the full animation
+    const fullPath=chainPaths[0]; // pick first (all end at same place)
+    const origin=chainOrigin;
+    clearSel();
+    lastF={r:origin.r,c:origin.c};
+    draw();
+    _animPending={type:'cap',fr:origin.r,fc:origin.c,capPath:fullPath};
+    _huffAnimPending=null;
+    applyPath(origin.r,origin.c,fullPath).then(()=>finish(false,null));
+  }
+}
+
+/* Normal (non-capture) move */
+async function doNormalMove(fr,fc,mv){
+  const ac=allCaps(turn,board);
+  const had=ac.length>0;
+
+  // Collect ALL pieces that should have captured (max-length paths)
+  let huffCands=[];
+  if(had){
+    const ml=maxCapLen(ac);
+    for(const entry of ac){
+      const bp=entry.paths.find(p=>p.length===ml);
+      if(bp){
+        const wasMoved=(entry.r===fr&&entry.c===fc);
+        huffCands.push({
+          or:entry.r, oc:entry.c,
+          path:bp,
+          piece:board[entry.r][entry.c],
+          victimR:wasMoved?mv.r:entry.r,
+          victimC:wasMoved?mv.c:entry.c
+        });
+      }
+    }
+  }
+
+  // Apply the normal move
+  lastF={r:fr,c:fc};
+  board[mv.r][mv.c]=board[fr][fc];
+  board[fr][fc]=E;
+  lastT={r:mv.r,c:mv.c};
+  promote(mv.r,mv.c);
+  addLog(`${turn===B?'⬛':'⬜'} ${cl(fc)}${fr+1}→${cl(mv.c)}${mv.r+1}${had?' ⚠️ ဖမ်းမစားခဲ့!':''}`);
+  _animPending={type:'move',fr,fc,tr:mv.r,tc:mv.c};
+  clearSel();draw();
+
+  if(had&&huffCands.length>0){
+    let chosen;
+    if(huffCands.length===1){
+      chosen=huffCands[0];
+    } else {
+      chosen=await showHuffPicker(huffCands);
+    }
+    _huffAnimPending=chosen;
+    await doHuffAnimation(chosen,true);
+    const vl=`${cl(chosen.victimC)}${chosen.victimR+1}`;
+    finish(false,null,{by:myName,at:vl,ts:Date.now()});
+  } else {
+    _huffAnimPending=null;
+    finish(false,null,null);
+  }
+}
+
+/* ═══ HUFF PICK (when 2+ candidates) ══════════════════ */
+async function showHuffPicker(cands){
+  huffPickMode=true; huffPickCands=cands;
+  const labels=cands.map(h=>`${cl(h.victimC)}${h.victimR+1}`).join(' / ');
+  $s('huff-pick-msg',`ဖမ်းမစားမိ ${cands.length} ကောင် (${labels}) — ဖမ်းကောက်မည့်ကောင် Board ပေါ်မှ ရွေးပါ`);
+  $('huff-pick-bar').classList.add('on');
+  vibrate([80,40,80]); draw();
+  const chosen=await new Promise(res=>{huffPickResolve=res;});
+  huffPickMode=false; huffPickCands=[]; huffPickResolve=null;
+  $('huff-pick-bar').classList.remove('on'); draw();
+  return chosen;
+}
+
+/* ═══ SHARED GHOST ANIMATION CORE ═════════════════════
+   doRemove=true  → mover's side: removes piece from board
+   doRemove=false → receiver's side: visual only           */
+async function _ghostWalk(or,oc,path,piece,victimR,victimC,doRemove){
+  const cellPx=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell'))||50;
+  function ctr(r,c){
+    const el=getCellEl(r,c); if(!el)return{x:0,y:0};
+    const rc=el.getBoundingClientRect();
+    return{x:rc.left+rc.width/2, y:rc.top+rc.height/2};
+  }
+
+  // Phase 1: red outline on victim, yellow on what it could have eaten
+  const vEl=getCellEl(victimR,victimC);
+  if(vEl){vEl.style.outline='3px solid rgba(229,115,115,.95)';vEl.style.outlineOffset='-2px';}
+  for(const s of path){
+    const cEl=getCellEl(s.cap[0],s.cap[1]);
+    if(cEl){cEl.style.outline='3px solid rgba(255,220,50,.7)';cEl.style.outlineOffset='-2px';}
+  }
+  await sleep(900);
+  if(vEl)vEl.style.outline='';
+  for(const s of path){const cEl=getCellEl(s.cap[0],s.cap[1]);if(cEl)cEl.style.outline='';}
+
+  // Phase 2: ghost walks the capture path
+  const sz=cellPx-7;
+  const ghost=document.createElement('div');
+  ghost.className=`ghost-piece ${isB(piece)?'bp':'wp'}${isK(piece)?' kp':''}`;
+  ghost.style.cssText=`width:${sz}px;height:${sz}px;position:fixed;z-index:900;border-radius:50%;
+    pointer-events:none;transition:left .32s cubic-bezier(.4,0,.2,1),top .32s cubic-bezier(.4,0,.2,1);
+    animation:ghost-fade-in .25s ease forwards`;
+  document.body.appendChild(ghost);
+  const sp=ctr(or,oc);
+  ghost.style.left=`${sp.x-sz/2}px`; ghost.style.top=`${sp.y-sz/2}px`;
+  await sleep(280);
+  for(const s of path){
+    const dp=ctr(s.r,s.c);
+    ghost.style.left=`${dp.x-sz/2}px`; ghost.style.top=`${dp.y-sz/2}px`;
+    await sleep(150);
+    const fEl=getCellEl(s.cap[0],s.cap[1]);
+    if(fEl){const fl=document.createElement('div');fl.className='cap-flash';fEl.appendChild(fl);setTimeout(()=>fl.remove(),380);}
+    await sleep(220);
+  }
+  await sleep(200);
+  ghost.style.transition='none'; ghost.style.animation='ghost-pop .35s ease forwards';
+  await sleep(350); ghost.remove();
+
+  // Phase 3: flash victim cell; only mover side removes from board
+  const vFlEl=getCellEl(victimR,victimC);
+  if(vFlEl){const fl=document.createElement('div');fl.className='cap-flash';vFlEl.appendChild(fl);setTimeout(()=>fl.remove(),450);}
+  if(doRemove){
+    const oppColor=turn===B?W:B;
+    const vp=board[victimR][victimC];
+    if(vp!==E){capBy[oppColor].push(vp); board[victimR][victimC]=E;}
+    addLog(`💨 Huff! ${cl(victimC)}${victimR+1} ဖမ်းကောက်ခံရ`);
+    draw();
+  }
+  await sleep(400);
+}
+
+/* Mover's side — animates AND removes piece from board */
+async function doHuffAnimation(h,doRemove){
+  await _ghostWalk(h.or,h.oc,h.path,h.piece,h.victimR,h.victimC,doRemove);
+}
+
+/* Receiver's side — visual replay only, no board modification */
+async function replayHuffGhost(h){
+  await _ghostWalk(h.or,h.oc,h.path,h.piece,h.victimR,h.victimC,false);
+}
+
+/* Receiver's side — replay capture animation step-by-step using pre-move board */
+async function replayCaptureAnim(fr,fc,capPath){
+  let r=fr,c=fc;
+  const p=board[r][c];
+  for(const s of capPath){
+    const[cr,cc]=s.cap;
+    const fromEl=getCellEl(r,c);
+    if(fromEl){const pEl=fromEl.querySelector('.piece');if(pEl){pEl.classList.add('jumping');await sleep(120);pEl.classList.remove('jumping');}}
+    const cEl=getCellEl(cr,cc);
+    if(cEl){const fl=document.createElement('div');fl.className='cap-flash';cEl.appendChild(fl);setTimeout(()=>fl.remove(),400);}
+    board[cr][cc]=E; board[r][c]=E; board[s.r][s.c]=p;
+    r=s.r; c=s.c;
+    lastT={r,c}; draw(); await sleep(260);
+  }
+  lastT={r,c}; draw();
+}
+
+// Helper: get the DOM cell element for a given board (r,c)
+function getCellEl(r,c){
+  // Map board coords → display coords based on myColor
+  const dr=myColor===B?7-r:r;
+  const dc=myColor===B?7-c:c;
+  const idx=dr*8+dc;
+  return $('board').children[idx]||null;
+}
+
+const sleep=ms=>new Promise(res=>setTimeout(res,ms));
+
+async function applyPath(fr,fc,path){
+  let r=fr,c=fc;
+  const p=board[r][c];
+  let n=0;
+
+  for(const s of path){
+    const[cr,cc]=s.cap;
+
+    // 1. Flash "jump" on the moving piece's current cell
+    const fromEl=getCellEl(r,c);
+    if(fromEl){
+      const pieceEl=fromEl.querySelector('.piece');
+      if(pieceEl){pieceEl.classList.add('jumping');await sleep(120);pieceEl.classList.remove('jumping');}
+    }
+
+    // 2. Flash "explode" on the captured piece's cell
+    const capEl=getCellEl(cr,cc);
+    if(capEl){
+      const flash=document.createElement('div');
+      flash.className='cap-flash';
+      capEl.appendChild(flash);
+      setTimeout(()=>flash.remove(),400);
+    }
+
+    // 3. Apply board state for this step
+    capBy[turn].push(board[cr][cc]);
+    board[cr][cc]=E;
+    board[r][c]=E;
+    board[s.r][s.c]=p;
+    r=s.r;c=s.c;n++;
+
+    // 4. Redraw and pause before next hop
+    lastT={r,c};
+    draw();
+    await sleep(260);
+  }
+
+  promote(r,c);
+  lastT={r,c};
+  draw();
+  addLog(`${turn===B?'⬛':'⬜'} ×${n} ဖမ်းမိ (${cl(fc)}${fr+1})`);
+}
+
+function promote(r,c){
+  if(board[r][c]===B&&r===7)board[r][c]=BK;
+  if(board[r][c]===W&&r===0)board[r][c]=WK;
+}
+
+const cl=c=>String.fromCharCode(65+c);
+
+/* ═══════════════════════════════════
+   FINISH TURN
+═══════════════════════════════════ */
+function finish(tHuff,hPos,huffNotif){
+  const{bc,wc}=cnt();
+  if(!bc){endGame(W,'ဖြူ');return;}
+  if(!wc){endGame(B,'မဲ');return;}
+  const nxt=turn===B?W:B;
+  const nc=allCaps(nxt,board);
+  let hasM=nc.length>0;
+  if(!hasM)for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(isOwn(board[r][c],nxt)&&normalMoves(r,c,nxt,board).length){hasM=true;break;}
+  if(!hasM){endGame(turn,turn===B?'မဲ':'ဖြူ');return;}
+  ver++;
+  const payload={board:board.map(r=>[...r]),turn:nxt,ver,over:false,winner:null,
+    capBy:{[B]:[...capBy[B]],[W]:[...capBy[W]]},
+    lastF,lastT,lastLog:glog[0]||'',
+    huffAvail:false,huffPos:null,huffFor:null};
+  if(huffNotif)payload.huffNotif=huffNotif;
+  if(_animPending)payload.anim=_animPending;
+  if(_huffAnimPending)payload.huffAnim=_huffAnimPending;
+  _animPending=null; _huffAnimPending=null;
+  push(payload);
+  turn=nxt;draw();uiUpdate();
+}
+
+function endGame(winner,wn){
+  over=true;ver++;
+  push({board:board.map(r=>[...r]),turn,ver,over:true,winner,
+    capBy:{[B]:[...capBy[B]],[W]:[...capBy[W]]},
+    lastF,lastT,lastLog:glog[0]||'',huffAvail:false,huffPos:null,huffFor:null});
+  showWin(winner===myColor,wn);
+}
+
+/* ═══════════════════════════════════
+   HUFF (AUTO) / RESIGN
+═══════════════════════════════════ */
+function clearHuff(){
+  huffOn=false;huffAt=null;
+  $('hn').classList.remove('on');
+}
+
+window.doResign=function(){
+  if(over)return;
+  if(!confirm('ဆုံးနိုင်ကြောင်း သေချာပါသလား?'))return;
+  endGame(myColor===B?W:B,myColor===B?'ဖြူ':'မဲ');
+};
+
+/* ═══════════════════════════════════
+   REMATCH
+═══════════════════════════════════ */
+window.requestRematch=function(){
+  if(!fbReady||!roomId)return;
+  const btn=$('btn-rematch');
+  if(btn){btn.disabled=true;btn.textContent='⏳ စောင့်နေသည်...';}
+  $s('rematch-status','ပြိုင်ဘက် သဘောတူဖို့ စောင့်နေသည်...');
+  const{db,ref,update}=FB();
+  const who=isHost?'host':'guest';
+  update(ref(db,`rooms/${roomId}/rematch`),{[who]:true});
+};
+
+function listenRematch(){
+  const{db,ref,onValue,remove}=FB();
+  onValue(ref(db,`rooms/${roomId}/rematch`),snap=>{
+    if(!snap.exists()||!over)return;
+    const d=snap.val();
+    const hostReady=!!d.host, guestReady=!!d.guest;
+
+    // Update UI
+    if(isHost){
+      if(!hostReady&&guestReady){
+        $s('rematch-status','ပြိုင်ဘက် သဘောတူပြီ! သင်လည်း နှိပ်ပါ');
+      } else if(hostReady&&!guestReady){
+        $s('rematch-status','ပြိုင်ဘက် သဘောတူဖို့ စောင့်နေသည်...');
+      }
+    } else {
+      if(hostReady&&!guestReady){
+        $s('rematch-status','ပြိုင်ဘက် သဘောတူပြီ! သင်လည်း နှိပ်ပါ');
+      } else if(!hostReady&&guestReady){
+        $s('rematch-status','ပြိုင်ဘက် သဘောတူဖို့ စောင့်နေသည်...');
+      }
+    }
+
+    if(hostReady&&guestReady){
+      // Both agreed — host starts the new game
+      if(isHost){
+        remove(ref(db,`rooms/${roomId}/rematch`));
+        startRematch();
+      }
+    }
+  });
+}
+
+function startRematch(){
+  // Alternate colors each game: even gameCount → host=B, odd → host=W
+  gameCount++;
+  const hostIsBlack=(gameCount%2===0);
+  myColor=hostIsBlack?B:W;
+
+  // First move alternates: even → B starts, odd → W starts (same as always B starts but colors swap)
+  const initTurn=B; // Black always moves first in checkers
+
+  const newState={board:newBoard(),turn:initTurn,ver:0,over:false,winner:null,
+    capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',
+    huffAvail:false,huffPos:null,huffFor:null,
+    hostColor:hostIsBlack?B:W};
+
+  const{db,ref,update}=FB();
+  update(ref(db,`rooms/${roomId}`),{state:newState,
+    host:{name:myName,color:hostIsBlack?B:W},
+    rematch:null});
+}
+
+function applyRematchColor(st){
+  // Both players sync their color from hostColor field
+  if(st.hostColor===undefined)return;
+  myColor=isHost?st.hostColor:(st.hostColor===B?W:B);
+}
+
+/* ─────────────────────────────────── */
+
+/* ═══════════════════════════════════
+═══════════════════════════════════ */
+function FB(){return window._FB;}
+function push(state){if(!fbReady||!roomId)return;const{db,ref,update}=FB();update(ref(db,`rooms/${roomId}`),{state});}
+
+window.createRoom=async function(){
+  if(!fbReady){$s('lobby-st','⏳ Firebase ချိတ်ဆက်နေသည်...');return;}
+  myName=$('inp-name').value.trim()||'ကစားသမား ①';
+  myColor=B;isHost=true;
+  roomId=Math.random().toString(36).slice(2,8).toUpperCase();
+  const{db,ref,set,onDisconnect:od}=FB();
+  const r=ref(db,`rooms/${roomId}`);
+  await set(r,{host:{name:myName,color:B},guest:null,
+    state:{board:newBoard(),turn:B,ver:0,over:false,winner:null,
+      capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',
+      huffAvail:false,huffPos:null,huffFor:null},
+    status:'waiting',created:Date.now()});
+  od(r).remove();
+  $s('w-code',roomId);showScr('waiting');
+  listenRoom();
+};
+
+window.joinRoom=async function(){
+  if(!fbReady){$s('lobby-st','⏳ Firebase ချိတ်ဆက်နေသည်...');return;}
+  myName=$('inp-name').value.trim()||'ကစားသမား ②';
+  const code=$('inp-code').value.trim().toUpperCase();
+  if(code.length<4){$s('lobby-st','⚠️ Room Code ထည့်ပါ');return;}
+  roomId=code;myColor=W;isHost=false;
+  const{db,ref,get,update}=FB();
+  const snap=await get(ref(db,`rooms/${roomId}`));
+  if(!snap.exists()){$s('lobby-st','❌ Room မတွေ့ပါ');return;}
+  const d=snap.val();
+  if(d.status!=='waiting'){$s('lobby-st','❌ Room ပြည့်နေသည်');return;}
+  await update(ref(db,`rooms/${roomId}`),{guest:{name:myName,color:W},status:'playing'});
+  loadSt(d.state);showGame();listenRoom();listenChat();listenRematch();
+};
+
+window.cancelRoom=function(){
+  try{if(typeof unsub==='function')unsub();}catch(e){}unsub=null;
+  if(roomId){try{const{db,ref,remove}=FB();remove(ref(db,`rooms/${roomId}`));}catch(e){}}
+  showScr('lobby');roomId='';myColor=null;isHost=false;
+};
+
+function listenRoom(){
+  try{if(typeof unsub==='function')unsub();}catch(e){}unsub=null;
+  const{db,ref,onValue}=FB();
+  unsub=onValue(ref(db,`rooms/${roomId}`),snap=>{
+    if(!snap.exists()){if(!over&&!leaving){toast('⚠️ Room ပျက်သွားသည်');doLeave();}return;}
+    const d=snap.val();
+    if(d.host&&d.guest){
+      const o=isHost?d.guest:d.host;
+      const n=o.name||'ပြိုင်ဘက်';
+      $s('opp-nm',n);$s('opp-pnm',n);
+    }
+    if(isHost&&d.status==='playing'&&!$('game').classList.contains('show')){
+      loadSt(d.state);showGame();listenChat();listenRematch();
+      sysChat(`🎮 ${d.guest?.name||'ပြိုင်ဘက်'} ဝင်ရောက်လာပြီ! ဂိမ်းစပါသည်!`);
+    }
+    if(!$('game').classList.contains('show'))return;
+    const st=d.state;if(!st)return;
+    const rv=st.ver||0;
+    const apply=(rv>ver)||st.over||!!st.huffNotif;
+    if(apply)applyRemote(st);
+  });
+}
+
+function listenChat(){
+  try{if(typeof unsubChat==='function')unsubChat();}catch(e){}unsubChat=null;
+  const{db,ref,onValue}=FB();
+  unsubChat=onValue(ref(db,`rooms/${roomId}/chat`),snap=>{
+    if(!snap.exists())return;
+    renderChat(Object.values(snap.val()).sort((a,b)=>a.ts-b.ts));
+  });
+}
+
+async function applyRemote(st){
+  const prevVer=ver;
+
+  // Detect rematch: new game started (ver resets to 0, over was true)
+  if(st.ver===0&&over&&st.hostColor!==undefined){
+    applyRematchColor(st);
+    loadSt(st);
+    over=false;winShown=false;
+    gameCount++;
+    $('wino').classList.remove('on');
+    $s('rematch-status','');
+    const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ကစားမည်';}
+    showGame();
+    sysChat(`🔄 ပွဲ ${gameCount+1} စတင်သည်! ${myColor===B?'⬛ မဲ':'⬜ ဖြူ'} ကစားမည်`);
+    return;
+  }
+
+  // ── Replay opponent animation BEFORE applying final state ──────────────────
+  const isNewOppMove=(st.ver||0)>prevVer && !st.over && !_animBusy;
+  if(isNewOppMove && st.anim){
+    _animBusy=true;
+    // Snapshot final state — will overwrite after animation
+    const fBoard=st.board.map(r=>[...r]);
+    const fCap={[B]:[...(st.capBy?.[B]||[])],[W]:[...(st.capBy?.[W]||[])]};
+
+    sel=null; legals=[];
+
+    if(st.anim.type==='cap'){
+      // Replay capture step-by-step on pre-move board
+      lastF={r:st.anim.fr,c:st.anim.fc};
+      draw();
+      await replayCaptureAnim(st.anim.fr,st.anim.fc,st.anim.capPath);
+    } else if(st.anim.type==='move'){
+      // Highlight from-cell, then slide piece
+      lastF={r:st.anim.fr,c:st.anim.fc};
+      draw();
+      await sleep(200);
+      if(board[st.anim.fr]&&board[st.anim.fr][st.anim.fc]!==undefined){
+        board[st.anim.tr][st.anim.tc]=board[st.anim.fr][st.anim.fc];
+        board[st.anim.fr][st.anim.fc]=E;
+      }
+      lastT={r:st.anim.tr,c:st.anim.tc};
+      draw();
+      await sleep(300);
+    }
+
+    // Replay huff ghost if one occurred
+    if(st.huffAnim){
+      await replayHuffGhost(st.huffAnim);
+    }
+
+    // Apply authoritative final state
+    board=fBoard;
+    capBy=fCap;
+    _animBusy=false;
+  } else {
+    // No animation data or first load — apply state directly
+    board=st.board.map(r=>[...r]);
+    if(st.capBy){capBy[B]=[...(st.capBy[B]||[])];capBy[W]=[...(st.capBy[W]||[])];}
+  }
+
+  turn=st.turn; ver=st.ver||0;
+  lastF=st.lastF||null; lastT=st.lastT||null;
+  if(st.lastLog)addLog(st.lastLog);
+  over=st.over||false;
+  sel=null; legals=[];
+  clearHuff();
+
+  // Huff notification — show to the player whose piece was taken
+  if(st.huffNotif&&st.huffNotif.ts&&(!window._lastHuffTs||st.huffNotif.ts>window._lastHuffTs)){
+    window._lastHuffTs=st.huffNotif.ts;
+    $s('huff-piece-lbl',st.huffNotif.at);
+    $('hn').classList.add('on');
+    vibrate([200,80,200,80,200]);
+    sysChat(`💨 မစားမိသောကြောင့် ${st.huffNotif.at} ဖမ်းကောက်ခံလိုက်ရသည်`);
+    setTimeout(()=>$('hn').classList.remove('on'),4000);
+  }
+
+  draw(); uiUpdate();
+  if(ver>prevVer&&turn===myColor&&!st.over)vibrate([0,60,120,60,200,60,120]);
+  if(st.over&&st.winner!=null)showWin(st.winner===myColor,st.winner===B?'မဲ':'ဖြူ');
+}
+
+function loadSt(st){
+  board=st.board.map(r=>[...r]);turn=st.turn||B;ver=st.ver||0;
+  over=false;capBy={[B]:[],[W]:[]};glog=[];sel=null;legals=[];
+  lastF=null;lastT=null;huffOn=false;huffAt=null;
+  huffPickMode=false;huffPickCands=[];huffPickResolve=null;
+  _animPending=null;_huffAnimPending=null;_animBusy=false;
+  const hpb=$('huff-pick-bar');if(hpb)hpb.classList.remove('on');
+}
+
+/* ═══════════════════════════════════
+   WIN
+═══════════════════════════════════ */
+function showWin(iWon,wn){
+  if(winShown)return;winShown=true;
+  $s('wi',iWon?'🏆':'😔');
+  $s('wt',iWon?'အနိုင်ရပြီ! 🎉':'ရှုံးနိမ့်သွားသည်');
+  const on=$('opp-nm').textContent||'ပြိုင်ဘက်';
+  $s('wm',iWon?`ကောင်းမွန်သောဂိမ်း! ${myName} အနိုင်ရ!`:`${on} (${wn}) အနိုင်ရသည်`);
+  $('wino').classList.add('on');
+  if(iWon)sysChat(`🏆 ${myName} အနိုင်ရပြီ!`);
+}
+
+window.doLeave=function(){
+  if(leaving)return;leaving=true;over=true;
+  try{if(typeof unsub==='function')unsub();}catch(e){}
+  try{if(typeof unsubChat==='function')unsubChat();}catch(e){}
+  unsub=null;unsubChat=null;
+  if(isHost&&roomId){try{const{db,ref,remove}=FB();remove(ref(db,`rooms/${roomId}`));}catch(e){}}
+  $('wino').classList.remove('on');showScr('lobby');
+  roomId='';myColor=null;isHost=false;leaving=false;
+  board=[];turn=B;sel=null;legals=[];over=false;glog=[];
+  capBy={[B]:[],[W]:[]};ver=0;huffOn=false;huffAt=null;
+  lastF=null;lastT=null;winShown=false;gameCount=0;$s('lobby-st','');
+  huffPickMode=false;huffPickCands=[];huffPickResolve=null;
+  _animPending=null;_huffAnimPending=null;_animBusy=false;
+  const hpb=$('huff-pick-bar');if(hpb)hpb.classList.remove('on');
+  $s('rematch-status','');
+  const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ကစားမည်';}
+};
+
+/* ═══════════════════════════════════
+   CHAT
+═══════════════════════════════════ */
+window.sendChat=function(){
+  const e=$('cinp'),t=e.value.trim();if(!t||!fbReady)return;e.value='';pChat(t,false);
+};
+window.qmsg=function(t){pChat(t,false);};
+function sysChat(t){pChat(t,true);}
+function pChat(txt,sys){
+  if(!fbReady||!roomId)return;
+  const{db,ref,push}=FB();
+  push(ref(db,`rooms/${roomId}/chat`),{name:sys?'System':myName,text:txt,sys,ts:Date.now()});
+}
+function renderChat(list){
+  const el=$('cmsgs');
+  const atBot=el.scrollHeight-el.scrollTop<=el.clientHeight+30;
+  el.innerHTML='';
+  for(const m of list){
+    const w=document.createElement('div');
+    w.className=`cm ${m.sys?'sys':m.name===myName?'own':'oth'}`;
+    const b=document.createElement('div');b.className='cb';
+    if(!m.sys&&m.name!==myName){const s=document.createElement('div');s.className='csn';s.textContent=m.name;b.appendChild(s);}
+    const t=document.createElement('div');t.textContent=m.text;b.appendChild(t);
+    w.appendChild(b);el.appendChild(w);
+  }
+  if(atBot)el.scrollTop=el.scrollHeight;
+}
+
+/* ═══════════════════════════════════
+   DRAW BOARD
+   ───────────────────────────────────
+   Map display (dr,dc) → actual board (r,c):
+
+   BLACK (myColor===B): rotate 180°
+     r = 7 - dr
+     c = 7 - dc
+     Result: BLACK pieces (board rows 0-2) → display rows 5-7 (bottom) ✓
+
+   WHITE (myColor===W): no rotation
+     r = dr
+     c = dc
+     Result: WHITE pieces (board rows 5-7) → display rows 5-7 (bottom) ✓
+═══════════════════════════════════ */
+function draw(){
+  const el=$('board');if(!el)return;el.innerHTML='';
+  const lm=new Map();for(const m of legals)lm.set(`${m.r},${m.c}`,m);
+
+  for(let dr=0;dr<8;dr++){
+    for(let dc=0;dc<8;dc++){
+      // Map display coords → board coords
+      const r=myColor===B ? 7-dr : dr;
+      const c=myColor===B ? 7-dc : dc;
+
+      const cell=document.createElement('div');
+      const dark=(r+c)%2===1;
+      cell.className=`cell ${dark?'dark':'light'}`;
+      if(!dark)cell.classList.add('nc');
+
+      const isSel=sel&&sel.r===r&&sel.c===c;
+      const mv=lm.get(`${r},${c}`);
+
+      if(isSel)cell.classList.add('sel');
+      else if(mv)cell.classList.add(mv.isCap?'cpto':mv.isSkip?'skipto':'mvto');
+      if(lastF&&lastF.r===r&&lastF.c===c)cell.classList.add('fr');
+      if(lastT&&lastT.r===r&&lastT.c===c)cell.classList.add('to');
+
+      if(board[r][c]!==E){
+        const p=document.createElement('div');
+        p.className=`piece ${isB(board[r][c])?'bp':'wp'}${isK(board[r][c])?' kp':''}`;
+        if(isSel)p.classList.add('sp');
+        if(huffOn&&huffAt&&huffAt.r===r&&huffAt.c===c)p.classList.add('hp');
+        // Huff pick mode: highlight selectable candidates
+        if(huffPickMode&&huffPickCands.some(h=>h.victimR===r&&h.victimC===c))p.classList.add('huff-cand');
+        // Badge only on the selected piece (not all pieces)
+        if(isSel&&turn===myColor){
+          const ac2=allCaps(turn,board);const ml2=maxCapLen(ac2);
+          if(ml2>=2){const en2=ac2.find(e=>e.r===r&&e.c===c);
+            if(en2&&en2.paths.filter(px=>px.length===ml2).length>0){
+              const bdg=document.createElement('div');bdg.className='cap-badge';
+              bdg.textContent=ml2;bdg.style.pointerEvents='none';p.appendChild(bdg);
+            }
+          }
+        }
+        cell.appendChild(p);
+      } else if(mv&&!isSel){
+        const d=document.createElement('div');
+        d.className=mv.isCap?'dotcp':mv.isSkip?'dotskip':'dotmv';
+        cell.appendChild(d);
+      }
+
+      cell.addEventListener('click',()=>onCell(r,c));
+      el.appendChild(cell);
+    }
+  }
+}
+
+/* ═══════════════════════════════════
+   UI UPDATE
+═══════════════════════════════════ */
+function uiUpdate(){
+  if(!myColor)return;
+  const{bc,wc}=cnt();
+  const myT=myColor===B?bc:wc;
+  const oppT=myColor===B?wc:bc;
+  const oppC=myColor===B?W:B;
+
+  buildDots('my-dots',myColor===B?'b':'w',myT);
+  buildDots('opp-dots',oppC===B?'b':'w',oppT);
+
+  const mine=turn===myColor;
+  $s('tlbl',mine?'သင့်အလှည့်':'ပြိုင်ဘက် အလှည့်');
+  $s('twho',mine?myName:($('opp-nm').textContent||'ပြိုင်ဘက်'));
+  $('my-card').classList.toggle('act',mine);
+  $('opp-card').classList.toggle('act',!mine);
+  $('my-bar').classList.toggle('act',mine);
+  $('my-bar').classList.toggle('my-turn',mine&&!over);
+  $('opp-bar').classList.toggle('act',!mine);
+
+  buildCap('my-cap',capBy[myColor]);
+  buildCap('opp-cap',capBy[oppC]);
+
+  if(turn===myColor&&!over){
+    const ac=allCaps(myColor,board);
+    if(ac.length){}// captures handled via highlight
+  }
+}
+
+function buildDots(id,cls,n){
+  const el=$(id);if(!el)return;el.innerHTML='';
+  for(let i=0;i<12;i++){const d=document.createElement('span');d.className=`mdot ${cls}${i>=n?' dead':''}`;el.appendChild(d);}
+}
+function buildCap(id,list){
+  const el=$(id);if(!el)return;el.innerHTML='';
+  for(const p of list){const d=document.createElement('span');d.className=`mdot ${isB(p)?'b':'w'}`;el.appendChild(d);}
+}
+function cnt(){let bc=0,wc=0;for(let r=0;r<8;r++)for(let c=0;c<8;c++){if(isB(board[r][c]))bc++;if(isW(board[r][c]))wc++;}return{bc,wc};}
+function addLog(t){
+  if(glog[0]===t)return;glog.unshift(t);if(glog.length>40)glog.pop();
+  const el=$('logul');if(!el)return;el.innerHTML='';
+  for(const e of glog){const li=document.createElement('li');li.textContent=e;el.appendChild(li);}
+}
+function clearSel(){sel=null;legals=[];chainOrigin=null;chainPaths=[];chainDone=0;clearCapOverlay();}
+
+/* ═══════════════════════════════════
+   SHOW GAME SCREEN
+═══════════════════════════════════ */
+function showGame(){
+  showScr('game');
+  $s('top-room',roomId);
+  const isBlk=myColor===B;
+
+  // My card (left panel)
+  $s('my-nm',myName);
+  $s('my-rl',isBlk?'⬛ မဲ':'⬜ ဖြူ');
+  $('my-av').className=`pav ${isBlk?'av-b':'av-w'}`;
+  $s('my-av',isBlk?'⬛':'⬜');
+
+  // Opp card (right panel)
+  $('opp-av').className=`pav ${isBlk?'av-w':'av-b'}`;
+  $s('opp-av',isBlk?'⬜':'⬛');
+  $s('opp-rl',isBlk?'⬜ ဖြူ':'⬛ မဲ');
+
+  // My bar (bottom bar)
+  $s('my-pnm',myName);
+  $s('my-prl',isBlk?'မဲ':'ဖြူ');
+  $('my-pc').className=`pbpc ${isBlk?'b':'w'}`;
+
+  // Opp bar (top bar)
+  $s('opp-prl',isBlk?'ဖြူ':'မဲ');
+  $('opp-pc').className=`pbpc ${isBlk?'w':'b'}`;
+
+  buildCoords();draw();uiUpdate();
+}
+
+/* ═══════════════════════════════════
+   COORDINATE LABELS
+   ───────────────────────────────────
+   BLACK (180° flip):
+     display col 0 → board col 7 → label 'H'
+     display col 7 → board col 0 → label 'A'
+     → show H G F E D C B A left-to-right
+     display row 0 → board row 7 → label '8'
+     display row 7 → board row 0 → label '1'
+     → show 8 7 6 5 4 3 2 1 top-to-bottom
+
+   WHITE (no flip):
+     display col 0 → board col 0 → label 'A'
+     → show A B C D E F G H left-to-right
+     display row 0 → board row 0 → label '1'
+     → show 1 2 3 4 5 6 7 8 top-to-bottom
+═══════════════════════════════════ */
+function buildCoords(){
+  const cols=$('col-lbl'),rows=$('row-lbl');
+  cols.innerHTML='';rows.innerHTML='';
+  const CL=myColor===B?'HGFEDCBA'.split(''):'ABCDEFGH'.split('');
+  const RN=myColor===B?[8,7,6,5,4,3,2,1]:[1,2,3,4,5,6,7,8];
+  for(const l of CL){const s=document.createElement('span');s.textContent=l;cols.appendChild(s);}
+  for(const n of RN){const s=document.createElement('span');s.textContent=n;rows.appendChild(s);}
+}
+
+/* ═══════════════════════════════════
+   CAPTURE PATH OVERLAY
+═══════════════════════════════════ */
+let highlightedPaths=[];   // [{steps,color}] for overlay drawing
+let selectedPathIdx=-1;    // which path variant is "active" (-1 = all)
+
+function cellCenter(r,c){
+  // board coords → display coords → pixel center
+  const dr=myColor===B?7-r:r;
+  const dc=myColor===B?7-c:c;
+  const cell=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell'))||50;
+  return{x:dc*cell+cell/2, y:dr*cell+cell/2};
+}
+
+function drawCapOverlay(){
+  const svg=$('cap-overlay');
+  if(!svg)return;
+  // clear previous
+  while(svg.children.length>1)svg.removeChild(svg.lastChild);
+  if(!highlightedPaths.length)return;
+
+  const cell=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell'))||50;
+  const sz=cell*8;
+  svg.setAttribute('width',sz);
+  svg.setAttribute('height',sz);
+
+  for(let pi=0;pi<highlightedPaths.length;pi++){
+    const{steps,origin,color}=highlightedPaths[pi];
+    if(selectedPathIdx>=0&&pi!==selectedPathIdx)continue;
+    const isAlt=color==='alt';
+    let pr=origin.r,pc=origin.c;
+    for(const s of steps){
+      const a=cellCenter(pr,pc),b=cellCenter(s.r,s.c);
+      // shorten line a bit so arrow doesn't overlap piece
+      const dx=b.x-a.x,dy=b.y-a.y,len=Math.sqrt(dx*dx+dy*dy);
+      const ex=b.x-dx/len*8,ey=b.y-dy/len*8;
+      const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);
+      line.setAttribute('x2',ex);line.setAttribute('y2',ey);
+      line.setAttribute('class',`cap-path-line${isAlt?' alt':''}`);
+      line.setAttribute('marker-end',isAlt?'url(#arr-alt)':'url(#arr)');
+      svg.appendChild(line);
+      pr=s.r;pc=s.c;
+    }
+  }
+}
+
+function clearCapOverlay(){
+  highlightedPaths=[];selectedPathIdx=-1;
+  const svg=$('cap-overlay');
+  if(svg){while(svg.children.length>1)svg.removeChild(svg.lastChild);}
+}
+
+/* Build capture-path highlights for a selected piece */
+function showCapPaths(r,c,paths){
+  highlightedPaths=paths.map((p,i)=>({
+    origin:{r,c},
+    steps:p,
+    color:i===0?'gold':'alt'
+  }));
+  drawCapOverlay();
+}
+
+/* ═══════════════════════════════════
+═══════════════════════════════════ */
+/* ═══════════════════════════════════
+   COPY ROOM CODE
+═══════════════════════════════════ */
+window.copyRoomCode=function(){
+  if(!roomId)return;
+  navigator.clipboard.writeText(roomId).then(()=>{
+    // Show tip on waiting screen
+    const t=$('copy-tip');if(t){t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1500);}
+    // Show tip on topbar
+    const t2=$('copy-tip2');if(t2){t2.classList.add('show');setTimeout(()=>t2.classList.remove('show'),1500);}
+  }).catch(()=>{
+    // Fallback: select text
+    const el=$('w-code')||$('top-room');
+    if(el){const r=document.createRange();r.selectNode(el);window.getSelection().removeAllRanges();window.getSelection().addRange(r);}
+  });
+};
+
+$('inp-name').addEventListener('keydown',e=>{if(e.key==='Enter')createRoom();});
+$('inp-code').addEventListener('keydown',e=>{if(e.key==='Enter')joinRoom();});
+$('inp-code').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase();});
+</script>
+
+<!-- Myanmar Cultural Live Background -->
+<script>
+(function(){
+  const cv=document.getElementById('mm-bg');
+  const cx=cv.getContext('2d');
+  let W,H;
+
+  function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;}
+  resize();
+  window.addEventListener('resize',resize);
+
+  // ── Colour palette ──────────────────────────────────────
+  const GOLD='rgba(212,168,67,';
+  const RUBY='rgba(180,30,60,';
+  const JADE='rgba(40,120,80,';
+  const LOTUS='rgba(200,80,120,';
+  const SKY='rgba(60,100,180,';
+
+  // ── Particle system ─────────────────────────────────────
+  // Each particle is a floating Myanmar cultural symbol
+  const SYMBOLS=['✦','❖','◈','⬡','☸','❋','✿','❁'];
+  const BURMESE_CHARS=['ဗ','မ','ရ','က','ဓ','ပ','ဥ'];
+
+  class Particle{
+    constructor(){this.reset(true);}
+    reset(init){
+      this.x=Math.random()*W;
+      this.y=init?Math.random()*H:H+40;
+      this.vy=-(0.12+Math.random()*0.22);
+      this.vx=(Math.random()-.5)*0.12;
+      this.size=7+Math.random()*14;
+      this.alpha=0;
+      this.targetAlpha=0.12+Math.random()*0.18;
+      this.fadeIn=true;
+      this.life=0;
+      this.maxLife=220+Math.random()*280;
+      const r=Math.random();
+      if(r<0.35){this.type='pagoda';}
+      else if(r<0.55){this.type='lotus';}
+      else if(r<0.70){this.type='diamond';}
+      else if(r<0.82){this.type='star8';}
+      else if(r<0.91){this.type='char';this.ch=BURMESE_CHARS[Math.floor(Math.random()*BURMESE_CHARS.length)];}
+      else{this.type='hti';}
+      const cr=Math.random();
+      this.color=cr<.35?GOLD:cr<.55?RUBY:cr<.70?JADE:cr<.83?LOTUS:SKY;
+      this.rot=Math.random()*Math.PI*2;
+      this.rotV=(Math.random()-.5)*0.004;
+    }
+    update(){
+      this.x+=this.vx; this.y+=this.vy; this.rot+=this.rotV; this.life++;
+      if(this.life<30)this.alpha=Math.min(this.targetAlpha,this.alpha+this.targetAlpha/30);
+      else if(this.life>this.maxLife-40)this.alpha=Math.max(0,this.alpha-this.targetAlpha/40);
+      if(this.life>this.maxLife||this.y<-60)this.reset(false);
+    }
+    draw(){
+      cx.save();
+      cx.globalAlpha=this.alpha;
+      cx.translate(this.x,this.y);
+      cx.rotate(this.rot);
+      cx.strokeStyle=this.color+'1)';
+      cx.fillStyle=this.color+'.18)';
+      cx.lineWidth=0.7;
+      const s=this.size;
+      if(this.type==='pagoda') drawPagoda(cx,s);
+      else if(this.type==='lotus') drawLotus(cx,s);
+      else if(this.type==='diamond') drawDiamond(cx,s);
+      else if(this.type==='star8') drawStar8(cx,s);
+      else if(this.type==='hti') drawHti(cx,s);
+      else{
+        cx.font=`${s}px 'Noto Sans Myanmar',sans-serif`;
+        cx.fillStyle=this.color+'.22)';
+        cx.textAlign='center';cx.textBaseline='middle';
+        cx.fillText(this.ch,0,0);
+      }
+      cx.restore();
+    }
+  }
+
+  // ── Shape drawers ────────────────────────────────────────
+
+  // Pagoda / Stupa silhouette (ဘုရား ပုံစံ)
+  function drawPagoda(cx,s){
+    cx.beginPath();
+    // Base
+    cx.rect(-s*.7,s*.3,s*1.4,s*.2);
+    // Middle tier
+    cx.rect(-s*.5,s*.1,s*1,s*.22);
+    // Upper tier
+    cx.rect(-s*.3,-s*.08,s*.6,s*.2);
+    // Spire
+    cx.moveTo(0,-s*.08);cx.lineTo(-s*.12,-s*.5);cx.lineTo(s*.12,-s*.5);cx.closePath();
+    cx.moveTo(0,-s*.5);cx.lineTo(0,-s*.95);
+    cx.stroke();cx.fill();
+    // Hti tip dot
+    cx.beginPath();cx.arc(0,-s*.95,s*.04,0,Math.PI*2);cx.fill();
+  }
+
+  // Lotus flower (ကြာပွင့်)
+  function drawLotus(cx,s){
+    const petals=8;
+    for(let i=0;i<petals;i++){
+      cx.save();cx.rotate(i*Math.PI*2/petals);
+      cx.beginPath();
+      cx.ellipse(0,-s*.55,s*.18,s*.45,0,0,Math.PI*2);
+      cx.stroke();cx.fill();
+      cx.restore();
+    }
+    cx.beginPath();cx.arc(0,0,s*.18,0,Math.PI*2);cx.stroke();cx.fill();
+  }
+
+  // Diamond / Kalaga gem (ကာလာဂ)
+  function drawDiamond(cx,s){
+    cx.beginPath();
+    cx.moveTo(0,-s);cx.lineTo(s*.6,0);cx.lineTo(0,s*.7);cx.lineTo(-s*.6,0);cx.closePath();
+    // Inner facets
+    cx.moveTo(0,-s);cx.lineTo(0,s*.7);
+    cx.moveTo(-s*.6,0);cx.lineTo(s*.6,0);
+    cx.moveTo(-s*.6,0);cx.lineTo(0,-s*.3);cx.moveTo(s*.6,0);cx.lineTo(0,-s*.3);
+    cx.stroke();cx.fill();
+  }
+
+  // 8-pointed star (မြန်မာ ကြယ်)
+  function drawStar8(cx,s){
+    cx.beginPath();
+    for(let i=0;i<8;i++){
+      const a=i*Math.PI/4,ai=(i+.5)*Math.PI/4;
+      const ox=Math.cos(a)*s,oy=Math.sin(a)*s;
+      const ix=Math.cos(ai)*s*.4,iy=Math.sin(ai)*s*.4;
+      i===0?cx.moveTo(ox,oy):cx.lineTo(ox,oy);
+      cx.lineTo(ix,iy);
+    }
+    cx.closePath();cx.stroke();cx.fill();
+  }
+
+  // Hti (ထီး) — tiered parasol
+  function drawHti(cx,s){
+    for(let t=0;t<4;t++){
+      const y=-s*.1-t*s*.22, r=s*(.55-t*.11);
+      cx.beginPath();
+      cx.moveTo(-r,y);
+      cx.quadraticCurveTo(0,y-s*.18,r,y);
+      cx.stroke();
+    }
+    cx.beginPath();cx.moveTo(0,s*.6);cx.lineTo(0,-s*.1);cx.stroke();
+  }
+
+  // ── Firefly glow orbs ────────────────────────────────────
+  class Orb{
+    constructor(){
+      this.x=Math.random()*W; this.y=Math.random()*H;
+      this.vx=(Math.random()-.5)*.35; this.vy=(Math.random()-.5)*.25;
+      this.r=40+Math.random()*80;
+      this.alpha=0.04+Math.random()*0.07;
+      this.phase=Math.random()*Math.PI*2;
+      this.speed=0.003+Math.random()*0.005;
+      const c=Math.random();
+      this.color=c<.5?'212,168,67':c<.7?'160,60,100':'80,60,160';
+    }
+    update(){
+      this.x+=this.vx;this.y+=this.vy;this.phase+=this.speed;
+      if(this.x<-200)this.x=W+200;if(this.x>W+200)this.x=-200;
+      if(this.y<-200)this.y=H+200;if(this.y>H+200)this.y=-200;
+    }
+    draw(){
+      const a=this.alpha*(0.6+0.4*Math.sin(this.phase));
+      const g=cx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.r);
+      g.addColorStop(0,`rgba(${this.color},${a})`);
+      g.addColorStop(1,`rgba(${this.color},0)`);
+      cx.fillStyle=g;cx.beginPath();cx.arc(this.x,this.y,this.r,0,Math.PI*2);cx.fill();
+    }
+  }
+
+  // ── Border mandala corners ───────────────────────────────
+  function drawCornerMandala(cx,x,y,r,t){
+    cx.save();cx.translate(x,y);
+    const layers=4;
+    for(let l=0;l<layers;l++){
+      const lr=r*(1-l*.2), petals=8+l*4;
+      cx.globalAlpha=0.09-l*.015;
+      cx.strokeStyle=`rgba(212,168,67,1)`;
+      cx.lineWidth=0.6;
+      for(let i=0;i<petals;i++){
+        cx.save();cx.rotate(i*Math.PI*2/petals+t*(.2+l*.1));
+        cx.beginPath();cx.ellipse(0,-lr*.55,lr*.14,lr*.42,0,0,Math.PI*2);
+        cx.stroke();cx.restore();
+      }
+      cx.beginPath();cx.arc(0,0,lr*.15,0,Math.PI*2);
+      cx.strokeStyle=`rgba(212,168,67,.06)`;cx.stroke();
+    }
+    cx.restore();
+  }
+
+  // ── Top decorative band — flowing Myanmar border pattern ─
+  function drawTopBand(t){
+    const bh=52;
+    // Background strip
+    const g=cx.createLinearGradient(0,0,0,bh);
+    g.addColorStop(0,'rgba(20,8,35,.55)');
+    g.addColorStop(1,'rgba(20,8,35,0)');
+    cx.fillStyle=g;cx.fillRect(0,0,W,bh);
+
+    // Repeating kalaga border chain
+    cx.save();cx.globalAlpha=0.07;cx.strokeStyle='#D4A843';cx.lineWidth=.8;
+    const unit=44, offset=(t*12)%unit;
+    for(let x=-unit+offset;x<W+unit;x+=unit){
+      // Diamond chain link
+      cx.beginPath();
+      cx.moveTo(x,8);cx.lineTo(x+unit*.25,22);cx.lineTo(x+unit*.5,8);
+      cx.lineTo(x+unit*.75,22);cx.lineTo(x+unit,8);
+      cx.moveTo(x+unit*.25,22);cx.lineTo(x+unit*.5,36);cx.lineTo(x+unit*.75,22);
+      cx.stroke();
+      // Small dot
+      cx.beginPath();cx.arc(x+unit*.5,22,2,0,Math.PI*2);cx.stroke();
+    }
+    cx.restore();
+
+    // Gold line separator
+    const lg=cx.createLinearGradient(0,0,W,0);
+    lg.addColorStop(0,'rgba(212,168,67,0)');
+    lg.addColorStop(.2,'rgba(212,168,67,.25)');
+    lg.addColorStop(.5,'rgba(212,168,67,.45)');
+    lg.addColorStop(.8,'rgba(212,168,67,.25)');
+    lg.addColorStop(1,'rgba(212,168,67,0)');
+    cx.fillStyle=lg;cx.fillRect(0,bh-1,W,1);
+  }
+
+  // Bottom band mirror
+  function drawBottomBand(t){
+    const bh=48;
+    const g=cx.createLinearGradient(0,H-bh,0,H);
+    g.addColorStop(0,'rgba(20,8,35,0)');
+    g.addColorStop(1,'rgba(10,4,20,.5)');
+    cx.fillStyle=g;cx.fillRect(0,H-bh,W,bh);
+    const lg=cx.createLinearGradient(0,0,W,0);
+    lg.addColorStop(0,'rgba(212,168,67,0)');
+    lg.addColorStop(.3,'rgba(212,168,67,.2)');
+    lg.addColorStop(.7,'rgba(212,168,67,.2)');
+    lg.addColorStop(1,'rgba(212,168,67,0)');
+    cx.fillStyle=lg;cx.fillRect(0,H-bh,W,1);
+  }
+
+  // ── Init ─────────────────────────────────────────────────
+  const PARTICLE_COUNT=38;
+  const ORB_COUNT=9;
+  const particles=Array.from({length:PARTICLE_COUNT},()=>new Particle());
+  const orbs=Array.from({length:ORB_COUNT},()=>new Orb());
+
+  const cornerR=Math.min(W,H)*.22;
+  let frame=0;
+
+  function loop(){
+    requestAnimationFrame(loop);
+    frame++;
+    cx.clearRect(0,0,W,H);
+
+    // ── Dark Myanmar night base ──
+    cx.fillStyle='#06020A';
+    cx.fillRect(0,0,W,H);
+
+    // Subtle vignette radial overlays
+    const v1=cx.createRadialGradient(W*.5,0,0,W*.5,0,H*1.1);
+    v1.addColorStop(0,'rgba(25,10,45,.7)');v1.addColorStop(1,'rgba(6,2,10,0)');
+    cx.fillStyle=v1;cx.fillRect(0,0,W,H);
+    const v2=cx.createRadialGradient(0,H,0,0,H,W*.8);
+    v2.addColorStop(0,'rgba(30,8,0,.5)');v2.addColorStop(1,'rgba(6,2,10,0)');
+    cx.fillStyle=v2;cx.fillRect(0,0,W,H);
+    const v3=cx.createRadialGradient(W,H*.6,0,W,H*.6,W*.7);
+    v3.addColorStop(0,'rgba(12,5,30,.45)');v3.addColorStop(1,'rgba(6,2,10,0)');
+    cx.fillStyle=v3;cx.fillRect(0,0,W,H);
+
+    // Orbs (soft glow blobs)
+    for(const o of orbs){o.update();o.draw();}
+
+    // Top / bottom decorative bands
+    drawTopBand(frame*.001);
+    drawBottomBand(frame*.001);
+
+    // Corner mandalas
+    const cr=Math.min(W,H)*.18;
+    const t=frame*.0008;
+    drawCornerMandala(cx,0,0,cr,t);
+    drawCornerMandala(cx,W,0,cr,-t);
+    drawCornerMandala(cx,0,H,cr,-t);
+    drawCornerMandala(cx,W,H,cr,t);
+
+    // Floating cultural particles
+    for(const p of particles){p.update();p.draw();}
+  }
+  loop();
+})();
+</script>
+
+
+</body>
+</html>
