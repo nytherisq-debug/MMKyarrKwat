@@ -336,17 +336,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 @keyframes badge-pop{from{transform:scale(0)}to{transform:scale(1)}}
 
 /* Multi-path selector toast */
-.mpaths{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
-  background:rgba(18,9,0,.97);border:1px solid rgba(212,168,67,.4);border-radius:12px;
-  padding:10px 16px;z-index:700;display:none;text-align:center;
-  box-shadow:0 4px 20px rgba(0,0,0,.8)}
-.mpaths.on{display:block;animation:fadeUp .2s ease}
-.mpaths-lbl{font-size:.72rem;color:var(--gold-l);margin-bottom:8px}
-.mpath-btn{display:inline-block;margin:3px;padding:6px 14px;border-radius:8px;
-  border:1px solid rgba(212,168,67,.35);background:rgba(212,168,67,.08);
-  color:var(--cream);font-size:.72rem;cursor:pointer;transition:all .15s}
-.mpath-btn:hover{background:rgba(212,168,67,.2);border-color:rgba(212,168,67,.7)}
-.mpath-btn.active{background:rgba(212,168,67,.3);border-color:var(--gold)}
 
 /* Multi-capture animation */
 .piece.jumping{
@@ -501,6 +490,110 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 @media(max-width:960px){:root{--cell:44px;--side:152px}.main{gap:7px}}
 @media(max-width:780px){:root{--cell:38px}.panel{display:none}.main{justify-content:center}}
 @media(max-width:500px){:root{--cell:34px}.lbox{padding:28px 26px}}
+
+/* ── AI MODAL ── */
+@keyframes ai-glow{0%,100%{box-shadow:0 0 0 0 rgba(212,168,67,.0)}50%{box-shadow:0 0 28px 4px rgba(212,168,67,.12)}}
+@keyframes ai-spin{to{--ai-angle:360deg}}
+@property --ai-angle{syntax:'<angle>';initial-value:0deg;inherits:false}
+
+#ai-modal{
+  position:fixed;inset:0;z-index:900;
+  display:none;align-items:center;justify-content:center;
+  background:rgba(2,1,6,.88);backdrop-filter:blur(12px)}
+#ai-modal.show{display:flex}
+
+.ai-box{
+  position:relative;z-index:1;
+  background:linear-gradient(150deg,#1C0E00,#0E0600);
+  border-radius:22px;padding:2px;
+  width:360px;max-width:93vw;
+  animation:fadeUp .5s cubic-bezier(.16,1,.3,1)}
+.ai-box::before{
+  content:'';position:absolute;inset:0;border-radius:22px;
+  background:conic-gradient(from var(--ai-angle),
+    rgba(212,168,67,.6),rgba(180,120,20,.2),rgba(212,168,67,.6));
+  animation:ai-spin 4s linear infinite;z-index:-1}
+.ai-inner{
+  background:linear-gradient(150deg,#1C0E00,#0E0600);
+  border-radius:20px;padding:36px 32px;text-align:center;position:relative;overflow:hidden}
+.ai-inner::before{
+  content:'';position:absolute;inset:0;border-radius:20px;
+  background:linear-gradient(135deg,rgba(212,168,67,.13),transparent 55%);pointer-events:none}
+
+.ai-icon{font-size:2.6rem;margin-bottom:8px;
+  filter:drop-shadow(0 0 18px rgba(212,168,67,.55));
+  animation:bob 3s ease-in-out infinite}
+.ai-title{
+  font-family:'Cinzel Decorative',cursive;font-size:1.35rem;
+  color:var(--gold);letter-spacing:3px;margin-bottom:3px;
+  text-shadow:0 0 30px rgba(212,168,67,.45)}
+.ai-sub{
+  font-size:.77rem;color:rgba(212,168,67,.45);
+  letter-spacing:1px;margin-bottom:22px}
+.ai-divider{
+  height:1px;margin:0 0 22px;
+  background:linear-gradient(90deg,transparent,rgba(212,168,67,.3),transparent)}
+
+.ai-lbl{
+  font-size:.68rem;color:var(--dim);letter-spacing:2px;
+  text-transform:uppercase;margin-bottom:12px;text-align:left}
+.ai-diff-row{display:flex;gap:9px;margin-bottom:22px}
+.ai-diff-btn{
+  flex:1;padding:14px 6px 12px;border-radius:13px;
+  border:1px solid rgba(212,168,67,.15);
+  background:rgba(0,0,0,.4);
+  color:rgba(212,168,67,.45);
+  font-family:'Noto Sans Myanmar',sans-serif;
+  cursor:pointer;transition:all .22s;position:relative;overflow:hidden}
+.ai-diff-btn::after{
+  content:'';position:absolute;inset:0;border-radius:13px;
+  background:linear-gradient(135deg,rgba(212,168,67,.08),transparent);
+  opacity:0;transition:opacity .22s}
+.ai-diff-btn:hover{
+  border-color:rgba(212,168,67,.4);color:var(--cream2);transform:translateY(-2px)}
+.ai-diff-btn:hover::after{opacity:1}
+.ai-diff-btn.sel{
+  border-color:rgba(212,168,67,.7);
+  background:linear-gradient(145deg,rgba(212,168,67,.14),rgba(0,0,0,.6));
+  color:var(--gold-l);
+  box-shadow:0 0 18px rgba(212,168,67,.15),inset 0 1px 0 rgba(212,168,67,.2)}
+.ai-diff-btn.sel::after{opacity:1}
+.ai-diff-btn .di{font-size:1.5rem;display:block;margin-bottom:6px}
+.ai-diff-btn .dn{font-size:.78rem;font-weight:700;display:block;letter-spacing:.5px}
+.ai-diff-btn .dm{font-size:.63rem;opacity:.55;display:block;margin-top:2px}
+
+.ai-color-row{display:flex;gap:9px;margin-bottom:22px}
+.ai-color-btn{
+  flex:1;padding:12px 6px;border-radius:12px;
+  border:1px solid rgba(212,168,67,.15);
+  background:rgba(0,0,0,.4);
+  color:rgba(212,168,67,.45);
+  font-family:'Noto Sans Myanmar',sans-serif;font-size:.78rem;
+  cursor:pointer;transition:all .22s}
+.ai-color-btn:hover{border-color:rgba(212,168,67,.4);color:var(--cream2)}
+.ai-color-btn.sel{
+  border-color:rgba(212,168,67,.7);
+  background:linear-gradient(145deg,rgba(212,168,67,.14),rgba(0,0,0,.6));
+  color:var(--gold-l);box-shadow:0 0 16px rgba(212,168,67,.14)}
+.ai-color-btn .ci{font-size:1.3rem;display:block;margin-bottom:4px}
+
+.ai-start{
+  width:100%;padding:14px;border-radius:12px;border:none;
+  background:linear-gradient(135deg,#7A5010,#D4A843,#B88020);
+  color:#080300;font-family:'Noto Sans Myanmar',sans-serif;
+  font-size:.92rem;font-weight:700;cursor:pointer;
+  box-shadow:0 4px 22px rgba(212,168,67,.22);
+  transition:all .22s;margin-bottom:11px;letter-spacing:.5px}
+.ai-start:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 30px rgba(212,168,67,.38);filter:brightness(1.08)}
+.ai-start:active{transform:none}
+.ai-cancel{
+  background:none;border:none;
+  color:rgba(212,168,67,.28);font-size:.73rem;
+  cursor:pointer;font-family:'Noto Sans Myanmar',sans-serif;
+  transition:color .18s;letter-spacing:.5px}
+.ai-cancel:hover{color:rgba(212,168,67,.55)}
 </style>
 </head>
 <body>
@@ -515,6 +608,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     <input class="linp" id="inp-name" type="text" placeholder="အမည်ထည့်ပါ..." maxlength="20">
     <div class="brow">
       <button class="bgold" onclick="createRoom()">🏠 Room ဖန်တီး</button>
+    </div>
+    <div class="brow" style="margin-top:4px">
+      <button class="bgold" style="background:linear-gradient(135deg,#3a1a6a,#6a2aaa,#4a1a8a);box-shadow:0 4px 20px rgba(120,60,220,.22)" onclick="openAiModal()">🤖 AI Mode</button>
     </div>
     <div class="lor">─── သို့မဟုတ် ───</div>
     <div class="llbl">🔑 Room Code ဖြင့် ဝင်ပါ</div>
@@ -616,10 +712,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
             </div>
           </div>
         </div>
-      </div>
-      <div class="mpaths" id="mpaths">
-        <div class="mpaths-lbl">📍 ဖမ်းနိုင်သောလမ်း ၂ ခု ရှိသည် — ရွေးပါ</div>
-        <div id="mpath-btns"></div>
       </div>
       <div class="huff-pick-bar" id="huff-pick-bar">
         👆 <span id="huff-pick-msg">ဖမ်းကောက်မည့်ကျားကို Board ပေါ်တွင် ရွေးပါ</span>
@@ -1284,13 +1376,14 @@ function finish(tHuff,hPos,huffNotif){
   if(_animPending)payload.anim=_animPending;
   if(_huffAnimPending)payload.huffAnim=_huffAnimPending;
   _animPending=null; _huffAnimPending=null;
-  push(payload);
+  if(!aiMode) push(payload);
   turn=nxt;draw();uiUpdate();
+  if(aiMode&&turn!==(myColor)&&!over) doAiMove();
 }
 
 function endGame(winner,wn){
   over=true;ver++;
-  push({board:board.map(r=>[...r]),turn,ver,over:true,winner,
+  if(!aiMode) push({board:board.map(r=>[...r]),turn,ver,over:true,winner,
     capBy:{[B]:[...capBy[B]],[W]:[...capBy[W]]},
     lastF,lastT,lastLog:glog[0]||'',huffAvail:false,huffPos:null,huffFor:null});
   showWin(winner===myColor,wn);
@@ -1314,6 +1407,27 @@ window.doResign=function(){
    REMATCH
 ═══════════════════════════════════ */
 window.requestRematch=function(){
+  if(aiMode){
+    // AI mode rematch — alternate who goes first each game
+    gameCount++;
+    // Flip human color each game
+    const firstHumanColor=aiHumanColor; // color chosen in modal
+    myColor=(gameCount%2===0)?firstHumanColor:(firstHumanColor===B?W:B);
+    const aiCol=myColor===B?W:B;
+
+    board=newBoard();turn=B;ver=0;over=false;winShown=false;
+    capBy={[B]:[],[W]:[]}; glog=[];sel=null;legals=[];lastF=null;lastT=null;
+    huffOn=false;huffAt=null;_animPending=null;_huffAnimPending=null;_animBusy=false;
+    huffPickMode=false;huffPickCands=[];huffPickResolve=null;
+    $('wino').classList.remove('on');
+    // Update display colors
+    showGame();
+    const diffLabel={easy:'😊 Easy AI',normal:'🎯 Normal AI',hard:'🔥 Hard AI'}[aiDifficulty];
+    $s('opp-nm',diffLabel);$s('opp-pnm',diffLabel);
+    // If AI is Black this game, AI moves first
+    if(turn===aiCol) doAiMove();
+    return;
+  }
   if(!fbReady||!roomId)return;
   const btn=$('btn-rematch');
   if(btn){btn.disabled=true;btn.textContent='⏳ စောင့်နေသည်...';}
@@ -1495,6 +1609,8 @@ async function applyRemote(st){
     $s('rematch-status','');
     const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
     showGame();
+  // If human chose White, AI (Black) goes first
+  if(myColor===W){ doAiMove(); }
     sysChat(`🔄 ပွဲ ${gameCount} စတင်သည်! ${myColor===B?'⬛ မဲ':'⬜ ဖြူ'} ကစားမည်`);
     return;
   }
@@ -1597,6 +1713,7 @@ window.doLeave=function(){
   if(isHost&&roomId){try{const{db,ref,remove}=FB();remove(ref(db,`rooms/${roomId}`));}catch(e){}}
   $('wino').classList.remove('on');
   $('rematch-req').classList.remove('on');
+  aiMode=false;
   showScr('lobby');
   roomId='';myColor=null;isHost=false;leaving=false;
   board=[];turn=B;sel=null;legals=[];over=false;glog=[];
@@ -1860,7 +1977,6 @@ function clearCapOverlay(){
   highlightedPaths=[];selectedPathIdx=-1;
   const svg=$('cap-overlay');
   if(svg){while(svg.children.length>1)svg.removeChild(svg.lastChild);}
-  const mp=$('mpaths');if(mp)mp.classList.remove('on');
 }
 
 /* Build capture-path highlights for a selected piece */
@@ -1872,38 +1988,6 @@ function showCapPaths(r,c,paths){
     color:i===0?'gold':'alt'
   }));
 
-  // If >1 unique path show the multi-path UI
-  if(paths.length>1){
-    const mp=$('mpaths');
-    const btns=$('mpath-btns');
-    if(mp&&btns){
-      btns.innerHTML='';
-      paths.forEach((p,i)=>{
-        const b=document.createElement('button');
-        b.className=`mpath-btn${i===0?' active':''}`;
-        b.textContent=`လမ်း ${i===1?'②':'①'} (${p.length} ကောင်)`;
-        b.onclick=()=>{
-          selectedPathIdx=i;
-          document.querySelectorAll('.mpath-btn').forEach((x,j)=>x.classList.toggle('active',j===i));
-          drawCapOverlay();
-        };
-        btns.appendChild(b);
-      });
-      // "show all" btn
-      const all=document.createElement('button');
-      all.className='mpath-btn active';
-      all.textContent='အားလုံးကြည့်';
-      all.onclick=()=>{
-        selectedPathIdx=-1;
-        document.querySelectorAll('.mpath-btn').forEach(x=>x.classList.remove('active'));
-        all.classList.add('active');
-        drawCapOverlay();
-      };
-      btns.insertBefore(all,btns.firstChild);
-      selectedPathIdx=-1;
-      mp.classList.add('on');
-    }
-  }
   drawCapOverlay();
 }
 
@@ -2221,8 +2305,271 @@ $('inp-code').addEventListener('input',e=>{e.target.value=e.target.value.toUpper
   }
   loop();
 })();
+
+/* ═══════════════════════════════════
+   AI MODE
+   Human = B (Black, moves first)
+   AI    = W (White)
+═══════════════════════════════════ */
+let aiMode=false;
+let aiDifficulty='easy'; // 'easy'|'normal'|'hard'
+let _aiThinking=false;
+
+/* ── Modal controls ── */
+window.openAiModal=function(){
+  myName=$('inp-name').value.trim()||'ကစားသမား';
+  $('ai-modal').classList.add('show');
+};
+window.closeAiModal=function(){$('ai-modal').classList.remove('show');};
+window.selectDiff=function(d){
+  aiDifficulty=d;
+  ['easy','normal','hard'].forEach(x=>$('ai-'+x).classList.toggle('sel',x===d));
+};
+let aiHumanColor=B; // human plays Black by default
+window.selectAiColor=function(c){
+  aiHumanColor=c==='b'?B:W;
+  ['b','w'].forEach(x=>$('ai-col-'+x).classList.toggle('sel',x===c));
+};
+window.startAiGame=function(){
+  $('ai-modal').classList.remove('show');
+  myName=$('inp-name').value.trim()||'ကစားသမား';
+  myColor=aiHumanColor; isHost=true; roomId='AI'; aiMode=true; aiDifficulty=aiDifficulty||'easy';
+  board=newBoard(); turn=B; ver=0; over=false; winShown=false; gameCount=0;
+  capBy={[B]:[],[W]:[]}; glog=[]; sel=null; legals=[]; lastF=null; lastT=null;
+  huffOn=false; huffAt=null; leaving=false;
+  huffPickMode=false; huffPickCands=[]; huffPickResolve=null;
+  _animPending=null; _huffAnimPending=null; _animBusy=false;
+  showGame();
+  // Update opp name to AI label
+  const diffLabel={easy:'😊 Easy AI',normal:'🎯 Normal AI',hard:'🔥 Hard AI'}[aiDifficulty];
+  $s('opp-nm',diffLabel); $s('opp-pnm',diffLabel);
+  // Remove resign and huff UI for cleaner AI mode (keep them functional)
+  uiUpdate(); draw();
+};
+
+/* ── Evaluation (board score from WHITE's perspective) ── */
+function evalBoard(bs){
+  let sc=0;
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+    const p=bs[r][c];
+    if(p===E) continue;
+    const isWhite=isW(p), king=isK(p);
+    const val=king?3:1;
+    // Positional bonus: advancement toward promotion
+    const adv=isWhite?(7-r)/7:r/7;
+    const piece_sc=val+adv*0.4;
+    if(isWhite) sc+=piece_sc; else sc-=piece_sc;
+  }
+  return sc;
+}
+
+/* ── Get ALL legal moves for a color ── */
+function allMoves(t,bs){
+  const caps=allCaps(t,bs);
+  if(caps.length){
+    // Must capture — return cap moves only
+    const moves=[];
+    for(const e of caps){
+      const maxL=e.paths.reduce((m,p)=>Math.max(m,p.length),0);
+      for(const path of e.paths){
+        if(path.length===maxL) moves.push({type:'cap',fr:e.r,fc:e.c,path});
+      }
+    }
+    return moves;
+  }
+  // Normal moves
+  const moves=[];
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+    if(bs[r][c]!==E&&isOwn(bs[r][c],t)){
+      for(const m of normalMoves(r,c,t,bs)) moves.push({type:'mv',fr:r,fc:c,tr:m.r,tc:m.c});
+    }
+  }
+  return moves;
+}
+
+/* ── Apply a move to a board copy ── */
+function applyMoveToBoard(mv,bs,t){
+  const nb=bs.map(x=>[...x]);
+  if(mv.type==='cap'){
+    let r=mv.fr,c=mv.fc;
+    const p=nb[r][c];
+    for(const s of mv.path){
+      nb[s.cap[0]][s.cap[1]]=E;
+      nb[r][c]=E;
+      nb[s.r][s.c]=p;
+      r=s.r; c=s.c;
+    }
+    // Promote
+    if(nb[r][c]===B&&r===7) nb[r][c]=BK;
+    if(nb[r][c]===W&&r===0) nb[r][c]=WK;
+  } else {
+    const p=nb[mv.fr][mv.fc];
+    nb[mv.fr][mv.fc]=E;
+    nb[mv.tr][mv.tc]=p;
+    if(nb[mv.tr][mv.tc]===B&&mv.tr===7) nb[mv.tr][mv.tc]=BK;
+    if(nb[mv.tr][mv.tc]===W&&mv.tr===0) nb[mv.tr][mv.tc]=WK;
+  }
+  return nb;
+}
+
+/* ── Minimax with alpha-beta (WHITE maximizes) ── */
+function minimax(bs,depth,alpha,beta,maxing){
+  const t=maxing?W:B;
+  const moves=allMoves(t,bs);
+  if(depth===0||!moves.length) return evalBoard(bs);
+  if(maxing){
+    let best=-Infinity;
+    for(const mv of moves){
+      const nb=applyMoveToBoard(mv,bs,t);
+      best=Math.max(best,minimax(nb,depth-1,alpha,beta,false));
+      alpha=Math.max(alpha,best);
+      if(beta<=alpha) break;
+    }
+    return best;
+  } else {
+    let best=Infinity;
+    for(const mv of moves){
+      const nb=applyMoveToBoard(mv,bs,t);
+      best=Math.min(best,minimax(nb,depth-1,alpha,beta,true));
+      beta=Math.min(beta,best);
+      if(beta<=alpha) break;
+    }
+    return best;
+  }
+}
+
+/* ── Pick AI move based on difficulty ── */
+function pickAiMove(aiColor){
+  const aiCol=aiColor||W;
+  const moves=allMoves(aiCol,board);
+  if(!moves.length) return null;
+  if(aiDifficulty==='easy'){
+    // Random move, but prefer captures
+    const caps=moves.filter(m=>m.type==='cap');
+    const pool=caps.length?caps:moves;
+    return pool[Math.floor(Math.random()*pool.length)];
+  }
+  if(aiDifficulty==='normal'){
+    // Depth 3 minimax with some randomness
+    let best=-Infinity, bestMoves=[];
+    for(const mv of moves){
+      const nb=applyMoveToBoard(mv,board,W);
+      const sc=minimax(nb,3,-Infinity,Infinity,false);
+      if(sc>best){best=sc;bestMoves=[mv];}
+      else if(sc===best) bestMoves.push(mv);
+    }
+    return bestMoves[Math.floor(Math.random()*bestMoves.length)];
+  }
+  // Hard — depth 5
+  let best=-Infinity, bestMoves=[];
+  for(const mv of moves){
+    const nb=applyMoveToBoard(mv,board,W);
+    const sc=minimax(nb,5,-Infinity,Infinity,false);
+    if(sc>best){best=sc;bestMoves=[mv];}
+    else if(sc===best) bestMoves.push(mv);
+  }
+  return bestMoves[Math.floor(Math.random()*bestMoves.length)];
+}
+
+/* ── Execute AI move (animate on board) ── */
+async function doAiMove(){
+  const _aiCol=myColor===B?W:B;
+  if(!aiMode||over||_aiThinking||turn!==_aiCol) return;
+  _aiThinking=true;
+  await sleep(aiDifficulty==='easy'?350:aiDifficulty==='normal'?600:900);
+  if(over){_aiThinking=false;return;}
+  const aiColor=myColor===B?W:B;
+  const mv=pickAiMove(aiColor);
+  if(!mv){_aiThinking=false;return;}
+  if(mv.type==='cap'){
+    lastF={r:mv.fr,c:mv.fc};
+    await applyPath(mv.fr,mv.fc,mv.path);
+    lastT={r:mv.path[mv.path.length-1].r,c:mv.path[mv.path.length-1].c};
+  } else {
+    lastF={r:mv.fr,c:mv.fc};
+    board[mv.tr][mv.tc]=board[mv.fr][mv.fc];
+    board[mv.fr][mv.fc]=E;
+    lastT={r:mv.tr,c:mv.tc};
+    promote(mv.tr,mv.tc);
+    addLog('⬜ AI: '+cl(mv.fc)+(mv.fr+1)+'→'+cl(mv.tc)+(mv.tr+1));
+    draw();
+  }
+  _aiThinking=false;
+  aiFinish();
+}
+
+/* ── AI version of finish() — no Firebase ── */
+function aiFinish(){
+  const{bc,wc}=cnt();
+  if(!bc){aiEndGame(W);return;}
+  if(!wc){aiEndGame(B);return;}
+  const nxt=turn===B?W:B;
+  const nc=allCaps(nxt,board);
+  let hasM=nc.length>0;
+  if(!hasM) for(let r=0;r<8;r++) for(let c=0;c<8;c++)
+    if(isOwn(board[r][c],nxt)&&normalMoves(r,c,nxt,board).length){hasM=true;break;}
+  if(!hasM){aiEndGame(turn);return;}
+  turn=nxt; draw(); uiUpdate();
+  const _ac2=myColor===B?W:B;
+  if(turn===_ac2) doAiMove();
+}
+
+function aiEndGame(winner){
+  over=true;
+  const iWon=winner===myColor;
+  showWin(iWon,winner===B?'မဲ':'ဖြူ');
+}
+
 </script>
 
 
+
+<!-- AI DIFFICULTY MODAL -->
+<div id="ai-modal">
+  <div class="ai-box">
+    <div class="ai-inner">
+      <div class="ai-icon">🤖</div>
+      <div class="ai-title">AI MODE</div>
+      <div class="ai-sub">မြန်မာ ကျားကွက် · AI နှင့် ကစားမည်</div>
+      <div class="ai-divider"></div>
+
+      <div class="ai-lbl">⚔️ အဆင့် ရွေးချယ်ပါ</div>
+      <div class="ai-diff-row">
+        <button class="ai-diff-btn sel" id="ai-easy" onclick="selectDiff('easy')">
+          <span class="di">🌿</span>
+          <span class="dn">Easy</span>
+          <span class="dm">လွယ်ကူ</span>
+        </button>
+        <button class="ai-diff-btn" id="ai-normal" onclick="selectDiff('normal')">
+          <span class="di">⚔️</span>
+          <span class="dn">Normal</span>
+          <span class="dm">ပုံမှန်</span>
+        </button>
+        <button class="ai-diff-btn" id="ai-hard" onclick="selectDiff('hard')">
+          <span class="di">🔥</span>
+          <span class="dn">Hard</span>
+          <span class="dm">ခက်ခဲ</span>
+        </button>
+      </div>
+
+      <div class="ai-lbl">♟ အရောင် ရွေးချယ်ပါ</div>
+      <div class="ai-color-row">
+        <button class="ai-color-btn sel" id="ai-col-b" onclick="selectAiColor('b')">
+          <span class="ci">⬛</span>
+          <span>မဲ (ဦးစွာ)</span>
+        </button>
+        <button class="ai-color-btn" id="ai-col-w" onclick="selectAiColor('w')">
+          <span class="ci">⬜</span>
+          <span>ဖြူ</span>
+        </button>
+      </div>
+
+      <button class="ai-start" onclick="startAiGame()">▶ &nbsp;ကစားမည်</button>
+      <br>
+      <button class="ai-cancel" onclick="closeAiModal()">← ပြန်သွားမည်</button>
+    </div>
+  </div>
+</div>
+
 </body>
-</html>
+  </html>
