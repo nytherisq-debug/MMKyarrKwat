@@ -335,6 +335,19 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   border:1.5px solid #fff;pointer-events:none;animation:badge-pop .2s ease}
 @keyframes badge-pop{from{transform:scale(0)}to{transform:scale(1)}}
 
+/* Multi-path selector toast */
+.mpaths{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
+  background:rgba(18,9,0,.97);border:1px solid rgba(212,168,67,.4);border-radius:12px;
+  padding:10px 16px;z-index:700;display:none;text-align:center;
+  box-shadow:0 4px 20px rgba(0,0,0,.8)}
+.mpaths.on{display:block;animation:fadeUp .2s ease}
+.mpaths-lbl{font-size:.72rem;color:var(--gold-l);margin-bottom:8px}
+.mpath-btn{display:inline-block;margin:3px;padding:6px 14px;border-radius:8px;
+  border:1px solid rgba(212,168,67,.35);background:rgba(212,168,67,.08);
+  color:var(--cream);font-size:.72rem;cursor:pointer;transition:all .15s}
+.mpath-btn:hover{background:rgba(212,168,67,.2);border-color:rgba(212,168,67,.7)}
+.mpath-btn.active{background:rgba(212,168,67,.3);border-color:var(--gold)}
+
 /* Multi-capture animation */
 .piece.jumping{
   animation:jump-piece .25s cubic-bezier(.4,0,.2,1);
@@ -440,6 +453,28 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   transition:opacity .2s}
 .copy-tip.show{opacity:1}
 
+/* ── WIN ── */
+/* ── REMATCH REQUEST POPUP ── */
+#rematch-req{position:fixed;inset:0;z-index:600;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.85);backdrop-filter:blur(8px);
+  opacity:0;pointer-events:none;visibility:hidden;transition:all .3s}
+#rematch-req.on{opacity:1;pointer-events:all;visibility:visible}
+.rr-box{background:linear-gradient(145deg,#1C0E00,#080300);
+  border:1px solid rgba(212,168,67,.45);border-radius:16px;padding:32px 40px;
+  text-align:center;transform:scale(.8);transition:transform .35s cubic-bezier(.16,1,.3,1);
+  box-shadow:0 0 50px rgba(212,168,67,.1)}
+#rematch-req.on .rr-box{transform:scale(1)}
+.rr-title{font-size:1.05rem;color:var(--gold);margin-bottom:8px;font-weight:700}
+.rr-sub{font-size:.8rem;color:var(--cream2);margin-bottom:22px}
+.rr-btns{display:flex;gap:12px;justify-content:center}
+.rr-accept{padding:11px 26px;border:none;border-radius:10px;
+  background:linear-gradient(135deg,#1A6A1A,#2ECC40);color:#fff;
+  font-family:'Noto Sans Myanmar',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s}
+.rr-accept:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.rr-decline{padding:11px 26px;border:1px solid rgba(229,115,115,.4);border-radius:10px;
+  background:rgba(229,115,115,.08);color:rgba(229,115,115,.9);
+  font-family:'Noto Sans Myanmar',sans-serif;font-size:.9rem;cursor:pointer;transition:all .2s}
+.rr-decline:hover{background:rgba(229,115,115,.18)}
 /* ── WIN ── */
 #wino{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;
   background:rgba(0,0,0,0);backdrop-filter:blur(0);
@@ -582,6 +617,10 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
           </div>
         </div>
       </div>
+      <div class="mpaths" id="mpaths">
+        <div class="mpaths-lbl">📍 ဖမ်းနိုင်သောလမ်း ၂ ခု ရှိသည် — ရွေးပါ</div>
+        <div id="mpath-btns"></div>
+      </div>
       <div class="huff-pick-bar" id="huff-pick-bar">
         👆 <span id="huff-pick-msg">ဖမ်းကောက်မည့်ကျားကို Board ပေါ်တွင် ရွေးပါ</span>
       </div>
@@ -646,10 +685,22 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     <div class="wt" id="wt">-</div>
     <div class="wm" id="wm">-</div>
     <div class="wbtn-row">
-      <button class="brematch" id="btn-rematch" onclick="requestRematch()">🔄 ထပ်ကစားမည်</button>
-      <button class="bgold" style="padding:12px 20px;width:auto;flex:none;display:inline-block" onclick="doLeave()">🚪 Lobby</button>
+      <button class="brematch" id="btn-rematch" onclick="requestRematch()">🔄 ထပ်ဆော့မည်</button>
+      <button class="bgold" style="padding:12px 20px;width:auto;flex:none;display:inline-block" onclick="doLeave()">🏠 Main Menu</button>
     </div>
     <div class="rematch-status" id="rematch-status"></div>
+  </div>
+</div>
+
+<!-- REMATCH REQUEST POPUP (shown to opponent) -->
+<div id="rematch-req">
+  <div class="rr-box">
+    <div class="rr-title">🔄 ထပ်ကစားဖို့ ခေါ်သည်</div>
+    <div class="rr-sub" id="rr-sub">ပြိုင်ဘက်က နောက်ပွဲ ထပ်ကစားဖို့ ခေါ်နေသည်</div>
+    <div class="rr-btns">
+      <button class="rr-accept" onclick="answerRematch(true)">✅ လက်ခံ</button>
+      <button class="rr-decline" onclick="answerRematch(false)">❌ ငြင်းပယ်</button>
+    </div>
   </div>
 </div>
 
@@ -1266,58 +1317,79 @@ window.requestRematch=function(){
   if(!fbReady||!roomId)return;
   const btn=$('btn-rematch');
   if(btn){btn.disabled=true;btn.textContent='⏳ စောင့်နေသည်...';}
-  $s('rematch-status','ပြိုင်ဘက် သဘောတူဖို့ စောင့်နေသည်...');
+  $s('rematch-status','ပြိုင်ဘက် ဆုံးဖြတ်ချက်ကို စောင့်နေသည်...');
   const{db,ref,update}=FB();
-  const who=isHost?'host':'guest';
-  update(ref(db,`rooms/${roomId}/rematch`),{[who]:true});
+  // Write request — include requester identity
+  update(ref(db,`rooms/${roomId}/rematch`),{req:isHost?'host':'guest', accepted:null});
+};
+
+window.answerRematch=function(accepted){
+  if(!fbReady||!roomId)return;
+  // Hide popup immediately
+  $('rematch-req').classList.remove('on');
+  if(accepted){
+    // Write accepted — host will detect and start
+    const{db,ref,update}=FB();
+    update(ref(db,`rooms/${roomId}/rematch`),{accepted:true});
+  } else {
+    // Declined — write declined then both go to lobby
+    const{db,ref,update}=FB();
+    update(ref(db,`rooms/${roomId}/rematch`),{accepted:false});
+    // Leave after short delay to let Firebase propagate
+    setTimeout(()=>doLeave(),400);
+  }
 };
 
 function listenRematch(){
-  const{db,ref,onValue,remove}=FB();
+  const{db,ref,onValue}=FB();
   onValue(ref(db,`rooms/${roomId}/rematch`),snap=>{
-    if(!snap.exists()||!over)return;
+    if(!snap.exists())return;
     const d=snap.val();
-    const hostReady=!!d.host, guestReady=!!d.guest;
 
-    // Update UI
-    if(isHost){
-      if(!hostReady&&guestReady){
-        $s('rematch-status','ပြိုင်ဘက် သဘောတူပြီ! သင်လည်း နှိပ်ပါ');
-      } else if(hostReady&&!guestReady){
-        $s('rematch-status','ပြိုင်ဘက် သဘောတူဖို့ စောင့်နေသည်...');
-      }
-    } else {
-      if(hostReady&&!guestReady){
-        $s('rematch-status','ပြိုင်ဘက် သဘောတူပြီ! သင်လည်း နှိပ်ပါ');
-      } else if(!hostReady&&guestReady){
-        $s('rematch-status','ပြိုင်ဘက် သဘောတူဖို့ စောင့်နေသည်...');
-      }
+    // Someone declined → both go to lobby
+    if(d.accepted===false){
+      $('rematch-req').classList.remove('on');
+      const btn=$('btn-rematch');
+      if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
+      $s('rematch-status','');
+      // Small delay so Firebase write can propagate, then leave
+      setTimeout(()=>doLeave(),600);
+      return;
     }
 
-    if(hostReady&&guestReady){
-      // Both agreed — host starts the new game
+    // Someone accepted → host starts game
+    if(d.accepted===true){
+      $('rematch-req').classList.remove('on');
       if(isHost){
-        remove(ref(db,`rooms/${roomId}/rematch`));
+        const{db:db2,ref:ref2,remove}=FB();
+        remove(ref2(db2,`rooms/${roomId}/rematch`));
         startRematch();
+      }
+      return;
+    }
+
+    // Request arrived — show popup to the OTHER player
+    if(d.req){
+      const iRequested=(d.req==='host'&&isHost)||(d.req==='guest'&&!isHost);
+      if(!iRequested){
+        // I am the one being asked
+        const oppNm=$('opp-nm').textContent||'ပြိုင်ဘက်';
+        $s('rr-sub',`${oppNm} က နောက်ပွဲ ထပ်ကစားဖို့ ခေါ်နေသည်`);
+        $('rematch-req').classList.add('on');
+        vibrate([100,50,100]);
       }
     }
   });
 }
 
 function startRematch(){
-  // Alternate colors each game: even gameCount → host=B, odd → host=W
   gameCount++;
   const hostIsBlack=(gameCount%2===0);
   myColor=hostIsBlack?B:W;
-
-  // First move alternates: even → B starts, odd → W starts (same as always B starts but colors swap)
-  const initTurn=B; // Black always moves first in checkers
-
-  const newState={board:newBoard(),turn:initTurn,ver:0,over:false,winner:null,
+  const newState={board:newBoard(),turn:B,ver:0,over:false,winner:null,
     capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',
     huffAvail:false,huffPos:null,huffFor:null,
     hostColor:hostIsBlack?B:W};
-
   const{db,ref,update}=FB();
   update(ref(db,`rooms/${roomId}`),{state:newState,
     host:{name:myName,color:hostIsBlack?B:W},
@@ -1393,7 +1465,9 @@ function listenRoom(){
     if(!$('game').classList.contains('show'))return;
     const st=d.state;if(!st)return;
     const rv=st.ver||0;
-    const apply=(rv>ver)||st.over||!!st.huffNotif;
+    // Apply if: new move, game over, huff notif, OR rematch (ver reset to 0 with hostColor)
+    const isRematch=(rv===0&&st.hostColor!==undefined&&(over||winShown));
+    const apply=isRematch||(rv>ver)||st.over||!!st.huffNotif;
     if(apply)applyRemote(st);
   });
 }
@@ -1410,17 +1484,18 @@ function listenChat(){
 async function applyRemote(st){
   const prevVer=ver;
 
-  // Detect rematch: new game started (ver resets to 0, over was true)
-  if(st.ver===0&&over&&st.hostColor!==undefined){
+  // Detect rematch: new game started (ver resets to 0 with hostColor set)
+  if(st.ver===0&&st.hostColor!==undefined&&(over||winShown)){
     applyRematchColor(st);
     loadSt(st);
     over=false;winShown=false;
     gameCount++;
     $('wino').classList.remove('on');
+    $('rematch-req').classList.remove('on');
     $s('rematch-status','');
-    const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ကစားမည်';}
+    const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
     showGame();
-    sysChat(`🔄 ပွဲ ${gameCount+1} စတင်သည်! ${myColor===B?'⬛ မဲ':'⬜ ဖြူ'} ကစားမည်`);
+    sysChat(`🔄 ပွဲ ${gameCount} စတင်သည်! ${myColor===B?'⬛ မဲ':'⬜ ဖြူ'} ကစားမည်`);
     return;
   }
 
@@ -1497,6 +1572,8 @@ function loadSt(st){
   huffPickMode=false;huffPickCands=[];huffPickResolve=null;
   _animPending=null;_huffAnimPending=null;_animBusy=false;
   const hpb=$('huff-pick-bar');if(hpb)hpb.classList.remove('on');
+  const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
+  $s('rematch-status','');
 }
 
 /* ═══════════════════════════════════
@@ -1518,7 +1595,9 @@ window.doLeave=function(){
   try{if(typeof unsubChat==='function')unsubChat();}catch(e){}
   unsub=null;unsubChat=null;
   if(isHost&&roomId){try{const{db,ref,remove}=FB();remove(ref(db,`rooms/${roomId}`));}catch(e){}}
-  $('wino').classList.remove('on');showScr('lobby');
+  $('wino').classList.remove('on');
+  $('rematch-req').classList.remove('on');
+  showScr('lobby');
   roomId='';myColor=null;isHost=false;leaving=false;
   board=[];turn=B;sel=null;legals=[];over=false;glog=[];
   capBy={[B]:[],[W]:[]};ver=0;huffOn=false;huffAt=null;
@@ -1527,7 +1606,7 @@ window.doLeave=function(){
   _animPending=null;_huffAnimPending=null;_animBusy=false;
   const hpb=$('huff-pick-bar');if(hpb)hpb.classList.remove('on');
   $s('rematch-status','');
-  const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ကစားမည်';}
+  const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
 };
 
 /* ═══════════════════════════════════
@@ -1781,15 +1860,50 @@ function clearCapOverlay(){
   highlightedPaths=[];selectedPathIdx=-1;
   const svg=$('cap-overlay');
   if(svg){while(svg.children.length>1)svg.removeChild(svg.lastChild);}
+  const mp=$('mpaths');if(mp)mp.classList.remove('on');
 }
 
 /* Build capture-path highlights for a selected piece */
 function showCapPaths(r,c,paths){
+  // Group paths by their first divergence point → assign colors
   highlightedPaths=paths.map((p,i)=>({
     origin:{r,c},
     steps:p,
     color:i===0?'gold':'alt'
   }));
+
+  // If >1 unique path show the multi-path UI
+  if(paths.length>1){
+    const mp=$('mpaths');
+    const btns=$('mpath-btns');
+    if(mp&&btns){
+      btns.innerHTML='';
+      paths.forEach((p,i)=>{
+        const b=document.createElement('button');
+        b.className=`mpath-btn${i===0?' active':''}`;
+        b.textContent=`လမ်း ${i===1?'②':'①'} (${p.length} ကောင်)`;
+        b.onclick=()=>{
+          selectedPathIdx=i;
+          document.querySelectorAll('.mpath-btn').forEach((x,j)=>x.classList.toggle('active',j===i));
+          drawCapOverlay();
+        };
+        btns.appendChild(b);
+      });
+      // "show all" btn
+      const all=document.createElement('button');
+      all.className='mpath-btn active';
+      all.textContent='အားလုံးကြည့်';
+      all.onclick=()=>{
+        selectedPathIdx=-1;
+        document.querySelectorAll('.mpath-btn').forEach(x=>x.classList.remove('active'));
+        all.classList.add('active');
+        drawCapOverlay();
+      };
+      btns.insertBefore(all,btns.firstChild);
+      selectedPathIdx=-1;
+      mp.classList.add('on');
+    }
+  }
   drawCapOverlay();
 }
 
