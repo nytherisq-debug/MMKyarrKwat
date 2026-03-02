@@ -2340,8 +2340,10 @@ window.startAiGame=function(){
   $('ai-modal').classList.remove('show');
   myName=$('inp-name').value.trim()||'ကစားသမား';
   isHost=true; roomId='AI'; aiMode=true;
-  aiGoesFirst=true;    // ပွဲ ၁: AI=မဲ(B) အရင်ရွှေ့, Human=ဖြူ(W)
-  myColor=W;           // Human=ဖြူ, AI=မဲ
+  // Use whichever color the human selected in the modal
+  myColor=aiHumanColor;
+  // B always moves first — if human is W then AI(B) goes first, else human(B) goes first
+  aiGoesFirst=(myColor!==B);
   board=newBoard(); turn=B; ver=0; over=false; winShown=false; gameCount=0;
   capBy={[B]:[],[W]:[]}; glog=[]; sel=null; legals=[]; lastF=null; lastT=null;
   huffOn=false; huffAt=null; leaving=false;
@@ -2351,8 +2353,8 @@ window.startAiGame=function(){
   const diffLabel={easy:'😊 Easy AI',normal:'🎯 Normal AI',hard:'🔥 Hard AI'}[aiDifficulty];
   $s('opp-nm',diffLabel); $s('opp-pnm',diffLabel);
   uiUpdate(); draw();
-  // ပွဲ ၁: AI(မဲ) အရင်ရွှေ့
-  setTimeout(()=>doAiMove(),300);
+  // If AI goes first (human chose Red/W), trigger AI move now
+  if(aiGoesFirst) setTimeout(()=>doAiMove(),300);
 };
 
 /* ── Evaluation (board score from WHITE's perspective) ── */
