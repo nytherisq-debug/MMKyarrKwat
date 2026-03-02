@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>မြန်မာ ကျားကွက် | Multiplayer</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@300;400;600;700&family=Cinzel+Decorative:wght@400;700;900&display=swap" rel="stylesheet">
+
+
 <style>
 :root{
   --gold:#D4A843; --gold-l:#F0CC72; --gold-d:#8A6410;
@@ -806,20 +806,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 <div class="toast" id="toast"></div>
 
-<!-- Firebase -->
-<script type="module">
-import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import{getDatabase,ref,set,get,onValue,push,remove,update,onDisconnect}
-  from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-const cfg={apiKey:"AIzaSyC-LM-rRPfgxIlYH9fpuZwUkSCCOPidg5g",
-  authDomain:"kyarkwat-57298.firebaseapp.com",
-  databaseURL:"https://kyarkwat-57298-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"kyarkwat-57298",storageBucket:"kyarkwat-57298.firebasestorage.app",
-  messagingSenderId:"143473069573",appId:"1:143473069573:web:127d6c9320195f10afd66c"};
-const db=getDatabase(initializeApp(cfg));
-window._FB={db,ref,set,get,onValue,push,remove,update,onDisconnect};
-window.dispatchEvent(new Event('fbReady'));
-</script>
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 <script>
 /* ═══════════════════════════════════
@@ -883,14 +871,76 @@ let capBy={[B]:[],[W]:[]};
 let lastF=null,lastT=null;
 
 let myName='',myColor=null,roomId='',isHost=false;
-let fbReady=false;
-let unsub=null,unsubChat=null;
+let fbReady=true;
 let ver=0;
 let huffOn=false,huffAt=null;
 let leaving=false,winShown=false;
-let gameCount=0; // increments each rematch — used to alternate first-move and color
+let gameCount=0;
 
-window.addEventListener('fbReady',()=>{fbReady=true;$s('lobby-st','');});
+/* ═══════════════════════════════════
+   SUPABASE STATE
+═══════════════════════════════════ */
+const SB_URL='https://oxziinvwdhligrbllqbj.supabase.co';
+const SB_KEY='sb_publishable_8uBlwuN8DbyDfccT2uMaNw_9fpqYb6s';
+let _sb=null, sbCh=null, chatLog=[];
+function SB(){if(!_sb)_sb=supabase.createClient(SB_URL,SB_KEY);return _sb;}
+
+function sbBroadcast(type,payload){
+  if(sbCh)sbCh.send({type:'broadcast',event:type,payload});
+}
+
+function handleMsg(type,payload){
+  if(type==='join'){
+    $s('opp-nm',payload.guestName);$s('opp-pnm',payload.guestName);
+    loadSt({board:newBoard(),turn:B,ver:0,over:false,winner:null,
+      capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',
+      huffAvail:false,huffPos:null,huffFor:null});
+    showGame();
+    addChatMsg({name:'System',text:`🎮 ${payload.guestName} ဝင်ရောက်လာပြီ! ဂိမ်းစပါသည်!`,sys:true,ts:Date.now()});
+  } else if(type==='state'){
+    applyRemote(payload.state);
+  } else if(type==='chat'){
+    addChatMsg(payload);
+  } else if(type==='rematch_req'){
+    const on=$('opp-nm').textContent||'ပြိုင်ဘက်';
+    $s('rr-sub',`${on} က နောက်ပွဲ ထပ်ကစားဖို့ ခေါ်နေသည်`);
+    $('rematch-req').classList.add('on');
+    vibrate([100,50,100]);
+  } else if(type==='rematch_accept'){
+    $('rematch-req').classList.remove('on');
+    if(isHost) startRematch();
+  } else if(type==='rematch_decline'){
+    $('rematch-req').classList.remove('on');
+    const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
+    $s('rematch-status','');
+    setTimeout(()=>doLeave(),400);
+  } else if(type==='rematch_start'){
+    applyRematchColor(payload.state);
+    loadSt(payload.state);
+    over=false;winShown=false;gameCount++;
+    $('wino').classList.remove('on');
+    $('rematch-req').classList.remove('on');
+    $s('rematch-status','');
+    const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
+    showGame();
+    addChatMsg({name:'System',text:`🔄 ပွဲ ${gameCount} စတင်သည်! ${myColor===B?'🔵 ပြာ':'🔴 နီ'} ကစားမည်`,sys:true,ts:Date.now()});
+  } else if(type==='leave'){
+    if(!over&&!leaving){toast('⚠️ ပြိုင်ဘက် ထွက်သွားသည်');doLeave();}
+  }
+}
+
+function subscribeChannel(rid,onReady){
+  if(sbCh){try{SB().removeChannel(sbCh);}catch(e){}}
+  sbCh=SB().channel('room:'+rid,{config:{broadcast:{self:false}}});
+  sbCh.on('broadcast',{event:'*'},(msg)=>handleMsg(msg.event,msg.payload));
+  sbCh.subscribe(status=>{if(status==='SUBSCRIBED'&&onReady)onReady();});
+}
+
+function addChatMsg(msg){
+  chatLog.push(msg);
+  if(chatLog.length>120)chatLog.shift();
+  renderChat(chatLog);
+}
 
 /* ═══════════════════════════════════
    VIBRATION HELPER
@@ -1416,12 +1466,8 @@ window.doResign=function(){
 ═══════════════════════════════════ */
 window.requestRematch=function(){
   if(aiMode){
-    // ပွဲတိုင်း flip — AI/Human အဆင့်မြောင်း ပြောင်း
     aiGoesFirst=!aiGoesFirst;
-    // aiGoesFirst=true  → AI=မဲ(B), Human=ဖြူ(W) → AI အရင်ရွှေ့
-    // aiGoesFirst=false → Human=မဲ(B), AI=ဖြူ(W) → Human အရင်ရွှေ့
     myColor=aiGoesFirst?W:B;
-
     board=newBoard(); turn=B; ver=0; over=false; winShown=false;
     capBy={[B]:[],[W]:[]}; glog=[]; sel=null; legals=[]; lastF=null; lastT=null;
     huffOn=false; huffAt=null; _animPending=null; _huffAnimPending=null; _animBusy=false;
@@ -1433,73 +1479,25 @@ window.requestRematch=function(){
     if(aiGoesFirst) setTimeout(()=>doAiMove(),300);
     return;
   }
-  if(!fbReady||!roomId)return;
+  if(!sbCh)return;
   const btn=$('btn-rematch');
   if(btn){btn.disabled=true;btn.textContent='⏳ စောင့်နေသည်...';}
   $s('rematch-status','ပြိုင်ဘက် ဆုံးဖြတ်ချက်ကို စောင့်နေသည်...');
-  const{db,ref,update}=FB();
-  // Write request — include requester identity
-  update(ref(db,`rooms/${roomId}/rematch`),{req:isHost?'host':'guest', accepted:null});
+  sbBroadcast('rematch_req',{});
 };
 
 window.answerRematch=function(accepted){
-  if(!fbReady||!roomId)return;
-  // Hide popup immediately
   $('rematch-req').classList.remove('on');
+  if(!sbCh)return;
   if(accepted){
-    // Write accepted — host will detect and start
-    const{db,ref,update}=FB();
-    update(ref(db,`rooms/${roomId}/rematch`),{accepted:true});
+    sbBroadcast('rematch_accept',{});
   } else {
-    // Declined — write declined then both go to lobby
-    const{db,ref,update}=FB();
-    update(ref(db,`rooms/${roomId}/rematch`),{accepted:false});
-    // Leave after short delay to let Firebase propagate
+    sbBroadcast('rematch_decline',{});
     setTimeout(()=>doLeave(),400);
   }
 };
 
-function listenRematch(){
-  const{db,ref,onValue}=FB();
-  onValue(ref(db,`rooms/${roomId}/rematch`),snap=>{
-    if(!snap.exists())return;
-    const d=snap.val();
-
-    // Someone declined → both go to lobby
-    if(d.accepted===false){
-      $('rematch-req').classList.remove('on');
-      const btn=$('btn-rematch');
-      if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
-      $s('rematch-status','');
-      // Small delay so Firebase write can propagate, then leave
-      setTimeout(()=>doLeave(),600);
-      return;
-    }
-
-    // Someone accepted → host starts game
-    if(d.accepted===true){
-      $('rematch-req').classList.remove('on');
-      if(isHost){
-        const{db:db2,ref:ref2,remove}=FB();
-        remove(ref2(db2,`rooms/${roomId}/rematch`));
-        startRematch();
-      }
-      return;
-    }
-
-    // Request arrived — show popup to the OTHER player
-    if(d.req){
-      const iRequested=(d.req==='host'&&isHost)||(d.req==='guest'&&!isHost);
-      if(!iRequested){
-        // I am the one being asked
-        const oppNm=$('opp-nm').textContent||'ပြိုင်ဘက်';
-        $s('rr-sub',`${oppNm} က နောက်ပွဲ ထပ်ကစားဖို့ ခေါ်နေသည်`);
-        $('rematch-req').classList.add('on');
-        vibrate([100,50,100]);
-      }
-    }
-  });
-}
+function listenRematch(){/* no-op — rematch handled by Supabase broadcast */}
 
 function startRematch(){
   gameCount++;
@@ -1509,10 +1507,16 @@ function startRematch(){
     capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',
     huffAvail:false,huffPos:null,huffFor:null,
     hostColor:hostIsBlack?B:W};
-  const{db,ref,update}=FB();
-  update(ref(db,`rooms/${roomId}`),{state:newState,
-    host:{name:myName,color:hostIsBlack?B:W},
-    rematch:null});
+  // Apply locally (host side)
+  applyRematchColor(newState);
+  loadSt(newState); over=false; winShown=false;
+  $('wino').classList.remove('on'); $('rematch-req').classList.remove('on');
+  $s('rematch-status','');
+  const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
+  showGame();
+  addChatMsg({name:'System',text:`🔄 ပွဲ ${gameCount} စတင်သည်! ${myColor===B?'🔵 ပြာ':'🔴 နီ'} ကစားမည်`,sys:true,ts:Date.now()});
+  // Send to guest
+  sbBroadcast('rematch_start',{state:newState});
 }
 
 function applyRematchColor(st){
@@ -1525,100 +1529,56 @@ function applyRematchColor(st){
 
 /* ═══════════════════════════════════
 ═══════════════════════════════════ */
-function FB(){return window._FB;}
-function push(state){if(!fbReady||!roomId)return;const{db,ref,update}=FB();update(ref(db,`rooms/${roomId}`),{state});}
+function push(state){sbBroadcast('state',{state});}
 
 window.createRoom=async function(){
-  if(!fbReady){$s('lobby-st','⏳ Firebase ချိတ်ဆက်နေသည်...');return;}
   myName=$('inp-name').value.trim()||'ကစားသမား ①';
   myColor=B;isHost=true;
   roomId=Math.random().toString(36).slice(2,8).toUpperCase();
-  const{db,ref,set,onDisconnect:od}=FB();
-  const r=ref(db,`rooms/${roomId}`);
-  await set(r,{host:{name:myName,color:B},guest:null,
-    state:{board:newBoard(),turn:B,ver:0,over:false,winner:null,
-      capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',
-      huffAvail:false,huffPos:null,huffFor:null},
-    status:'waiting',created:Date.now()});
-  od(r).remove();
-  $s('w-code',roomId);showScr('waiting');
-  listenRoom();
+  $s('lobby-st','⏳ Room ဖန်တီးနေသည်...');
+  const initState={board:newBoard(),turn:B,ver:0,over:false,winner:null,
+    capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',
+    huffAvail:false,huffPos:null,huffFor:null};
+  const{error}=await SB().from('rooms').upsert({id:roomId,data:{hostName:myName,status:'waiting',state:initState}});
+  if(error){$s('lobby-st','❌ Room ဖန်တီး မရပါ: '+error.message);return;}
+  subscribeChannel(roomId,null);
+  $s('w-code',roomId);showScr('waiting');$s('lobby-st','');
 };
 
 window.joinRoom=async function(){
-  if(!fbReady){$s('lobby-st','⏳ Firebase ချိတ်ဆက်နေသည်...');return;}
   myName=$('inp-name').value.trim()||'ကစားသမား ②';
   const code=$('inp-code').value.trim().toUpperCase();
   if(code.length<4){$s('lobby-st','⚠️ Room Code ထည့်ပါ');return;}
   roomId=code;myColor=W;isHost=false;
-  const{db,ref,get,update}=FB();
-  const snap=await get(ref(db,`rooms/${roomId}`));
-  if(!snap.exists()){$s('lobby-st','❌ Room မတွေ့ပါ');return;}
-  const d=snap.val();
-  if(d.status!=='waiting'){$s('lobby-st','❌ Room ပြည့်နေသည်');return;}
-  await update(ref(db,`rooms/${roomId}`),{guest:{name:myName,color:W},status:'playing'});
-  loadSt(d.state);showGame();listenRoom();listenChat();listenRematch();
+  $s('lobby-st','⏳ Room ရှာနေသည်...');
+  const{data,error}=await SB().from('rooms').select('data').eq('id',roomId).single();
+  if(error||!data){$s('lobby-st','❌ Room မတွေ့ပါ — Code စစ်ကြည့်ပါ');return;}
+  const rd=data.data;
+  if(rd.status!=='waiting'){$s('lobby-st','❌ Room ပြည့်နေသည်');return;}
+  $s('opp-nm',rd.hostName);$s('opp-pnm',rd.hostName);
+  // Update room status to playing
+  await SB().from('rooms').update({data:{...rd,status:'playing',guestName:myName}}).eq('id',roomId);
+  subscribeChannel(roomId,()=>{
+    loadSt(rd.state);showGame();
+    sbBroadcast('join',{guestName:myName});
+    addChatMsg({name:'System',text:`🎮 ${myName} ဝင်ရောက်လာပြီ! ဂိမ်းစပါသည်!`,sys:true,ts:Date.now()});
+  });
 };
 
-window.cancelRoom=function(){
-  try{if(typeof unsub==='function')unsub();}catch(e){}unsub=null;
-  if(roomId){try{const{db,ref,remove}=FB();remove(ref(db,`rooms/${roomId}`));}catch(e){}}
-  showScr('lobby');roomId='';myColor=null;isHost=false;
+window.cancelRoom=async function(){
+  if(sbCh){try{await SB().removeChannel(sbCh);}catch(e){}}sbCh=null;
+  if(roomId)try{await SB().from('rooms').delete().eq('id',roomId);}catch(e){}
+  showScr('lobby');roomId='';myColor=null;isHost=false;chatLog=[];
 };
 
-function listenRoom(){
-  try{if(typeof unsub==='function')unsub();}catch(e){}unsub=null;
-  const{db,ref,onValue}=FB();
-  unsub=onValue(ref(db,`rooms/${roomId}`),snap=>{
-    if(!snap.exists()){if(!over&&!leaving){toast('⚠️ Room ပျက်သွားသည်');doLeave();}return;}
-    const d=snap.val();
-    if(d.host&&d.guest){
-      const o=isHost?d.guest:d.host;
-      const n=o.name||'ပြိုင်ဘက်';
-      $s('opp-nm',n);$s('opp-pnm',n);
-    }
-    if(isHost&&d.status==='playing'&&!$('game').classList.contains('show')){
-      loadSt(d.state);showGame();listenChat();listenRematch();
-      sysChat(`🎮 ${d.guest?.name||'ပြိုင်ဘက်'} ဝင်ရောက်လာပြီ! ဂိမ်းစပါသည်!`);
-    }
-    if(!$('game').classList.contains('show'))return;
-    const st=d.state;if(!st)return;
-    const rv=st.ver||0;
-    // Apply if: new move, game over, huff notif, OR rematch (ver reset to 0 with hostColor)
-    const isRematch=(rv===0&&st.hostColor!==undefined&&(over||winShown));
-    const apply=isRematch||(rv>ver)||st.over||!!st.huffNotif;
-    if(apply)applyRemote(st);
-  });
-}
+function listenRoom(){/* no-op — handled by Supabase subscribeChannel */}
 
-function listenChat(){
-  try{if(typeof unsubChat==='function')unsubChat();}catch(e){}unsubChat=null;
-  const{db,ref,onValue}=FB();
-  unsubChat=onValue(ref(db,`rooms/${roomId}/chat`),snap=>{
-    if(!snap.exists())return;
-    renderChat(Object.values(snap.val()).sort((a,b)=>a.ts-b.ts));
-  });
-}
+function listenChat(){/* no-op — chat handled by Supabase broadcast */}
 
 async function applyRemote(st){
   const prevVer=ver;
 
-  // Detect rematch: new game started (ver resets to 0 with hostColor set)
-  if(st.ver===0&&st.hostColor!==undefined&&(over||winShown)){
-    applyRematchColor(st);
-    loadSt(st);
-    over=false;winShown=false;
-    gameCount++;
-    $('wino').classList.remove('on');
-    $('rematch-req').classList.remove('on');
-    $s('rematch-status','');
-    const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
-    showGame();
-  // If human chose White, AI (Black) goes first
-  if(myColor===W){ doAiMove(); }
-    sysChat(`🔄 ပွဲ ${gameCount} စတင်သည်! ${myColor===B?'🔵 ပြာ':'🔴 နီ'} ကစားမည်`);
-    return;
-  }
+  // Rematch is now handled by explicit rematch_start P2P message — skip here
 
   // ── Replay opponent animation BEFORE applying final state ──────────────────
   const isNewOppMove=(st.ver||0)>prevVer && !st.over && !_animBusy;
@@ -1712,10 +1672,12 @@ function showWin(iWon,wn){
 
 window.doLeave=function(){
   if(leaving)return;leaving=true;over=true;
-  try{if(typeof unsub==='function')unsub();}catch(e){}
-  try{if(typeof unsubChat==='function')unsubChat();}catch(e){}
-  unsub=null;unsubChat=null;
-  if(isHost&&roomId){try{const{db,ref,remove}=FB();remove(ref(db,`rooms/${roomId}`));}catch(e){}}
+  // Notify opponent then clean up
+  try{sbBroadcast('leave',{});}catch(e){}
+  setTimeout(async()=>{
+    if(sbCh){try{await SB().removeChannel(sbCh);}catch(e){}}sbCh=null;
+    if(isHost&&roomId){try{await SB().from('rooms').delete().eq('id',roomId);}catch(e){}}
+  },200);
   $('wino').classList.remove('on');
   $('rematch-req').classList.remove('on');
   aiMode=false;
@@ -1724,6 +1686,7 @@ window.doLeave=function(){
   board=[];turn=B;sel=null;legals=[];over=false;glog=[];
   capBy={[B]:[],[W]:[]};ver=0;huffOn=false;huffAt=null;
   lastF=null;lastT=null;winShown=false;gameCount=0;$s('lobby-st','');
+  chatLog=[];
   huffPickMode=false;huffPickCands=[];huffPickResolve=null;
   _animPending=null;_huffAnimPending=null;_animBusy=false;
   const hpb=$('huff-pick-bar');if(hpb)hpb.classList.remove('on');
@@ -1735,15 +1698,18 @@ window.doLeave=function(){
    CHAT
 ═══════════════════════════════════ */
 window.sendChat=function(){
-  const e=$('cinp'),t=e.value.trim();if(!t||!fbReady)return;e.value='';pChat(t,false);
+  const e=$('cinp'),t=e.value.trim();if(!t)return;e.value='';
+  const msg={name:myName,text:t,sys:false,ts:Date.now()};
+  addChatMsg(msg);
+  if(!aiMode)sbBroadcast('chat',msg);
 };
-window.qmsg=function(t){pChat(t,false);};
-function sysChat(t){pChat(t,true);}
-function pChat(txt,sys){
-  if(!fbReady||!roomId)return;
-  const{db,ref,push}=FB();
-  push(ref(db,`rooms/${roomId}/chat`),{name:sys?'System':myName,text:txt,sys,ts:Date.now()});
-}
+window.qmsg=function(t){
+  const msg={name:myName,text:t,sys:false,ts:Date.now()};
+  addChatMsg(msg);
+  if(!aiMode)sbBroadcast('chat',msg);
+};
+function sysChat(t){addChatMsg({name:'System',text:t,sys:true,ts:Date.now()});}
+function pChat(txt,sys){sysChat(txt);}
 function renderChat(list){
   const el=$('cmsgs');
   const atBot=el.scrollHeight-el.scrollTop<=el.clientHeight+30;
