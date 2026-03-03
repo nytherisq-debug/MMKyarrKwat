@@ -1216,6 +1216,8 @@ let _sb=null, sbCh=null, chatLog=[];
 let _syncInterval=null;
 let _channelOk=false;
 let _applyingRemote=false;
+let _roomBusy=false, _joinBusy=false;
+let _animBusyTimer=null;
 
 function SB(){if(!_sb)_sb=supabase.createClient(SB_URL,SB_KEY);return _sb;}
 
@@ -1229,18 +1231,25 @@ function sbBroadcast(type,payload){
 async function push(state){
   sbBroadcast('state',{state});
   if(!roomId||aiMode)return;
-  try{
-    await SB().from('rooms')
-      .update({data:{status:'playing',lastState:state,lastStateAt:Date.now()}})
-      .eq('id',roomId);
-  }catch(e){
-    console.warn('DB persist failed (non-fatal):',e);
+  /* Retry once on failure for reliability */
+  for(let attempt=0;attempt<2;attempt++){
+    try{
+      const{error}=await SB().from('rooms')
+        .update({data:{status:'playing',lastState:state,lastStateAt:Date.now()}})
+        .eq('id',roomId);
+      if(!error)return;
+      console.warn('DB persist attempt'+(attempt+1)+' failed:',error.message);
+      if(attempt===0)await new Promise(r=>setTimeout(r,400));
+    }catch(e){
+      console.warn('DB persist exception:',e);
+      if(attempt===0)await new Promise(r=>setTimeout(r,400));
+    }
   }
 }
 
 function subscribeChannel(rid,onReady){
   if(sbCh){try{SB().removeChannel(sbCh);}catch(e){}}
-  sbCh=SB().channel('room:'+rid,{config:{broadcast:{self:false}}});
+  sbCh=SB().channel('room:'+rid,{config:{broadcast:{self:false,ack:false}}});
   sbCh.on('broadcast',{event:'*'},(msg)=>handleMsg(msg.event,msg.payload));
   let firstConnect=true;
   sbCh.subscribe(status=>{
@@ -1259,6 +1268,12 @@ function subscribeChannel(rid,onReady){
       _channelOk=false;
       setConnUI(false);
       console.warn('Channel status:',status);
+      /* Auto-reconnect after short delay */
+      if(!leaving&&roomId&&status!=='CLOSED'){
+        setTimeout(()=>{
+          if(!leaving&&roomId&&!_channelOk)subscribeChannel(rid,null);
+        },3000);
+      }
     }
   });
 }
@@ -1267,8 +1282,21 @@ async function resyncFromDB(){
   if(!roomId||aiMode||leaving)return;
   try{
     const{data,error}=await SB().from('rooms').select('data').eq('id',roomId).single();
-    if(error||!data)return;
-    const lastState=data.data?.lastState;
+    if(error||!data){
+      /* Room deleted — opponent likely left */
+      if(!over&&!leaving&&$('game').classList.contains('show')){
+        console.warn('Room not found during sync — opponent may have left');
+      }
+      return;
+    }
+    const rd=data.data;
+    /* Detect opponent disconnect: room still waiting means guest never properly joined */
+    if(rd.status==='waiting'&&!isHost&&!over){
+      console.warn('Room still in waiting status — re-broadcasting join');
+      sbBroadcast('join',{guestName:myName});
+      return;
+    }
+    const lastState=rd.lastState;
     if(!lastState)return;
     const remoteVer=lastState.ver||0;
     if(remoteVer>ver){
@@ -1284,10 +1312,9 @@ function startPeriodicSync(){
   stopPeriodicSync();
   _syncInterval=setInterval(async()=>{
     if(aiMode||over||leaving||!roomId)return;
-    if(turn!==myColor){
-      await resyncFromDB();
-    }
-  },8000);
+    /* Always resync — covers both realtime drops and slow connections */
+    await resyncFromDB();
+  },4000);
 }
 function stopPeriodicSync(){
   if(_syncInterval){clearInterval(_syncInterval);_syncInterval=null;}
@@ -1319,11 +1346,17 @@ function setAiConnUI(){
 
 function handleMsg(type,payload){
   if(type==='join'){
+    if(!payload||!payload.guestName)return;
     $s('opp-nm',payload.guestName);$s('opp-pnm',payload.guestName);
-    loadSt({board:newBoard(),turn:B,ver:0,over:false,winner:null,
-      capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',
-      huffAvail:false,huffPos:null,huffFor:null});
-    showGame();
+    /* Only init fresh board if game hasn't started yet (host on waiting screen) */
+    if(ver===0&&!over){
+      loadSt({board:newBoard(),turn:B,ver:0,over:false,winner:null,
+        capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',
+        huffAvail:false,huffPos:null,huffFor:null});
+    }
+    /* Only switch screen if not already in game */
+    if(!$('game').classList.contains('show'))showGame();
+    startPeriodicSync();
     addChatMsg({name:'System',text:`🎮 ${payload.guestName} ဝင်ရောက်လာပြီ! ဂိမ်းစပါသည်!`,sys:true,ts:Date.now()});
   } else if(type==='state'){
     applyRemote(payload.state);
@@ -1739,6 +1772,8 @@ function applyRematchColor(st){
    ROOM MANAGEMENT
 ══════════════════════════════════════════════ */
 window.createRoom=async function(){
+  if(_roomBusy)return;
+  _roomBusy=true;
   myName=$('inp-name').value.trim()||'ကစားသမား ①';
   myColor=B;isHost=true;
   roomId=Math.random().toString(36).slice(2,8).toUpperCase();
@@ -1746,28 +1781,41 @@ window.createRoom=async function(){
   const initState={board:newBoard(),turn:B,ver:0,over:false,winner:null,
     capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',
     huffAvail:false,huffPos:null,huffFor:null};
+  /* Subscribe channel and DB upsert in parallel for faster room creation */
+  subscribeChannel(roomId,null);
   const{error}=await SB().from('rooms').upsert({id:roomId,
     data:{hostName:myName,status:'waiting',state:initState,lastState:initState,lastStateAt:Date.now()}});
-  if(error){$s('lobby-st','❌ Room ဖန်တီး မရပါ: '+error.message);return;}
-  subscribeChannel(roomId,null);
+  if(error){
+    $s('lobby-st','❌ Room ဖန်တီး မရပါ: '+error.message);
+    if(sbCh){try{SB().removeChannel(sbCh);}catch(e){}}sbCh=null;
+    roomId='';_roomBusy=false;return;
+  }
   $s('w-code',roomId);showScr('waiting');$s('lobby-st','');
+  _roomBusy=false;
 };
 
 window.joinRoom=async function(){
+  if(_joinBusy)return;
+  _joinBusy=true;
   myName=$('inp-name').value.trim()||'ကစားသမား ②';
   const code=$('inp-code').value.trim().toUpperCase();
-  if(code.length<4){$s('lobby-st','⚠️ Room Code ထည့်ပါ');return;}
+  if(code.length<4){$s('lobby-st','⚠️ Room Code ထည့်ပါ');_joinBusy=false;return;}
   roomId=code;myColor=W;isHost=false;
   $s('lobby-st','⏳ Room ရှာနေသည်...');
   const{data,error}=await SB().from('rooms').select('data').eq('id',roomId).single();
-  if(error||!data){$s('lobby-st','❌ Room မတွေ့ပါ — Code စစ်ကြည့်ပါ');return;}
+  if(error||!data){$s('lobby-st','❌ Room မတွေ့ပါ — Code စစ်ကြည့်ပါ');roomId='';_joinBusy=false;return;}
   const rd=data.data;
-  if(rd.status!=='waiting'){$s('lobby-st','❌ Room ပြည့်နေသည်');return;}
+  if(rd.status!=='waiting'){$s('lobby-st','❌ Room ပြည့်နေသည်');roomId='';_joinBusy=false;return;}
   $s('opp-nm',rd.hostName);$s('opp-pnm',rd.hostName);
-  await SB().from('rooms').update({data:{...rd,status:'playing',guestName:myName}}).eq('id',roomId);
+  /* Update room status fire-and-forget (non-blocking for speed) */
+  SB().from('rooms').update({data:{...rd,status:'playing',guestName:myName}}).eq('id',roomId)
+    .then(({error:e})=>{if(e)console.warn('Room status update failed:',e.message);});
+  /* Load state and show game IMMEDIATELY */
+  const st=rd.lastState||rd.state;
+  loadSt(st);showGame();$s('lobby-st','');
+  _joinBusy=false;
+  /* Subscribe channel — broadcast 'join' only when channel is confirmed SUBSCRIBED */
   subscribeChannel(roomId,()=>{
-    const st=rd.lastState||rd.state;
-    loadSt(st);showGame();
     sbBroadcast('join',{guestName:myName});
     addChatMsg({name:'System',text:`🎮 ${myName} ဝင်ရောက်လာပြီ! ဂိမ်းစပါသည်!`,sys:true,ts:Date.now()});
     startPeriodicSync();
@@ -1779,9 +1827,11 @@ window.cancelRoom=async function(){
   if(sbCh){try{await SB().removeChannel(sbCh);}catch(e){}}sbCh=null;
   if(roomId)try{await SB().from('rooms').delete().eq('id',roomId);}catch(e){}
   showScr('lobby');roomId='';myColor=null;isHost=false;chatLog=[];
+  _roomBusy=false;_joinBusy=false;
 };
 
 async function applyRemote(st){
+  if(!st||!st.board){console.warn('applyRemote: invalid state');return;}
   if(_applyingRemote){
     console.log('applyRemote: skipping concurrent call');
     return;
@@ -1793,10 +1843,17 @@ async function applyRemote(st){
     if(_animBusy&&remoteVer>prevVer){
       console.warn('_animBusy was stuck — force resetting');
       _animBusy=false;
+      if(_animBusyTimer){clearTimeout(_animBusyTimer);_animBusyTimer=null;}
     }
     const isNewOppMove = remoteVer>prevVer && !st.over && !_animBusy;
     if(isNewOppMove&&st.anim){
       _animBusy=true;
+      /* Safety timeout: force-clear animBusy after 3s max */
+      if(_animBusyTimer)clearTimeout(_animBusyTimer);
+      _animBusyTimer=setTimeout(()=>{
+        if(_animBusy){console.warn('_animBusy safety timeout fired');_animBusy=false;}
+        _animBusyTimer=null;
+      },3000);
       const fBoard=st.board.map(r=>[...r]);
       const fCap={[B]:[...(st.capBy?.[B]||[])],[W]:[...(st.capBy?.[W]||[])]};
       sel=null;legals=[];
@@ -1818,6 +1875,7 @@ async function applyRemote(st){
       }
       board=fBoard;capBy=fCap;
       _animBusy=false;
+      if(_animBusyTimer){clearTimeout(_animBusyTimer);_animBusyTimer=null;}
     } else {
       board=st.board.map(r=>[...r]);
       if(st.capBy){capBy[B]=[...(st.capBy[B]||[])];capBy[W]=[...(st.capBy[W]||[])];}
@@ -1840,6 +1898,7 @@ async function applyRemote(st){
   }catch(e){
     console.error('applyRemote fatal error:',e);
     _animBusy=false;
+    if(_animBusyTimer){clearTimeout(_animBusyTimer);_animBusyTimer=null;}
     try{
       if(st&&st.board){
         board=st.board.map(r=>[...r]);
@@ -1860,6 +1919,7 @@ function loadSt(st){
   lastF=null;lastT=null;huffOn=false;huffAt=null;
   huffPickMode=false;huffPickCands=[];huffPickResolve=null;
   _animPending=null;_huffAnimPending=null;_animBusy=false;_applyingRemote=false;
+  if(_animBusyTimer){clearTimeout(_animBusyTimer);_animBusyTimer=null;}
   const hpb=$('huff-pick-bar');if(hpb)hpb.classList.remove('on');
   const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
   $s('rematch-status','');
@@ -1893,6 +1953,8 @@ window.doLeave=function(){
   lastF=null;lastT=null;winShown=false;gameCount=0;$s('lobby-st','');
   chatLog=[];huffPickMode=false;huffPickCands=[];huffPickResolve=null;
   _animPending=null;_huffAnimPending=null;_animBusy=false;_applyingRemote=false;
+  if(_animBusyTimer){clearTimeout(_animBusyTimer);_animBusyTimer=null;}
+  _roomBusy=false;_joinBusy=false;
   const hpb=$('huff-pick-bar');if(hpb)hpb.classList.remove('on');
   $s('rematch-status','');
   const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
