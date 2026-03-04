@@ -1544,8 +1544,9 @@ function onCell(r,c){
   if(sel){
     const hit=legals.find(m=>m.r===r&&m.c===c);
     if(hit){hit.isCap?commitCapStep(hit):doNormalMove(sel.r,sel.c,hit);return;}
-    if(chainDone===0&&board[r][c]!==E&&isOwn(board[r][c],turn)){clearSel();pick(r,c);return;}
-    if(chainDone===0){clearSel();draw();}
+    if(chainDone>0){const _or=chainOrigin.r,_oc=chainOrigin.c;clearSel();pick(_or,_oc);return;}
+    if(board[r][c]!==E&&isOwn(board[r][c],turn)){clearSel();pick(r,c);return;}
+    clearSel();draw();
     return;
   }
   if(board[r][c]!==E&&isOwn(board[r][c],turn))pick(r,c);
