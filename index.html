@@ -1555,7 +1555,8 @@ function pick(r,c){
   clearCapOverlay();
   const ac=allCaps(turn,board),ml=maxCapLen(ac),capEntry=ac.find(e=>e.r===r&&e.c===c);
   if(ml>0&&capEntry){
-    const mp=capEntry.paths.filter(p=>p.length===ml);
+    const pml=capEntry.paths.reduce((m,p)=>Math.max(m,p.length),0);
+    const mp=capEntry.paths.filter(p=>p.length===pml);
     if(!mp.length){toast('⚠️ ဖမ်းနိုင်သောလမ်း မရှိ');return;}
     chainOrigin={r,c};chainPaths=mp;chainDone=0;sel={r,c};
     legals=buildLegalsAtStep(mp,0);
