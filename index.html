@@ -1469,8 +1469,7 @@ function newBoard(){
 ══════════════════════════════════════════════ */
 function capPaths(r,c,t,bs,vis,isChain){
   const p=bs[r][c],king=isK(p);
-  /* Non-kings can capture in all 4 directions (Myanmar rules) */
-  const dirs=[[-1,-1],[-1,1],[1,-1],[1,1]];
+  const dirs=king?[[-1,-1],[-1,1],[1,-1],[1,1]]:(t===B?[[1,-1],[1,1]]:[[-1,-1],[-1,1]]);
   let out=[];
   for(const[dr,dc]of dirs){
     if(king){
@@ -1530,7 +1529,7 @@ function normalMoves(r,c,t,bs){
 /* ══════════════════════════════════════════════
    CELL CLICK
 ══════════════════════════════════════════════ */
-let chainOrigin=null, chainPaths=[], chainOriginalPaths=[], chainDone=0;
+let chainOrigin=null, chainPaths=[], chainDone=0;
 let huffPickMode=false, huffPickCands=[], huffPickResolve=null;
 let _animPending=null, _huffAnimPending=null, _animBusy=false;
 
@@ -1545,20 +1544,8 @@ function onCell(r,c){
   if(sel){
     const hit=legals.find(m=>m.r===r&&m.c===c);
     if(hit){hit.isCap?commitCapStep(hit):doNormalMove(sel.r,sel.c,hit);return;}
-    const clickedOwnPiece=(board[r][c]!==E&&isOwn(board[r][c],turn));
-    const clickedSelPiece=(chainOrigin&&r===chainOrigin.r&&c===chainOrigin.c);
-    const isDifferentPiece=(clickedOwnPiece&&!clickedSelPiece);
-    if(chainDone>0){
-      if(isDifferentPiece){clearSel();pick(r,c);return;}
-      chainDone=0;chainPaths=chainOriginalPaths;sel=chainOrigin;
-      legals=buildLegalsAtStep(chainOriginalPaths,0);
-      const seen=new Set(),uniq=[];
-      for(const p of chainOriginalPaths){const k=p.map(s=>`${s.r},${s.c}`).join('|');if(!seen.has(k)){seen.add(k);uniq.push(p);}}
-      if(uniq.length)showCapPaths(chainOrigin.r,chainOrigin.c,uniq.slice(0,4));
-      draw();return;
-    }
-    if(isDifferentPiece){clearSel();pick(r,c);return;}
-    clearSel();draw();
+    if(chainDone===0&&board[r][c]!==E&&isOwn(board[r][c],turn)){clearSel();pick(r,c);return;}
+    if(chainDone===0){clearSel();draw();}
     return;
   }
   if(board[r][c]!==E&&isOwn(board[r][c],turn))pick(r,c);
@@ -1570,7 +1557,7 @@ function pick(r,c){
   if(ml>0&&capEntry){
     const mp=capEntry.paths.filter(p=>p.length===ml);
     if(!mp.length){toast('⚠️ ဖမ်းနိုင်သောလမ်း မရှိ');return;}
-    chainOrigin={r,c};chainPaths=mp;chainOriginalPaths=mp;chainDone=0;sel={r,c};
+    chainOrigin={r,c};chainPaths=mp;chainDone=0;sel={r,c};
     legals=buildLegalsAtStep(mp,0);
     const nmv=normalMoves(r,c,turn,board);
     for(const m of nmv)legals.push({r:m.r,c:m.c,isCap:false,isSkip:true});
@@ -2102,7 +2089,7 @@ function addLog(t){
   const el=$('logul');if(!el)return;el.innerHTML='';
   for(const e of glog){const li=document.createElement('li');li.textContent=e;el.appendChild(li);}
 }
-function clearSel(){sel=null;legals=[];chainOrigin=null;chainPaths=[];chainOriginalPaths=[];chainDone=0;clearCapOverlay();}
+function clearSel(){sel=null;legals=[];chainOrigin=null;chainPaths=[];chainDone=0;clearCapOverlay();}
 
 /* ══════════════════════════════════════════════
    SHOW GAME
@@ -2422,43 +2409,54 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
   </div>
 </div>
 
-<!-- Music player — src ထည့်ပြီး အသုံးပြုပါ -->
-<div id="yt-wrap" style="position:fixed;left:-9999px;top:0;width:480px;height:270px;pointer-events:none;z-index:-1;"></div>
+<!-- Music: YT IFrame API — muted autoplay, unMute on click -->
+<div id="yt-p" style="position:fixed;left:-9999px;top:0;width:480px;height:270px;pointer-events:none;z-index:-1;"></div>
 <script>
 (function(){
+  var VIDEO_ID = '4eTE9X1G76M';
+  var ready = false, on = false, player;
 
-  /* ═══════════════════════════════════════════════════
-     YouTube embed src ကို ဤနေရာတွင် ထည့်ပါ
-     ဥပမာ:
-     'https://www.youtube.com/embed/VIDEO_ID?autoplay=1&mute=0&loop=1&playlist=VIDEO_ID'
-  ═══════════════════════════════════════════════════ */
-  var SRC = 'https://www.youtube.com/embed/4eTE9X1G76M?autoplay=1&mute=0&loop=1&playlist=4eTE9X1G76M&playsinline=1';'  /* ← src ဤနေရာတွင် ထည့်ပါ */
+  var tag = document.createElement('script');
+  tag.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
 
-  var frame = null, isOn = false;
-
-  window.mToggle = function(){
-    if(!SRC){ return; }
-    var btn = document.getElementById('mbtn');
-    var ico = document.getElementById('mico');
-    if(!frame){
-      frame = document.createElement('iframe');
-      frame.src = SRC;
-      frame.setAttribute('allow','autoplay; encrypted-media');
-      frame.setAttribute('frameborder','0');
-      frame.style.cssText = 'width:100%;height:100%;border:0;';
-      document.getElementById('yt-wrap').appendChild(frame);
-      isOn = true;
-    } else if(isOn){
-      frame.src = 'about:blank';
-      isOn = false;
-    } else {
-      frame.src = SRC;
-      isOn = true;
-    }
-    ico.textContent = isOn ? '🔊' : '🎵';
-    btn.classList.toggle('on', isOn);
+  window.onYouTubeIframeAPIReady = function(){
+    player = new YT.Player('yt-p', {
+      videoId: VIDEO_ID,
+      playerVars: {
+        autoplay: 1, mute: 1, loop: 1,
+        playlist: VIDEO_ID, controls: 0,
+        disablekb: 1, fs: 0, rel: 0, playsinline: 1
+      },
+      events: {
+        onReady: function(e){
+          e.target.playVideo();
+          ready = true;
+        },
+        onStateChange: function(e){
+          if(e.data === 0) player.playVideo();
+        }
+      }
+    });
   };
 
+  window.mToggle = function(){
+    var btn = document.getElementById('mbtn');
+    var ico = document.getElementById('mico');
+    if(!ready){ return; }
+    if(!on){
+      player.unMute();
+      player.setVolume(80);
+      on = true;
+      ico.textContent = '🔊';
+      btn.classList.add('on');
+    } else {
+      player.mute();
+      on = false;
+      ico.textContent = '🎵';
+      btn.classList.remove('on');
+    }
+  };
 })();
 </script>
 </body>
