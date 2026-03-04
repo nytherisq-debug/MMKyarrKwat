@@ -1043,7 +1043,7 @@ body::after{
     <div class="tlogo">🎭 KYAR KWAT<small>မြန်မာ ကျားကွက်</small></div>
     <div class="topbar-space"></div>
     <div class="topbar-right">
-      <button id="mbtn" onclick="mToggle()" title="Music on/off">
+      <button id="mbtn" onclick="mToggle()" title="Music">
         <span id="mico">🎵</span>
         <span class="mbars"><i></i><i></i><i></i></span>
       </button>
@@ -2409,50 +2409,41 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
   </div>
 </div>
 
-<!-- Music: YT IFrame API — muted autoplay, unMute on click -->
-<div id="yt-p" style="position:fixed;left:-9999px;top:0;width:480px;height:270px;pointer-events:none;z-index:-1;"></div>
+<!-- Music -->
+<div id="yt-wrap" style="position:fixed;left:-9999px;top:0;width:480px;height:270px;pointer-events:none;z-index:-1;overflow:hidden;"></div>
 <script>
 (function(){
-  var VIDEO_ID = '4eTE9X1G76M';
-  var ready = false, on = false, player;
+  var SRC = 'https://www.youtube.com/embed/4eTE9X1G76M?autoplay=1&mute=0&loop=1&playlist=4eTE9X1G76M&playsinline=1&controls=0&rel=0';
+  var isOn = false;
+  var wrap = document.getElementById('yt-wrap');
 
-  var tag = document.createElement('script');
-  tag.src = 'https://www.youtube.com/iframe_api';
-  document.head.appendChild(tag);
+  function startMusic(){
+    wrap.innerHTML = '';
+    var f = document.createElement('iframe');
+    f.width  = '480';
+    f.height = '270';
+    f.src    = SRC;
+    f.allow  = 'autoplay; encrypted-media';
+    f.setAttribute('frameborder','0');
+    f.setAttribute('allowfullscreen','');
+    wrap.appendChild(f);
+  }
 
-  window.onYouTubeIframeAPIReady = function(){
-    player = new YT.Player('yt-p', {
-      videoId: VIDEO_ID,
-      playerVars: {
-        autoplay: 1, mute: 1, loop: 1,
-        playlist: VIDEO_ID, controls: 0,
-        disablekb: 1, fs: 0, rel: 0, playsinline: 1
-      },
-      events: {
-        onReady: function(e){
-          e.target.playVideo();
-          ready = true;
-        },
-        onStateChange: function(e){
-          if(e.data === 0) player.playVideo();
-        }
-      }
-    });
-  };
+  function stopMusic(){
+    wrap.innerHTML = '';
+  }
 
   window.mToggle = function(){
     var btn = document.getElementById('mbtn');
     var ico = document.getElementById('mico');
-    if(!ready){ return; }
-    if(!on){
-      player.unMute();
-      player.setVolume(80);
-      on = true;
+    if(!isOn){
+      startMusic();   /* iframe created inside click → Chrome allows audio */
+      isOn = true;
       ico.textContent = '🔊';
       btn.classList.add('on');
     } else {
-      player.mute();
-      on = false;
+      stopMusic();
+      isOn = false;
       ico.textContent = '🎵';
       btn.classList.remove('on');
     }
