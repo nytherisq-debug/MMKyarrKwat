@@ -2431,34 +2431,51 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
     </div>
   </div>
 </div>
-<!-- yt iframe: off-screen, real size so browser allows audio -->
-<div id="yt-wrap" style="position:fixed;left:-9999px;top:0;width:480px;height:270px;pointer-events:none;z-index:-1;"></div>
+<!-- Music: YT IFrame API — muted autoplay, unmute on click -->
+<div id="yt-p" style="position:fixed;left:-9999px;top:0;width:480px;height:270px;pointer-events:none;z-index:-1;"></div>
 <script>
 (function(){
-  var YT_SRC='https://www.youtube.com/embed/b7FXM0GR7FQ?autoplay=1&mute=0&loop=1&playlist=b7FXM0GR7FQ&controls=0&disablekb=1&fs=0&rel=0&modestbranding=1&playsinline=1';
-  var frame=null, isOn=false;
+  var ready=false, clicked=false, on=false, player;
+
+  /* Load YT IFrame API */
+  var tag=document.createElement('script');
+  tag.src='https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
+
+  window.onYouTubeIframeAPIReady=function(){
+    player=new YT.Player('yt-p',{
+      videoId:'b7FXM0GR7FQ',
+      playerVars:{autoplay:1,mute:1,loop:1,playlist:'b7FXM0GR7FQ',
+                  controls:0,disablekb:1,fs:0,rel:0,playsinline:1},
+      events:{
+        onReady:function(e){
+          e.target.playVideo();
+          ready=true;
+          if(clicked){_unmute();on=true;}
+        },
+        onStateChange:function(e){
+          if(e.data===0)player.playVideo(); /* loop fallback */
+        }
+      }
+    });
+  };
+
+  function _unmute(){
+    player.unMute();
+    player.setVolume(75);
+    document.getElementById('mico').textContent='🔊';
+    document.getElementById('mbtn').classList.add('on');
+  }
+  function _mute(){
+    player.mute();
+    document.getElementById('mico').textContent='🎵';
+    document.getElementById('mbtn').classList.remove('on');
+  }
+
   window.mToggle=function(){
-    var btn=document.getElementById('mbtn');
-    var ico=document.getElementById('mico');
-    if(!frame){
-      /* Create iframe INSIDE the user-click event — browser allows autoplay */
-      frame=document.createElement('iframe');
-      frame.src=YT_SRC;
-      frame.setAttribute('allow','autoplay; encrypted-media');
-      frame.setAttribute('allowfullscreen','');
-      frame.setAttribute('frameborder','0');
-      frame.style.cssText='width:100%;height:100%;border:0;';
-      document.getElementById('yt-wrap').appendChild(frame);
-      isOn=true;
-    } else if(isOn){
-      frame.src='about:blank';
-      isOn=false;
-    } else {
-      frame.src=YT_SRC;
-      isOn=true;
-    }
-    ico.textContent=isOn?'🔊':'🎵';
-    btn.classList.toggle('on',isOn);
+    if(!ready){clicked=true;return;}
+    if(!on){_unmute();on=true;}
+    else{_mute();on=false;}
   };
 })();
 </script>
