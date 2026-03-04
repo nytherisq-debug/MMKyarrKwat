@@ -951,6 +951,32 @@ body::after{
 @media(max-width:780px){:root{--cell:38px}.panel{display:none}.main{justify-content:center}}
 @media(max-width:500px){:root{--cell:34px}.lbox{padding:26px 22px}}
 @media(max-width:380px){:root{--cell:32px}}
+
+/* ── Music Button ── */
+#mbtn{
+  display:flex;align-items:center;gap:5px;
+  height:30px;padding:0 10px;flex-shrink:0;
+  border-radius:8px;cursor:pointer;outline:none;
+  background:rgba(255,255,255,0.025);
+  border:1px solid rgba(212,168,67,0.22);
+  color:var(--text-2);font-size:.63rem;
+  font-family:'Outfit',sans-serif;letter-spacing:.3px;
+  transition:border-color .2s,background .2s,box-shadow .2s,color .2s;
+  white-space:nowrap;}
+#mbtn:hover{border-color:rgba(212,168,67,0.52);background:rgba(212,168,67,0.07);color:var(--g100);}
+#mbtn.on{
+  border-color:rgba(212,168,67,0.78);
+  background:rgba(212,168,67,0.11);
+  color:var(--g100);
+  box-shadow:0 0 14px rgba(212,168,67,0.22);}
+.mbars{display:flex;align-items:flex-end;gap:2px;height:12px;margin-left:2px;}
+.mbars i{display:block;width:3px;border-radius:2px;background:currentColor;height:3px;}
+#mbtn.on .mbars i:nth-child(1){animation:_mb1 .55s ease-in-out infinite alternate;}
+#mbtn.on .mbars i:nth-child(2){animation:_mb2 .42s ease-in-out infinite alternate;}
+#mbtn.on .mbars i:nth-child(3){animation:_mb3 .68s ease-in-out infinite alternate;}
+@keyframes _mb1{from{height:3px}to{height:12px}}
+@keyframes _mb2{from{height:8px}to{height:3px}}
+@keyframes _mb3{from{height:2px}to{height:10px}}
 </style>
 </head>
 <body>
@@ -1023,6 +1049,10 @@ body::after{
     </div>
     <div class="topbar-space"></div>
     <div class="topbar-right">
+      <button id="mbtn" onclick="mToggle()" title="Music on/off">
+        <span id="mico">🎵</span>
+        <span class="mbars"><i></i><i></i><i></i></span>
+      </button>
       <div class="ping-pill" id="ping-pill">
         <span class="ping-icon">⚡</span>
         <span class="ping-val" id="ping-val">--</span>
@@ -1216,8 +1246,6 @@ let _sb=null, sbCh=null, chatLog=[];
 let _syncInterval=null;
 let _channelOk=false;
 let _applyingRemote=false;
-let _roomBusy=false, _joinBusy=false;
-let _animBusyTimer=null;
 
 function SB(){if(!_sb)_sb=supabase.createClient(SB_URL,SB_KEY);return _sb;}
 
@@ -1231,25 +1259,18 @@ function sbBroadcast(type,payload){
 async function push(state){
   sbBroadcast('state',{state});
   if(!roomId||aiMode)return;
-  /* Retry once on failure for reliability */
-  for(let attempt=0;attempt<2;attempt++){
-    try{
-      const{error}=await SB().from('rooms')
-        .update({data:{status:'playing',lastState:state,lastStateAt:Date.now()}})
-        .eq('id',roomId);
-      if(!error)return;
-      console.warn('DB persist attempt'+(attempt+1)+' failed:',error.message);
-      if(attempt===0)await new Promise(r=>setTimeout(r,400));
-    }catch(e){
-      console.warn('DB persist exception:',e);
-      if(attempt===0)await new Promise(r=>setTimeout(r,400));
-    }
+  try{
+    await SB().from('rooms')
+      .update({data:{status:'playing',lastState:state,lastStateAt:Date.now()}})
+      .eq('id',roomId);
+  }catch(e){
+    console.warn('DB persist failed (non-fatal):',e);
   }
 }
 
 function subscribeChannel(rid,onReady){
   if(sbCh){try{SB().removeChannel(sbCh);}catch(e){}}
-  sbCh=SB().channel('room:'+rid,{config:{broadcast:{self:false,ack:false}}});
+  sbCh=SB().channel('room:'+rid,{config:{broadcast:{self:false}}});
   sbCh.on('broadcast',{event:'*'},(msg)=>handleMsg(msg.event,msg.payload));
   let firstConnect=true;
   sbCh.subscribe(status=>{
@@ -1268,12 +1289,6 @@ function subscribeChannel(rid,onReady){
       _channelOk=false;
       setConnUI(false);
       console.warn('Channel status:',status);
-      /* Auto-reconnect after short delay */
-      if(!leaving&&roomId&&status!=='CLOSED'){
-        setTimeout(()=>{
-          if(!leaving&&roomId&&!_channelOk)subscribeChannel(rid,null);
-        },3000);
-      }
     }
   });
 }
@@ -1282,21 +1297,8 @@ async function resyncFromDB(){
   if(!roomId||aiMode||leaving)return;
   try{
     const{data,error}=await SB().from('rooms').select('data').eq('id',roomId).single();
-    if(error||!data){
-      /* Room deleted — opponent likely left */
-      if(!over&&!leaving&&$('game').classList.contains('show')){
-        console.warn('Room not found during sync — opponent may have left');
-      }
-      return;
-    }
-    const rd=data.data;
-    /* Detect opponent disconnect: room still waiting means guest never properly joined */
-    if(rd.status==='waiting'&&!isHost&&!over){
-      console.warn('Room still in waiting status — re-broadcasting join');
-      sbBroadcast('join',{guestName:myName});
-      return;
-    }
-    const lastState=rd.lastState;
+    if(error||!data)return;
+    const lastState=data.data?.lastState;
     if(!lastState)return;
     const remoteVer=lastState.ver||0;
     if(remoteVer>ver){
@@ -1312,9 +1314,10 @@ function startPeriodicSync(){
   stopPeriodicSync();
   _syncInterval=setInterval(async()=>{
     if(aiMode||over||leaving||!roomId)return;
-    /* Always resync — covers both realtime drops and slow connections */
-    await resyncFromDB();
-  },4000);
+    if(turn!==myColor){
+      await resyncFromDB();
+    }
+  },8000);
 }
 function stopPeriodicSync(){
   if(_syncInterval){clearInterval(_syncInterval);_syncInterval=null;}
@@ -1344,19 +1347,71 @@ function setAiConnUI(){
   if(unit){unit.textContent='MODE';}
 }
 
+
+/* ── Sound Engine ── */
+var _SAC = null;
+function _sac() {
+  if (!_SAC) try { _SAC = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  if (_SAC && _SAC.state === 'suspended') try { _SAC.resume(); } catch(e) {}
+  return _SAC;
+}
+/* Unlock on first touch */
+document.addEventListener('touchstart', function(){ _sac(); }, { once: true, passive: true });
+document.addEventListener('click',      function(){ _sac(); }, { once: true, passive: true });
+
+function sfxMove() {
+  var ac = _sac(); if (!ac) return;
+  try {
+    var o = ac.createOscillator(), g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type = 'sine'; o.frequency.value = 660;
+    var t = ac.currentTime;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.22, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+    o.start(t); o.stop(t + 0.10);
+    var o2 = ac.createOscillator(), g2 = ac.createGain();
+    o2.connect(g2); g2.connect(ac.destination);
+    o2.type = 'sine'; o2.frequency.value = 990;
+    g2.gain.setValueAtTime(0.0001, t + 0.012);
+    g2.gain.linearRampToValueAtTime(0.10, t + 0.018);
+    g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+    o2.start(t + 0.012); o2.stop(t + 0.08);
+  } catch(e) {}
+}
+
+function sfxCapture() {
+  var ac = _sac(); if (!ac) return;
+  try {
+    /* Bass thud */
+    var o1 = ac.createOscillator(), g1 = ac.createGain();
+    o1.connect(g1); g1.connect(ac.destination);
+    o1.type = 'sine';
+    o1.frequency.setValueAtTime(180, ac.currentTime);
+    o1.frequency.exponentialRampToValueAtTime(50, ac.currentTime + 0.15);
+    g1.gain.setValueAtTime(0.0001, ac.currentTime);
+    g1.gain.linearRampToValueAtTime(0.55, ac.currentTime + 0.005);
+    g1.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.20);
+    o1.start(ac.currentTime); o1.stop(ac.currentTime + 0.22);
+    /* Mid crack */
+    var o2 = ac.createOscillator(), g2 = ac.createGain();
+    o2.connect(g2); g2.connect(ac.destination);
+    o2.type = 'triangle'; o2.frequency.value = 420;
+    g2.gain.setValueAtTime(0.0001, ac.currentTime + 0.008);
+    g2.gain.linearRampToValueAtTime(0.28, ac.currentTime + 0.014);
+    g2.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.09);
+    o2.start(ac.currentTime + 0.008); o2.stop(ac.currentTime + 0.10);
+  } catch(e) {}
+  try { if (navigator.vibrate) navigator.vibrate([20, 8, 12]); } catch(e) {}
+}
+
 function handleMsg(type,payload){
   if(type==='join'){
-    if(!payload||!payload.guestName)return;
     $s('opp-nm',payload.guestName);$s('opp-pnm',payload.guestName);
-    /* Only init fresh board if game hasn't started yet (host on waiting screen) */
-    if(ver===0&&!over){
-      loadSt({board:newBoard(),turn:B,ver:0,over:false,winner:null,
-        capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',
-        huffAvail:false,huffPos:null,huffFor:null});
-    }
-    /* Only switch screen if not already in game */
-    if(!$('game').classList.contains('show'))showGame();
-    startPeriodicSync();
+    loadSt({board:newBoard(),turn:B,ver:0,over:false,winner:null,
+      capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',
+      huffAvail:false,huffPos:null,huffFor:null});
+    showGame();
     addChatMsg({name:'System',text:`🎮 ${payload.guestName} ဝင်ရောက်လာပြီ! ဂိမ်းစပါသည်!`,sys:true,ts:Date.now()});
   } else if(type==='state'){
     applyRemote(payload.state);
@@ -1480,7 +1535,7 @@ function normalMoves(r,c,t,bs){
 /* ══════════════════════════════════════════════
    CELL CLICK
 ══════════════════════════════════════════════ */
-let chainOrigin=null, chainPaths=[], chainDone=0;
+let chainOrigin=null, chainPaths=[], chainOriginalPaths=[], chainDone=0;
 let huffPickMode=false, huffPickCands=[], huffPickResolve=null;
 let _animPending=null, _huffAnimPending=null, _animBusy=false;
 
@@ -1495,8 +1550,25 @@ function onCell(r,c){
   if(sel){
     const hit=legals.find(m=>m.r===r&&m.c===c);
     if(hit){hit.isCap?commitCapStep(hit):doNormalMove(sel.r,sel.c,hit);return;}
-    if(chainDone===0&&board[r][c]!==E&&isOwn(board[r][c],turn)){clearSel();pick(r,c);return;}
-    if(chainDone===0){clearSel();draw();}
+
+    const clickedOwnPiece=(board[r][c]!==E&&isOwn(board[r][c],turn));
+    const clickedSelPiece=(chainOrigin&&r===chainOrigin.r&&c===chainOrigin.c);
+    const isDifferentPiece=(clickedOwnPiece&&!clickedSelPiece);
+
+    if(chainDone>0){
+      // Mid-chain: allow switching to a different own piece, or reset chain to step 0
+      if(isDifferentPiece){clearSel();pick(r,c);return;}
+      // Re-click selected piece OR click empty space → reset to step 0
+      chainDone=0;chainPaths=chainOriginalPaths;sel=chainOrigin;
+      legals=buildLegalsAtStep(chainOriginalPaths,0);
+      const seen=new Set(),uniq=[];
+      for(const p of chainOriginalPaths){const k=p.map(s=>`${s.r},${s.c}`).join('|');if(!seen.has(k)){seen.add(k);uniq.push(p);}}
+      if(uniq.length)showCapPaths(chainOrigin.r,chainOrigin.c,uniq.slice(0,4));
+      draw();return;
+    }
+
+    if(isDifferentPiece){clearSel();pick(r,c);return;}
+    clearSel();draw();
     return;
   }
   if(board[r][c]!==E&&isOwn(board[r][c],turn))pick(r,c);
@@ -1508,7 +1580,7 @@ function pick(r,c){
   if(ml>0&&capEntry){
     const mp=capEntry.paths.filter(p=>p.length===ml);
     if(!mp.length){toast('⚠️ ဖမ်းနိုင်သောလမ်း မရှိ');return;}
-    chainOrigin={r,c};chainPaths=mp;chainDone=0;sel={r,c};
+    chainOrigin={r,c};chainPaths=mp;chainOriginalPaths=mp;chainDone=0;sel={r,c};
     legals=buildLegalsAtStep(mp,0);
     const nmv=normalMoves(r,c,turn,board);
     for(const m of nmv)legals.push({r:m.r,c:m.c,isCap:false,isSkip:true});
@@ -1569,6 +1641,7 @@ async function doNormalMove(fr,fc,mv){
   lastF={r:fr,c:fc};
   board[mv.r][mv.c]=board[fr][fc];board[fr][fc]=E;
   lastT={r:mv.r,c:mv.c};promote(mv.r,mv.c);
+  sfxMove();
   addLog(`${turn===B?'⬛':'⬜'} ${cl(fc)}${fr+1}→${cl(mv.c)}${mv.r+1}${had?' ⚠️ ဖမ်းမစားခဲ့!':''}`);
   _animPending={type:'move',fr,fc,tr:mv.r,tc:mv.c};
   clearSel();draw();
@@ -1650,7 +1723,7 @@ async function replayCaptureAnim(fr,fc,capPath){
     const cEl=getCellEl(cr,cc);
     if(cEl){const fl=document.createElement('div');fl.className='cap-flash';cEl.appendChild(fl);setTimeout(()=>fl.remove(),400);}
     board[cr][cc]=E;board[r][c]=E;board[s.r][s.c]=p;
-    r=s.r;c=s.c;lastT={r,c};draw();await sleep(260);
+    r=s.r;c=s.c;lastT={r,c};draw();sfxCapture();await sleep(260);
   }
   lastT={r,c};draw();
 }
@@ -1670,7 +1743,7 @@ async function applyPath(fr,fc,path){
     const capEl=getCellEl(cr,cc);
     if(capEl){const flash=document.createElement('div');flash.className='cap-flash';capEl.appendChild(flash);setTimeout(()=>flash.remove(),400);}
     capBy[turn].push(board[cr][cc]);board[cr][cc]=E;board[r][c]=E;board[s.r][s.c]=p;
-    r=s.r;c=s.c;n++;lastT={r,c};draw();await sleep(260);
+    r=s.r;c=s.c;n++;lastT={r,c};draw();sfxCapture();await sleep(260);
   }
   promote(r,c);lastT={r,c};draw();
   addLog(`${turn===B?'⬛':'⬜'} ×${n} ဖမ်းမိ (${cl(fc)}${fr+1})`);
@@ -1772,8 +1845,6 @@ function applyRematchColor(st){
    ROOM MANAGEMENT
 ══════════════════════════════════════════════ */
 window.createRoom=async function(){
-  if(_roomBusy)return;
-  _roomBusy=true;
   myName=$('inp-name').value.trim()||'ကစားသမား ①';
   myColor=B;isHost=true;
   roomId=Math.random().toString(36).slice(2,8).toUpperCase();
@@ -1781,41 +1852,28 @@ window.createRoom=async function(){
   const initState={board:newBoard(),turn:B,ver:0,over:false,winner:null,
     capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',
     huffAvail:false,huffPos:null,huffFor:null};
-  /* Subscribe channel and DB upsert in parallel for faster room creation */
-  subscribeChannel(roomId,null);
   const{error}=await SB().from('rooms').upsert({id:roomId,
     data:{hostName:myName,status:'waiting',state:initState,lastState:initState,lastStateAt:Date.now()}});
-  if(error){
-    $s('lobby-st','❌ Room ဖန်တီး မရပါ: '+error.message);
-    if(sbCh){try{SB().removeChannel(sbCh);}catch(e){}}sbCh=null;
-    roomId='';_roomBusy=false;return;
-  }
+  if(error){$s('lobby-st','❌ Room ဖန်တီး မရပါ: '+error.message);return;}
+  subscribeChannel(roomId,null);
   $s('w-code',roomId);showScr('waiting');$s('lobby-st','');
-  _roomBusy=false;
 };
 
 window.joinRoom=async function(){
-  if(_joinBusy)return;
-  _joinBusy=true;
   myName=$('inp-name').value.trim()||'ကစားသမား ②';
   const code=$('inp-code').value.trim().toUpperCase();
-  if(code.length<4){$s('lobby-st','⚠️ Room Code ထည့်ပါ');_joinBusy=false;return;}
+  if(code.length<4){$s('lobby-st','⚠️ Room Code ထည့်ပါ');return;}
   roomId=code;myColor=W;isHost=false;
   $s('lobby-st','⏳ Room ရှာနေသည်...');
   const{data,error}=await SB().from('rooms').select('data').eq('id',roomId).single();
-  if(error||!data){$s('lobby-st','❌ Room မတွေ့ပါ — Code စစ်ကြည့်ပါ');roomId='';_joinBusy=false;return;}
+  if(error||!data){$s('lobby-st','❌ Room မတွေ့ပါ — Code စစ်ကြည့်ပါ');return;}
   const rd=data.data;
-  if(rd.status!=='waiting'){$s('lobby-st','❌ Room ပြည့်နေသည်');roomId='';_joinBusy=false;return;}
+  if(rd.status!=='waiting'){$s('lobby-st','❌ Room ပြည့်နေသည်');return;}
   $s('opp-nm',rd.hostName);$s('opp-pnm',rd.hostName);
-  /* Update room status fire-and-forget (non-blocking for speed) */
-  SB().from('rooms').update({data:{...rd,status:'playing',guestName:myName}}).eq('id',roomId)
-    .then(({error:e})=>{if(e)console.warn('Room status update failed:',e.message);});
-  /* Load state and show game IMMEDIATELY */
-  const st=rd.lastState||rd.state;
-  loadSt(st);showGame();$s('lobby-st','');
-  _joinBusy=false;
-  /* Subscribe channel — broadcast 'join' only when channel is confirmed SUBSCRIBED */
+  await SB().from('rooms').update({data:{...rd,status:'playing',guestName:myName}}).eq('id',roomId);
   subscribeChannel(roomId,()=>{
+    const st=rd.lastState||rd.state;
+    loadSt(st);showGame();
     sbBroadcast('join',{guestName:myName});
     addChatMsg({name:'System',text:`🎮 ${myName} ဝင်ရောက်လာပြီ! ဂိမ်းစပါသည်!`,sys:true,ts:Date.now()});
     startPeriodicSync();
@@ -1827,11 +1885,9 @@ window.cancelRoom=async function(){
   if(sbCh){try{await SB().removeChannel(sbCh);}catch(e){}}sbCh=null;
   if(roomId)try{await SB().from('rooms').delete().eq('id',roomId);}catch(e){}
   showScr('lobby');roomId='';myColor=null;isHost=false;chatLog=[];
-  _roomBusy=false;_joinBusy=false;
 };
 
 async function applyRemote(st){
-  if(!st||!st.board){console.warn('applyRemote: invalid state');return;}
   if(_applyingRemote){
     console.log('applyRemote: skipping concurrent call');
     return;
@@ -1843,17 +1899,10 @@ async function applyRemote(st){
     if(_animBusy&&remoteVer>prevVer){
       console.warn('_animBusy was stuck — force resetting');
       _animBusy=false;
-      if(_animBusyTimer){clearTimeout(_animBusyTimer);_animBusyTimer=null;}
     }
     const isNewOppMove = remoteVer>prevVer && !st.over && !_animBusy;
     if(isNewOppMove&&st.anim){
       _animBusy=true;
-      /* Safety timeout: force-clear animBusy after 3s max */
-      if(_animBusyTimer)clearTimeout(_animBusyTimer);
-      _animBusyTimer=setTimeout(()=>{
-        if(_animBusy){console.warn('_animBusy safety timeout fired');_animBusy=false;}
-        _animBusyTimer=null;
-      },3000);
       const fBoard=st.board.map(r=>[...r]);
       const fCap={[B]:[...(st.capBy?.[B]||[])],[W]:[...(st.capBy?.[W]||[])]};
       sel=null;legals=[];
@@ -1867,6 +1916,7 @@ async function applyRemote(st){
             board[st.anim.tr][st.anim.tc]=board[st.anim.fr][st.anim.fc];
             board[st.anim.fr][st.anim.fc]=E;
           }
+          sfxMove();
           lastT={r:st.anim.tr,c:st.anim.tc};draw();await sleep(300);
         }
         if(st.huffAnim)await replayHuffGhost(st.huffAnim);
@@ -1875,7 +1925,6 @@ async function applyRemote(st){
       }
       board=fBoard;capBy=fCap;
       _animBusy=false;
-      if(_animBusyTimer){clearTimeout(_animBusyTimer);_animBusyTimer=null;}
     } else {
       board=st.board.map(r=>[...r]);
       if(st.capBy){capBy[B]=[...(st.capBy[B]||[])];capBy[W]=[...(st.capBy[W]||[])];}
@@ -1898,7 +1947,6 @@ async function applyRemote(st){
   }catch(e){
     console.error('applyRemote fatal error:',e);
     _animBusy=false;
-    if(_animBusyTimer){clearTimeout(_animBusyTimer);_animBusyTimer=null;}
     try{
       if(st&&st.board){
         board=st.board.map(r=>[...r]);
@@ -1919,7 +1967,6 @@ function loadSt(st){
   lastF=null;lastT=null;huffOn=false;huffAt=null;
   huffPickMode=false;huffPickCands=[];huffPickResolve=null;
   _animPending=null;_huffAnimPending=null;_animBusy=false;_applyingRemote=false;
-  if(_animBusyTimer){clearTimeout(_animBusyTimer);_animBusyTimer=null;}
   const hpb=$('huff-pick-bar');if(hpb)hpb.classList.remove('on');
   const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
   $s('rematch-status','');
@@ -1953,8 +2000,6 @@ window.doLeave=function(){
   lastF=null;lastT=null;winShown=false;gameCount=0;$s('lobby-st','');
   chatLog=[];huffPickMode=false;huffPickCands=[];huffPickResolve=null;
   _animPending=null;_huffAnimPending=null;_animBusy=false;_applyingRemote=false;
-  if(_animBusyTimer){clearTimeout(_animBusyTimer);_animBusyTimer=null;}
-  _roomBusy=false;_joinBusy=false;
   const hpb=$('huff-pick-bar');if(hpb)hpb.classList.remove('on');
   $s('rematch-status','');
   const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
@@ -2067,7 +2112,7 @@ function addLog(t){
   const el=$('logul');if(!el)return;el.innerHTML='';
   for(const e of glog){const li=document.createElement('li');li.textContent=e;el.appendChild(li);}
 }
-function clearSel(){sel=null;legals=[];chainOrigin=null;chainPaths=[];chainDone=0;clearCapOverlay();}
+function clearSel(){sel=null;legals=[];chainOrigin=null;chainPaths=[];chainOriginalPaths=[];chainDone=0;clearCapOverlay();}
 
 /* ══════════════════════════════════════════════
    SHOW GAME
@@ -2386,5 +2431,36 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
     </div>
   </div>
 </div>
+<!-- yt iframe: off-screen, real size so browser allows audio -->
+<div id="yt-wrap" style="position:fixed;left:-9999px;top:0;width:480px;height:270px;pointer-events:none;z-index:-1;"></div>
+<script>
+(function(){
+  var YT_SRC='https://www.youtube.com/embed/b7FXM0GR7FQ?autoplay=1&mute=0&loop=1&playlist=b7FXM0GR7FQ&controls=0&disablekb=1&fs=0&rel=0&modestbranding=1&playsinline=1';
+  var frame=null, isOn=false;
+  window.mToggle=function(){
+    var btn=document.getElementById('mbtn');
+    var ico=document.getElementById('mico');
+    if(!frame){
+      /* Create iframe INSIDE the user-click event — browser allows autoplay */
+      frame=document.createElement('iframe');
+      frame.src=YT_SRC;
+      frame.setAttribute('allow','autoplay; encrypted-media');
+      frame.setAttribute('allowfullscreen','');
+      frame.setAttribute('frameborder','0');
+      frame.style.cssText='width:100%;height:100%;border:0;';
+      document.getElementById('yt-wrap').appendChild(frame);
+      isOn=true;
+    } else if(isOn){
+      frame.src='about:blank';
+      isOn=false;
+    } else {
+      frame.src=YT_SRC;
+      isOn=true;
+    }
+    ico.textContent=isOn?'🔊':'🎵';
+    btn.classList.toggle('on',isOn);
+  };
+})();
+</script>
 </body>
 </html>
