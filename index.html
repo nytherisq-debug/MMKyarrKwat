@@ -620,10 +620,17 @@ body::after{
   animation:huff-pulse .55s ease-in-out infinite;
   outline:2px solid rgba(239,68,68,0.8);outline-offset:2px}
 
-/* Huff candidate */
-.piece.huff-cand{
-  cursor:pointer;outline:2.5px solid rgba(245,158,11,0.95);outline-offset:3px;z-index:5;
-  animation:huff-pulse .6s ease-in-out infinite}
+/* ─── Huff victim cell — amber radial glow, no border ─── */
+@keyframes hv-pulse{0%,100%{background:rgba(212,168,67,.09)}50%{background:rgba(245,158,11,.17)}}
+.cell.huff-victim{background:rgba(212,168,67,.10)!important;animation:hv-pulse 1.2s ease-in-out infinite}
+.cell.huff-victim::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:radial-gradient(circle at 50% 50%,rgba(245,158,11,.22) 0%,transparent 62%)}
+
+/* ─── Huff candidate piece — inner golden glow, no scale / outline distortion ─── */
+@keyframes hc-glow{
+  0%,100%{filter:brightness(1.05);box-shadow:inset 0 0 0 1.5px rgba(212,168,67,.40),0 0 10px rgba(212,168,67,.18),0 4px 18px rgba(0,0,0,.75)}
+  50%{filter:brightness(1.15);box-shadow:inset 0 0 0 1.5px rgba(253,211,77,.85),0 0 18px rgba(245,158,11,.38),0 4px 18px rgba(0,0,0,.75)}}
+.piece.huff-cand{cursor:pointer;z-index:5;outline:none;animation:hc-glow 1.1s ease-in-out infinite}
 
 /* Jump animation */
 .piece.jumping{animation:piece-jump .22s cubic-bezier(.4,0,.2,1);position:relative;z-index:20}
@@ -670,17 +677,42 @@ body::after{
   pointer-events:none;animation:badge-pop .2s ease both}
 
 /* ═══════════════════════════════════════════
-   HUFF PICK BAR
+   HUFF BARS — premium frosted glass
 ═══════════════════════════════════════════ */
+.huff-pick-bar,.huff-wait-bar{
+  display:none;align-items:center;gap:11px;
+  padding:10px 14px;border-radius:var(--r-sm);width:100%;
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  animation:fadeUp .2s cubic-bezier(.16,1,.3,1) both;
+  pointer-events:none;font-family:'Outfit',sans-serif;
+  box-shadow:0 2px 20px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.03)}
+.huff-pick-bar.on,.huff-wait-bar.on{display:flex}
+
+/* Gold — picker (Player B choosing) */
 .huff-pick-bar{
-  display:none;align-items:center;justify-content:center;gap:7px;
-  padding:8px 14px;border-radius:var(--r-sm);width:100%;
-  background:rgba(245,158,11,0.07);
-  border:1.5px solid rgba(245,158,11,0.38);
-  font-size:.74rem;color:rgba(253,211,77,0.88);
-  text-align:center;animation:fadeUp .25s ease both;pointer-events:none;
-  font-family:'Outfit',sans-serif}
-.huff-pick-bar.on{display:flex}
+  background:linear-gradient(135deg,rgba(14,9,2,.94),rgba(8,5,0,.97));
+  border:1px solid rgba(212,168,67,.18);border-left:3px solid rgba(212,168,67,.72)}
+.huff-pick-bar .hpb-dot{
+  width:7px;height:7px;border-radius:50%;flex-shrink:0;
+  background:rgba(245,158,11,.9);box-shadow:0 0 8px rgba(245,158,11,.6);
+  animation:pulse-ring 1.4s ease-in-out infinite}
+.huff-pick-bar .hpb-col{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.huff-pick-bar .hpb-title{font-size:.72rem;font-weight:700;letter-spacing:.3px;color:rgba(253,211,77,.92)}
+.huff-pick-bar .hpb-sub{font-size:.60rem;color:rgba(180,140,60,.58);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Red — wait (Player A watching) */
+.huff-wait-bar{
+  background:linear-gradient(135deg,rgba(14,2,2,.94),rgba(8,1,1,.97));
+  border:1px solid rgba(239,68,68,.16);border-left:3px solid rgba(239,68,68,.58)}
+.huff-wait-bar .hwb-dot{
+  width:7px;height:7px;border-radius:50%;flex-shrink:0;
+  background:rgba(239,68,68,.82);box-shadow:0 0 8px rgba(239,68,68,.5);
+  animation:pulse-ring 1.8s ease-in-out infinite}
+.huff-wait-bar .hwb-col{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.huff-wait-bar .hwb-title{font-size:.72rem;font-weight:700;letter-spacing:.3px;color:rgba(252,165,165,.82)}
+.huff-wait-bar .hwb-sub{font-size:.60rem;color:rgba(200,100,100,.48);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ═══════════════════════════════════════════
    CHAT — PREMIUM REDESIGN
@@ -1121,9 +1153,21 @@ body::after{
         </div>
       </div>
 
-      <!-- Huff pick bar -->
+      <!-- Huff pick bar: shown to Player B (opponent) who chooses which piece to huff -->
       <div class="huff-pick-bar" id="huff-pick-bar">
-        👆 <span id="huff-pick-msg">ဖမ်းကောက်မည့်ကျားကို Board ပေါ်တွင် ရွေးပါ</span>
+        <div class="hpb-dot"></div>
+        <div class="hpb-col">
+          <span class="hpb-title">ဖမ်းကောက်မည့်ကျား ရွေးပါ</span>
+          <span class="hpb-sub" id="huff-pick-msg">မီးပြနေသောကျားကို Board ပေါ်တွင် နှိပ်ပါ</span>
+        </div>
+      </div>
+      <!-- Huff wait bar: shown to Player A (the one who missed) while B chooses -->
+      <div class="huff-wait-bar" id="huff-wait-bar">
+        <div class="hwb-dot"></div>
+        <div class="hwb-col">
+          <span class="hwb-title">ပြိုင်ဘက် ဖမ်းကောက်ဖို့ ရွေးနေသည်</span>
+          <span class="hwb-sub" id="huff-wait-msg">မဖမ်းမစားမိသဖြင့် ပြိုင်ဘက်က ကျားရွေးချယ်နေပြီ...</span>
+        </div>
       </div>
 
       <!-- My bar -->
@@ -1531,6 +1575,7 @@ function normalMoves(r,c,t,bs){
 ══════════════════════════════════════════════ */
 let chainOrigin=null, chainPaths=[], chainDone=0;
 let huffPickMode=false, huffPickCands=[], huffPickResolve=null;
+let huffWaitMode=false, huffWaitCands=[];  /* Player A: victim highlights while B picks */
 let _animPending=null, _huffAnimPending=null, _animBusy=false;
 
 function onCell(r,c){
@@ -1612,8 +1657,13 @@ async function doNormalMove(fr,fc,mv){
       const bp=entry.paths.find(p=>p.length===ml);
       if(bp){
         const wasMoved=(entry.r===fr&&entry.c===fc);
-        huffCands.push({or:entry.r,oc:entry.c,path:bp,piece:board[entry.r][entry.c],
-          victimR:wasMoved?mv.r:entry.r,victimC:wasMoved?mv.c:entry.c});
+        huffCands.push({
+          /* Bug-5 fix: ghost must start from piece's CURRENT position after the move */
+          or: wasMoved?mv.r:entry.r,
+          oc: wasMoved?mv.c:entry.c,
+          path:bp,piece:board[entry.r][entry.c],
+          victimR:wasMoved?mv.r:entry.r,
+          victimC:wasMoved?mv.c:entry.c});
       }
     }
   }
@@ -1630,7 +1680,26 @@ async function doNormalMove(fr,fc,mv){
     else if(aiMode){
       chosen=huffCands.find(h=>isK(h.piece))||huffCands[0];
     } else {
-      chosen=await showHuffPicker(huffCands);
+      /* Bug-3 fix: in multiplayer, opponent (Player B) must choose — not Player A.
+         Push huffPending; Player B's applyRemote shows the picker.
+         Player A enters huffWaitMode to see victim highlights. */
+      const nxtT=turn===B?W:B;
+      const pendingCands=huffCands.map(h=>({or:h.or,oc:h.oc,path:h.path,piece:h.piece,victimR:h.victimR,victimC:h.victimC}));
+      const{bc:_bc,wc:_wc}=cnt();
+      if(!_bc){endGame(W,'နီ');return;}if(!_wc){endGame(B,'ပြာ');return;}
+      ver++;
+      const _hp={board:board.map(r=>[...r]),turn:nxtT,ver,over:false,winner:null,
+        capBy:{[B]:[...capBy[B]],[W]:[...capBy[W]]},lastF,lastT,lastLog:glog[0]||'',
+        huffAvail:false,huffPos:null,huffFor:null,
+        huffPending:pendingCands,anim:_animPending};
+      _animPending=null;_huffAnimPending=null;
+      /* Show wait-bar + victim highlights to Player A */
+      huffWaitMode=true;huffWaitCands=pendingCands;
+      const _wlbl=pendingCands.map(h=>`${cl(h.victimC)}${h.victimR+1}`).join(', ');
+      $s('huff-wait-msg',`ဖမ်းမစားမိသောကျား (${_wlbl}) `);
+      $('huff-wait-bar').classList.add('on');
+      push(_hp);turn=nxtT;draw();uiUpdate();
+      return;
     }
     _huffAnimPending=chosen;
     await doHuffAnimation(chosen,true);
@@ -1643,9 +1712,9 @@ async function doNormalMove(fr,fc,mv){
 
 async function showHuffPicker(cands){
   huffPickMode=true;huffPickCands=cands;
-  const labels=cands.map(h=>`${cl(h.victimC)}${h.victimR+1}`).join(' / ');
-  $s('huff-pick-msg',`ဖမ်းမစားမိ ${cands.length} ကောင် (${labels}) — ဖမ်းကောက်မည့်ကောင် Board ပေါ်မှ ရွေးပါ`);
-  $('huff-pick-bar').classList.add('on');vibrate([80,40,80]);draw();
+  const labels=cands.map(h=>`${cl(h.victimC)}${h.victimR+1}`).join(', ');
+  $s('huff-pick-msg',`ဖမ်းနိုင်သောကျား — ${labels}`);
+  $('huff-pick-bar').classList.add('on');vibrate([60,30,60]);draw();
   const chosen=await new Promise(res=>{huffPickResolve=res;});
   huffPickMode=false;huffPickCands=[];huffPickResolve=null;
   $('huff-pick-bar').classList.remove('on');draw();
@@ -1664,7 +1733,7 @@ async function _ghostWalk(or,oc,path,piece,victimR,victimC,doRemove){
   const sz=cellPx-7;
   const ghost=document.createElement('div');
   ghost.className=`ghost-piece ${isB(piece)?'bp':'wp'}${isK(piece)?' kp':''}`;
-  ghost.style.cssText=`width:${sz}px;height:${sz}px;position:fixed;z-index:900;border-radius:50%;pointer-events:none;transition:left .32s cubic-bezier(.4,0,.2,1),top .32s cubic-bezier(.4,0,.2,1);animation:ghost-fade-in .25s ease forwards`;
+  ghost.style.cssText=`width:${sz}px;height:${sz}px;position:fixed;z-index:900;border-radius:50%;pointer-events:none;transition:left .32s cubic-bezier(.4,0,.2,1),top .32s cubic-bezier(.4,0,.2,1);animation:ghost-in .25s ease forwards`;
   document.body.appendChild(ghost);
   const sp=ctr(or,oc);
   ghost.style.left=`${sp.x-sz/2}px`;ghost.style.top=`${sp.y-sz/2}px`;
@@ -1683,9 +1752,14 @@ async function _ghostWalk(or,oc,path,piece,victimR,victimC,doRemove){
   const vFlEl=getCellEl(victimR,victimC);
   if(vFlEl){const fl=document.createElement('div');fl.className='cap-flash';vFlEl.appendChild(fl);setTimeout(()=>fl.remove(),450);}
   if(doRemove){
-    const oppColor=turn===B?W:B;
+    /* Bug-4 fix: captor = whoever does NOT own the huffed piece.
+       Determined by piece color, not `turn` (which may be wrong in remote flow). */
     const vp=board[victimR][victimC];
-    if(vp!==E){capBy[oppColor].push(vp);board[victimR][victimC]=E;}
+    if(vp!==E){
+      const captorColor=isB(vp)?W:B;
+      capBy[captorColor].push(vp);
+      board[victimR][victimC]=E;
+    }
     addLog(`💨 Huff! ${cl(victimC)}${victimR+1} ဖမ်းကောက်ခံရ`);draw();
   }
   await sleep(400);
@@ -1785,6 +1859,7 @@ window.requestRematch=function(){
     capBy={[B]:[],[W]:[]};glog=[];sel=null;legals=[];lastF=null;lastT=null;
     huffOn=false;huffAt=null;_animPending=null;_huffAnimPending=null;_animBusy=false;
     huffPickMode=false;huffPickCands=[];huffPickResolve=null;
+    huffWaitMode=false;huffWaitCands=[];
     $('wino').classList.remove('on');showGame();
     const dl={easy:'😊 Easy AI',normal:'🎯 Normal AI',hard:'🔥 Hard AI'}[aiDifficulty];
     $s('opp-nm',dl);$s('opp-pnm',dl);
@@ -1913,16 +1988,43 @@ async function applyRemote(st){
     if(st.lastLog)addLog(st.lastLog);
     over=st.over||false;
     sel=null;legals=[];clearHuff();
+    /* Clear huffWaitMode whenever we get a clean non-pending state */
+    if(!st.huffPending){huffWaitMode=false;huffWaitCands=[];$('huff-wait-bar').classList.remove('on');}
     if(st.huffNotif&&st.huffNotif.ts&&(!window._lastHuffTs||st.huffNotif.ts>window._lastHuffTs)){
       window._lastHuffTs=st.huffNotif.ts;
       $s('huff-piece-lbl',st.huffNotif.at);
       $('hn').classList.add('on');vibrate([200,80,200,80,200]);
-      sysChat(`💨 မစားမိသောကြောင့် ${st.huffNotif.at} ဖမ်းကောက်ခံလိုက်ရသည်`);
+      sysChat(`မစားမိသောကြောင့် ${st.huffNotif.at} ဖမ်းကောက်ခံလိုက်ရသည်`);
       setTimeout(()=>$('hn').classList.remove('on'),4000);
     }
     draw();uiUpdate();
     if(remoteVer>prevVer&&turn===myColor&&!st.over)vibrate([0,60,120,60,200,60,120]);
     if(st.over&&st.winner!=null)showWin(st.winner===myColor,st.winner===B?'ပြာ':'နီ');
+
+    /* huffPending: Player B (us) picks which piece to huff */
+    if(!st.over&&st.huffPending&&st.huffPending.length>0&&turn===myColor){
+      const _chosen=await showHuffPicker(st.huffPending);
+      _huffAnimPending=_chosen;
+      await doHuffAnimation(_chosen,true);
+      const _hpVl=`${cl(_chosen.victimC)}${_chosen.victimR+1}`;
+      sysChat(`\u{1F4A8} မစားမိသောကြောင့် ${_hpVl} ဖမ်းကောက်ခဲ့ 👀`);
+      ver++;
+      const _hr={board:board.map(r=>[...r]),turn:myColor,ver,over:false,winner:null,
+        capBy:{[B]:[...capBy[B]],[W]:[...capBy[W]]},lastF,lastT,lastLog:glog[0]||'',
+        huffAvail:false,huffPos:null,huffFor:null,
+        huffNotif:{by:myName,at:_hpVl,ts:Date.now()}};
+      _huffAnimPending=null;
+      push(_hr);draw();uiUpdate();
+    }
+
+    /* huffPending: Player A (us, the one who missed) shows victim highlights while B picks */
+    if(!st.over&&st.huffPending&&st.huffPending.length>0&&turn!==myColor){
+      huffWaitMode=true;huffWaitCands=st.huffPending;
+      const _wlbl=st.huffPending.map(h=>`${cl(h.victimC)}${h.victimR+1}`).join(', ');
+      $s('huff-wait-msg',`ဖမ်းမစားမိသောကျား (${_wlbl}) `);
+      $('huff-wait-bar').classList.add('on');
+      draw();
+    }
   }catch(e){
     console.error('applyRemote fatal error:',e);
     _animBusy=false;
@@ -1945,8 +2047,10 @@ function loadSt(st){
   over=false;capBy={[B]:[],[W]:[]};glog=[];sel=null;legals=[];
   lastF=null;lastT=null;huffOn=false;huffAt=null;
   huffPickMode=false;huffPickCands=[];huffPickResolve=null;
+  huffWaitMode=false;huffWaitCands=[];
   _animPending=null;_huffAnimPending=null;_animBusy=false;_applyingRemote=false;
   const hpb=$('huff-pick-bar');if(hpb)hpb.classList.remove('on');
+  const hwb=$('huff-wait-bar');if(hwb)hwb.classList.remove('on');
   const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
   $s('rematch-status','');
 }
@@ -1978,8 +2082,10 @@ window.doLeave=function(){
   capBy={[B]:[],[W]:[]};ver=0;huffOn=false;huffAt=null;
   lastF=null;lastT=null;winShown=false;gameCount=0;$s('lobby-st','');
   chatLog=[];huffPickMode=false;huffPickCands=[];huffPickResolve=null;
+  huffWaitMode=false;huffWaitCands=[];
   _animPending=null;_huffAnimPending=null;_animBusy=false;_applyingRemote=false;
   const hpb=$('huff-pick-bar');if(hpb)hpb.classList.remove('on');
+  const hwb2=$('huff-wait-bar');if(hwb2)hwb2.classList.remove('on');
   $s('rematch-status','');
   const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
   _channelOk=false;setConnUI(true);
@@ -2034,12 +2140,17 @@ function draw(){
       else if(mv)cell.classList.add(mv.isCap?'cpto':mv.isSkip?'skipto':'mvto');
       if(lastF&&lastF.r===r&&lastF.c===c)cell.classList.add('fr');
       if(lastT&&lastT.r===r&&lastT.c===c)cell.classList.add('to');
+      /* Huff victim highlight — shown on both Player B (picker) and Player A (watcher) */
+      const isHuffVictim=
+        (huffPickMode&&huffPickCands.some(h=>h.victimR===r&&h.victimC===c))||
+        (huffWaitMode&&huffWaitCands.some(h=>h.victimR===r&&h.victimC===c));
+      if(isHuffVictim)cell.classList.add('huff-victim');
       if(board[r][c]!==E){
         const p=document.createElement('div');
         p.className=`piece ${isB(board[r][c])?'bp':'wp'}${isK(board[r][c])?' kp':''}`;
         if(isSel)p.classList.add('sp');
         if(huffOn&&huffAt&&huffAt.r===r&&huffAt.c===c)p.classList.add('hp');
-        if(huffPickMode&&huffPickCands.some(h=>h.victimR===r&&h.victimC===c))p.classList.add('huff-cand');
+        if(isHuffVictim)p.classList.add('huff-cand');
         if(isSel&&turn===myColor){
           const ac2=allCaps(turn,board),ml2=maxCapLen(ac2);
           if(ml2>=2){const en2=ac2.find(e=>e.r===r&&e.c===c);
@@ -2277,6 +2388,7 @@ window.startAiGame=function(){
   board=newBoard();turn=B;ver=0;over=false;winShown=false;gameCount=0;
   capBy={[B]:[],[W]:[]};glog=[];sel=null;legals=[];lastF=null;lastT=null;
   huffOn=false;huffAt=null;leaving=false;huffPickMode=false;huffPickCands=[];huffPickResolve=null;
+  huffWaitMode=false;huffWaitCands=[];
   _animPending=null;_huffAnimPending=null;_animBusy=false;
   showGame();
   const dl={easy:'😊 Easy AI',normal:'🎯 Normal AI',hard:'🔥 Hard AI'}[aiDifficulty];
@@ -2453,4 +2565,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-           </html>
+</html>
