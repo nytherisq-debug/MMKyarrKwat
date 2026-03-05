@@ -1656,14 +1656,13 @@ async function doNormalMove(fr,fc,mv){
     for(const entry of ac){
       const bp=entry.paths.find(p=>p.length===ml);
       if(bp){
-        const wasMoved=(entry.r===fr&&entry.c===fc);
         huffCands.push({
-          /* Bug-5 fix: ghost must start from piece's CURRENT position after the move */
-          or: wasMoved?mv.r:entry.r,
-          oc: wasMoved?mv.c:entry.c,
+          /* Ghost always starts from the piece's ORIGINAL position before the move */
+          or: entry.r,
+          oc: entry.c,
           path:bp,piece:board[entry.r][entry.c],
-          victimR:wasMoved?mv.r:entry.r,
-          victimC:wasMoved?mv.c:entry.c});
+          victimR:entry.r,
+          victimC:entry.c});
       }
     }
   }
@@ -1696,7 +1695,7 @@ async function doNormalMove(fr,fc,mv){
       /* Show wait-bar + victim highlights to Player A */
       huffWaitMode=true;huffWaitCands=pendingCands;
       const _wlbl=pendingCands.map(h=>`${cl(h.victimC)}${h.victimR+1}`).join(', ');
-      $s('huff-wait-msg',`ဖမ်းမစားမိသောကျား (${_wlbl}) `);
+      $s('huff-wait-msg',`ဖမ်းမစားမိကျား (${_wlbl}) — ပြိုင်ဘက် ရွေးချယ်နေပြီ...`);
       $('huff-wait-bar').classList.add('on');
       push(_hp);turn=nxtT;draw();uiUpdate();
       return;
@@ -1994,7 +1993,7 @@ async function applyRemote(st){
       window._lastHuffTs=st.huffNotif.ts;
       $s('huff-piece-lbl',st.huffNotif.at);
       $('hn').classList.add('on');vibrate([200,80,200,80,200]);
-      sysChat(`မစားမိသောကြောင့် ${st.huffNotif.at} ဖမ်းကောက်ခံလိုက်ရသည်`);
+      sysChat(`💨 မစားမိသောကြောင့် ${st.huffNotif.at} ဖမ်းကောက်ခံလိုက်ရသည်`);
       setTimeout(()=>$('hn').classList.remove('on'),4000);
     }
     draw();uiUpdate();
@@ -2007,7 +2006,7 @@ async function applyRemote(st){
       _huffAnimPending=_chosen;
       await doHuffAnimation(_chosen,true);
       const _hpVl=`${cl(_chosen.victimC)}${_chosen.victimR+1}`;
-      sysChat(`\u{1F4A8} မစားမိသောကြောင့် ${_hpVl} ဖမ်းကောက်ခဲ့ 👀`);
+      sysChat(`\u{1F4A8} မစားမိသောကြောင့် ${_hpVl} ဖမ်းကောက်ခဲ့`);
       ver++;
       const _hr={board:board.map(r=>[...r]),turn:myColor,ver,over:false,winner:null,
         capBy:{[B]:[...capBy[B]],[W]:[...capBy[W]]},lastF,lastT,lastLog:glog[0]||'',
@@ -2021,7 +2020,7 @@ async function applyRemote(st){
     if(!st.over&&st.huffPending&&st.huffPending.length>0&&turn!==myColor){
       huffWaitMode=true;huffWaitCands=st.huffPending;
       const _wlbl=st.huffPending.map(h=>`${cl(h.victimC)}${h.victimR+1}`).join(', ');
-      $s('huff-wait-msg',`ဖမ်းမစားမိသောကျား (${_wlbl}) `);
+      $s('huff-wait-msg',`ဖမ်းမစားမိကျား (${_wlbl}) — ပြိုင်ဘက် ရွေးချယ်နေပြီ...`);
       $('huff-wait-bar').classList.add('on');
       draw();
     }
@@ -2565,4 +2564,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-</html>
+   </html>
