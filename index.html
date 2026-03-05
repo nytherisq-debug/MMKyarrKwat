@@ -1284,6 +1284,8 @@ let _sb=null, sbCh=null, chatLog=[];
 let _syncInterval=null;
 let _channelOk=false;
 let _applyingRemote=false;
+let _pendingRemoteState=null;
+let _skipNextApplyRemote=false;
 
 function SB(){if(!_sb)_sb=supabase.createClient(SB_URL,SB_KEY);return _sb;}
 
@@ -1469,6 +1471,7 @@ function handleMsg(type,payload){
     $s('rematch-status','');
     setTimeout(()=>doLeave(),400);
   } else if(type==='rematch_start'){
+    _skipNextApplyRemote=true;
     applyRematchColor(payload.state);
     loadSt(payload.state);
     over=false;winShown=false;gameCount++;
@@ -1656,13 +1659,14 @@ async function doNormalMove(fr,fc,mv){
     for(const entry of ac){
       const bp=entry.paths.find(p=>p.length===ml);
       if(bp){
+        const _wasMoved=(entry.r===fr&&entry.c===fc);
         huffCands.push({
-          /* Ghost always starts from the piece's ORIGINAL position before the move */
+          /* Ghost starts from piece's original position; victim is wherever the piece now sits */
           or: entry.r,
           oc: entry.c,
           path:bp,piece:board[entry.r][entry.c],
-          victimR:entry.r,
-          victimC:entry.c});
+          victimR:_wasMoved?mv.r:entry.r,
+          victimC:_wasMoved?mv.c:entry.c});
       }
     }
   }
@@ -1942,9 +1946,12 @@ window.cancelRoom=async function(){
 
 async function applyRemote(st){
   if(_applyingRemote){
-    console.log('applyRemote: skipping concurrent call');
+    /* Queue latest state instead of dropping — prevents game stall (Bug-3 fix) */
+    _pendingRemoteState=st;
     return;
   }
+  /* Skip once after rematch loadSt to avoid double-processing (Bug-4 fix) */
+  if(_skipNextApplyRemote){_skipNextApplyRemote=false;return;}
   _applyingRemote=true;
   try{
     const prevVer=ver;
@@ -2013,6 +2020,7 @@ async function applyRemote(st){
         huffAvail:false,huffPos:null,huffFor:null,
         huffNotif:{by:myName,at:_hpVl,ts:Date.now()}};
       _huffAnimPending=null;
+      turn=myColor;
       push(_hr);draw();uiUpdate();
     }
 
@@ -2038,6 +2046,8 @@ async function applyRemote(st){
     }catch(e2){console.error('Fallback also failed:',e2);}
   }finally{
     _applyingRemote=false;
+    /* Process any state that arrived while we were busy (Bug-3 fix) */
+    if(_pendingRemoteState){const _ps=_pendingRemoteState;_pendingRemoteState=null;applyRemote(_ps);}
   }
 }
 
@@ -2048,6 +2058,7 @@ function loadSt(st){
   huffPickMode=false;huffPickCands=[];huffPickResolve=null;
   huffWaitMode=false;huffWaitCands=[];
   _animPending=null;_huffAnimPending=null;_animBusy=false;_applyingRemote=false;
+  _pendingRemoteState=null;_skipNextApplyRemote=false;
   const hpb=$('huff-pick-bar');if(hpb)hpb.classList.remove('on');
   const hwb=$('huff-wait-bar');if(hwb)hwb.classList.remove('on');
   const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
@@ -2083,7 +2094,7 @@ window.doLeave=function(){
   chatLog=[];huffPickMode=false;huffPickCands=[];huffPickResolve=null;
   huffWaitMode=false;huffWaitCands=[];
   _animPending=null;_huffAnimPending=null;_animBusy=false;_applyingRemote=false;
-  const hpb=$('huff-pick-bar');if(hpb)hpb.classList.remove('on');
+  _pendingRemoteState=null;_skipNextApplyRemote=false;
   const hwb2=$('huff-wait-bar');if(hwb2)hwb2.classList.remove('on');
   $s('rematch-status','');
   const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
