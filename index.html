@@ -1303,7 +1303,10 @@ async function _rtDrain(){
   while(_rtQueue.length){const fn=_rtQueue.shift();try{await fn();}catch(e){console.error('RT anim err',e);}}
   _rtAnimRunning=false;
 }
-function _rtReset(){_animSeq=0;_seqPlayed.clear();_rtQueue.length=0;_rtAnimRunning=false;}
+function _rtReset(){_animSeq=0;_seqPlayed.clear();_rtQueue.length=0;_rtAnimRunning=false;_activeGhost=null;}
+
+/* Track active ghost walk so draw() can re-apply victim outlines after DOM rebuild */
+let _activeGhost=null; /* {victimR, victimC, capCells:[{r,c}]} */
 
 function SB(){if(!_sb)_sb=supabase.createClient(SB_URL,SB_KEY);return _sb;}
 
@@ -1341,10 +1344,12 @@ function _bcast(data){
 async function _execAnim(d){
   if(d.type==='move'){
     lastF={r:d.fr,c:d.fc};
-    const fromEl=getCellEl(d.fr,d.fc);
+    /* BUG2 fix: if board already snapped (state arrived before ra), piece is at dest */
+    const alreadyMoved=!d.local&&board[d.fr]&&board[d.fr][d.fc]===E&&board[d.tr]&&board[d.tr][d.tc]!==E;
+    const fromEl=getCellEl(alreadyMoved?d.tr:d.fr,alreadyMoved?d.tc:d.fc);
     if(fromEl){const pEl=fromEl.querySelector('.piece');if(pEl)pEl.classList.add('jumping');}
     sfxMove();
-    if(!d.local){
+    if(!d.local&&!alreadyMoved){
       if(board[d.fr]&&board[d.fr][d.fc]!==E){
         board[d.tr][d.tc]=board[d.fr][d.fc];board[d.fr][d.fc]=E;
       }
@@ -1356,14 +1361,20 @@ async function _execAnim(d){
   } else if(d.type==='cap'){
     lastF={r:d.fr,c:d.fc};draw();
     let r=d.fr,c=d.fc;
+    /* BUG2 fix: fallback piece if board already snapped */
     const p=d.local?board[r][c]:(board[r][c]!==E?board[r][c]:d.piece);
+    /* BUG3 fix: determine captor color from piece for opponent side */
+    const captorCol=d.local?turn:(isB(d.piece)?B:W);
     for(const s of d.path){
       const[cr,cc]=s.cap;
+      /* BUG2 fix: if piece already gone at source (board snapped), animate at current pos only */
       const fromEl2=getCellEl(r,c);
       if(fromEl2){const pEl2=fromEl2.querySelector('.piece');if(pEl2){pEl2.classList.add('jumping');await sleep(120);pEl2.classList.remove('jumping');}}
       const capEl=getCellEl(cr,cc);
       if(capEl){const fl=document.createElement('div');fl.className='cap-flash';capEl.appendChild(fl);setTimeout(()=>fl.remove(),400);}
-      if(d.local){capBy[turn].push(board[cr][cc]);}
+      /* BUG3 fix: update capBy on opponent side too, so counter animates live */
+      const captured=board[cr][cc];
+      if(captured!==E)capBy[captorCol].push(captured);
       board[cr][cc]=E;board[r][c]=E;if(p!==E)board[s.r][s.c]=p;
       r=s.r;c=s.c;lastT={r,c};draw();sfxCapture();
       await sleep(260);
@@ -1554,6 +1565,8 @@ function handleMsg(type,payload){
     if(over)return;
     if(_seqPlayed.has(payload.seq))return;
     _seqPlayed.add(payload.seq);
+    /* BUG5 fix: prevent memory leak — keep only last 200 seq entries */
+    if(_seqPlayed.size>200){const first=_seqPlayed.values().next().value;_seqPlayed.delete(first);}
     _rtEnqueue(()=>_execAnim(payload));
   }
 }
@@ -1808,12 +1821,20 @@ async function showHuffPicker(cands){
 async function _ghostWalkCore(or,oc,path,piece,victimR,victimC,doRemove){
   const cellPx=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell'))||50;
   function ctr(r,c){const el=getCellEl(r,c);if(!el)return{x:0,y:0};const rc=el.getBoundingClientRect();return{x:rc.left+rc.width/2,y:rc.top+rc.height/2};}
-  const vEl=getCellEl(victimR,victimC);
-  if(vEl){vEl.style.outline='3px solid rgba(229,115,115,.95)';vEl.style.outlineOffset='-2px';}
-  for(const s of path){const cEl=getCellEl(s.cap[0],s.cap[1]);if(cEl){cEl.style.outline='3px solid rgba(255,220,50,.7)';cEl.style.outlineOffset='-2px';}}
+  /* Register active ghost so draw() re-applies outlines after DOM rebuild */
+  _activeGhost={victimR,victimC,capCells:path.map(s=>({r:s.cap[0],c:s.cap[1]}))};
+  function applyOutlines(){
+    const v=getCellEl(victimR,victimC);
+    if(v){v.style.outline='3px solid rgba(229,115,115,.95)';v.style.outlineOffset='-2px';}
+    for(const s of path){const c2=getCellEl(s.cap[0],s.cap[1]);if(c2){c2.style.outline='3px solid rgba(255,220,50,.7)';c2.style.outlineOffset='-2px';}}
+  }
+  function clearOutlines(){
+    const v=getCellEl(victimR,victimC);if(v)v.style.outline='';
+    for(const s of path){const c2=getCellEl(s.cap[0],s.cap[1]);if(c2)c2.style.outline='';}
+  }
+  applyOutlines();
   await sleep(1800);
-  if(vEl)vEl.style.outline='';
-  for(const s of path){const cEl=getCellEl(s.cap[0],s.cap[1]);if(cEl)cEl.style.outline='';}
+  clearOutlines();
   const sz=cellPx-7;
   const ghost=document.createElement('div');
   ghost.className=`ghost-piece ${isB(piece)?'bp':'wp'}${isK(piece)?' kp':''}`;
@@ -1835,6 +1856,7 @@ async function _ghostWalkCore(or,oc,path,piece,victimR,victimC,doRemove){
   await sleep(500);ghost.remove();
   const vFlEl=getCellEl(victimR,victimC);
   if(vFlEl){const fl=document.createElement('div');fl.className='cap-flash';vFlEl.appendChild(fl);setTimeout(()=>fl.remove(),700);}
+  _activeGhost=null; /* clear before final draw */
   if(doRemove){
     const vp=board[victimR][victimC];
     if(vp!==E){const captorColor=isB(vp)?W:B;capBy[captorColor].push(vp);board[victimR][victimC]=E;}
@@ -2036,7 +2058,7 @@ async function applyRemote(st){
     const prevVer=ver;
     const remoteVer=st.ver||0;
     /* ── RT engine: wait for any in-flight broadcast animation to finish ── */
-    let _wc=0;while(_rtAnimRunning&&_wc<80){await sleep(30);_wc++;}
+    let _wc=0;while(_rtAnimRunning&&_wc<200){await sleep(50);_wc++;}
     /* Apply board state directly — broadcast already handled visual animation */
     board=st.board.map(r=>[...r]);
     if(st.capBy){capBy[B]=[...(st.capBy[B]||[])];capBy[W]=[...(st.capBy[W]||[])];}
@@ -2230,6 +2252,12 @@ function draw(){
       cell.addEventListener('click',()=>onCell(r,c));
       el.appendChild(cell);
     }
+  }
+  /* If ghost walk is active, re-apply victim outlines (draw() just rebuilt DOM) */
+  if(_activeGhost){
+    const vEl2=getCellEl(_activeGhost.victimR,_activeGhost.victimC);
+    if(vEl2){vEl2.style.outline='3px solid rgba(229,115,115,.95)';vEl2.style.outlineOffset='-2px';}
+    for(const cc of _activeGhost.capCells){const cEl2=getCellEl(cc.r,cc.c);if(cEl2){cEl2.style.outline='3px solid rgba(255,220,50,.7)';cEl2.style.outlineOffset='-2px';}}
   }
 }
 
@@ -2627,4 +2655,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-</html>
+   </html>
