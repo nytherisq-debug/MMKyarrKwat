@@ -1340,42 +1340,37 @@ function _bcast(data){
 ══════════════════════════════════════════════ */
 async function _execAnim(d){
   if(d.type==='move'){
-    /* Normal move: highlight origin, slide piece */
     lastF={r:d.fr,c:d.fc};
     const fromEl=getCellEl(d.fr,d.fc);
     if(fromEl){const pEl=fromEl.querySelector('.piece');if(pEl)pEl.classList.add('jumping');}
     sfxMove();
     if(!d.local){
-      /* On opponent side: animate board state change */
       if(board[d.fr]&&board[d.fr][d.fc]!==E){
         board[d.tr][d.tc]=board[d.fr][d.fc];board[d.fr][d.fc]=E;
       }
       lastT={r:d.tr,c:d.tc};draw();
     }
-    await sleep(90);
+    await sleep(200);
     if(fromEl){const pEl=fromEl.querySelector('.piece');if(pEl)pEl.classList.remove('jumping');}
 
   } else if(d.type==='cap'){
-    /* Capture sequence */
     lastF={r:d.fr,c:d.fc};draw();
     let r=d.fr,c=d.fc;
     const p=d.local?board[r][c]:(board[r][c]!==E?board[r][c]:d.piece);
     for(const s of d.path){
       const[cr,cc]=s.cap;
       const fromEl2=getCellEl(r,c);
-      if(fromEl2){const pEl2=fromEl2.querySelector('.piece');if(pEl2){pEl2.classList.add('jumping');}}
+      if(fromEl2){const pEl2=fromEl2.querySelector('.piece');if(pEl2){pEl2.classList.add('jumping');await sleep(120);pEl2.classList.remove('jumping');}}
       const capEl=getCellEl(cr,cc);
-      if(capEl){const fl=document.createElement('div');fl.className='cap-flash';capEl.appendChild(fl);setTimeout(()=>fl.remove(),320);}
+      if(capEl){const fl=document.createElement('div');fl.className='cap-flash';capEl.appendChild(fl);setTimeout(()=>fl.remove(),400);}
       if(d.local){capBy[turn].push(board[cr][cc]);}
       board[cr][cc]=E;board[r][c]=E;if(p!==E)board[s.r][s.c]=p;
       r=s.r;c=s.c;lastT={r,c};draw();sfxCapture();
-      await sleep(200);
-      if(fromEl2){const pEl2=fromEl2.querySelector('.piece');if(pEl2)pEl2.classList.remove('jumping');}
+      await sleep(260);
     }
     if(d.local){promote(r,c);lastT={r,c};draw();addLog(`${turn===B?'⬛':'⬜'} ×${d.path.length} ဖမ်းမိ (${cl(d.fc)}${d.fr+1})`);}
 
   } else if(d.type==='ghost'){
-    /* Ghost walk (huff animation) */
     await _ghostWalkCore(d.or,d.oc,d.path,d.piece,d.vr,d.vc,d.local);
   }
 }
@@ -1809,43 +1804,43 @@ async function showHuffPicker(cands){
   return chosen;
 }
 
-/* ── Ghost walk core — zero initial delay, used by both local & remote ── */
+/* ── Ghost walk core — real-time broadcast, original animation speed ── */
 async function _ghostWalkCore(or,oc,path,piece,victimR,victimC,doRemove){
   const cellPx=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell'))||50;
   function ctr(r,c){const el=getCellEl(r,c);if(!el)return{x:0,y:0};const rc=el.getBoundingClientRect();return{x:rc.left+rc.width/2,y:rc.top+rc.height/2};}
-  /* Show outlines immediately — no pre-sleep */
   const vEl=getCellEl(victimR,victimC);
   if(vEl){vEl.style.outline='3px solid rgba(229,115,115,.95)';vEl.style.outlineOffset='-2px';}
   for(const s of path){const cEl=getCellEl(s.cap[0],s.cap[1]);if(cEl){cEl.style.outline='3px solid rgba(255,220,50,.7)';cEl.style.outlineOffset='-2px';}}
+  await sleep(900);
+  if(vEl)vEl.style.outline='';
+  for(const s of path){const cEl=getCellEl(s.cap[0],s.cap[1]);if(cEl)cEl.style.outline='';}
   const sz=cellPx-7;
   const ghost=document.createElement('div');
   ghost.className=`ghost-piece ${isB(piece)?'bp':'wp'}${isK(piece)?' kp':''}`;
-  ghost.style.cssText=`width:${sz}px;height:${sz}px;position:fixed;z-index:900;border-radius:50%;pointer-events:none;transition:left .25s cubic-bezier(.4,0,.2,1),top .25s cubic-bezier(.4,0,.2,1);`;
+  ghost.style.cssText=`width:${sz}px;height:${sz}px;position:fixed;z-index:900;border-radius:50%;pointer-events:none;transition:left .32s cubic-bezier(.4,0,.2,1),top .32s cubic-bezier(.4,0,.2,1);animation:ghost-in .25s ease forwards`;
   document.body.appendChild(ghost);
   const sp=ctr(or,oc);
   ghost.style.left=`${sp.x-sz/2}px`;ghost.style.top=`${sp.y-sz/2}px`;
-  /* Tiny paint-frame delay so transition fires */
-  await sleep(16);
+  await sleep(280);
   for(const s of path){
     const dp=ctr(s.r,s.c);
     ghost.style.left=`${dp.x-sz/2}px`;ghost.style.top=`${dp.y-sz/2}px`;
-    await sleep(260); /* transition time */
+    await sleep(150);
     const fEl=getCellEl(s.cap[0],s.cap[1]);
-    if(fEl){const fl=document.createElement('div');fl.className='cap-flash';fEl.appendChild(fl);setTimeout(()=>fl.remove(),280);}
-    await sleep(60);
+    if(fEl){const fl=document.createElement('div');fl.className='cap-flash';fEl.appendChild(fl);setTimeout(()=>fl.remove(),380);}
+    await sleep(220);
   }
-  /* Clear outlines */
-  if(vEl)vEl.style.outline='';
-  for(const s of path){const cEl=getCellEl(s.cap[0],s.cap[1]);if(cEl)cEl.style.outline='';}
-  ghost.style.transition='none';ghost.style.animation='ghost-pop .25s ease forwards';
-  await sleep(250);ghost.remove();
+  await sleep(200);
+  ghost.style.transition='none';ghost.style.animation='ghost-pop .35s ease forwards';
+  await sleep(350);ghost.remove();
   const vFlEl=getCellEl(victimR,victimC);
-  if(vFlEl){const fl=document.createElement('div');fl.className='cap-flash';vFlEl.appendChild(fl);setTimeout(()=>fl.remove(),320);}
+  if(vFlEl){const fl=document.createElement('div');fl.className='cap-flash';vFlEl.appendChild(fl);setTimeout(()=>fl.remove(),450);}
   if(doRemove){
     const vp=board[victimR][victimC];
     if(vp!==E){const captorColor=isB(vp)?W:B;capBy[captorColor].push(vp);board[victimR][victimC]=E;}
     addLog(`💨 Huff! ${cl(victimC)}${victimR+1} ဖမ်းကောက်ခံရ`);draw();
   }
+  await sleep(400);
 }
 async function _ghostWalk(or,oc,path,piece,victimR,victimC,doRemove){
   await _ghostWalkCore(or,oc,path,piece,victimR,victimC,doRemove);
@@ -1858,11 +1853,11 @@ async function replayCaptureAnim(fr,fc,capPath){
   for(const s of capPath){
     const[cr,cc]=s.cap;
     const fromEl=getCellEl(r,c);
-    if(fromEl){const pEl=fromEl.querySelector('.piece');if(pEl){pEl.classList.add('jumping');await sleep(90);pEl.classList.remove('jumping');}}
+    if(fromEl){const pEl=fromEl.querySelector('.piece');if(pEl){pEl.classList.add('jumping');await sleep(120);pEl.classList.remove('jumping');}}
     const cEl=getCellEl(cr,cc);
-    if(cEl){const fl=document.createElement('div');fl.className='cap-flash';cEl.appendChild(fl);setTimeout(()=>fl.remove(),300);}
+    if(cEl){const fl=document.createElement('div');fl.className='cap-flash';cEl.appendChild(fl);setTimeout(()=>fl.remove(),400);}
     board[cr][cc]=E;board[r][c]=E;board[s.r][s.c]=p;
-    r=s.r;c=s.c;lastT={r,c};draw();sfxCapture();await sleep(200);
+    r=s.r;c=s.c;lastT={r,c};draw();sfxCapture();await sleep(260);
   }
   lastT={r,c};draw();
 }
@@ -1881,11 +1876,11 @@ async function applyPath(fr,fc,path){
   for(const s of path){
     const[cr,cc]=s.cap;
     const fromEl=getCellEl(r,c);
-    if(fromEl){const pEl=fromEl.querySelector('.piece');if(pEl){pEl.classList.add('jumping');await sleep(90);pEl.classList.remove('jumping');}}
+    if(fromEl){const pEl=fromEl.querySelector('.piece');if(pEl){pEl.classList.add('jumping');await sleep(120);pEl.classList.remove('jumping');}}
     const capEl=getCellEl(cr,cc);
-    if(capEl){const flash=document.createElement('div');flash.className='cap-flash';capEl.appendChild(flash);setTimeout(()=>flash.remove(),300);}
+    if(capEl){const flash=document.createElement('div');flash.className='cap-flash';capEl.appendChild(flash);setTimeout(()=>flash.remove(),400);}
     capBy[turn].push(board[cr][cc]);board[cr][cc]=E;board[r][c]=E;board[s.r][s.c]=p;
-    r=s.r;c=s.c;n++;lastT={r,c};draw();sfxCapture();await sleep(200);
+    r=s.r;c=s.c;n++;lastT={r,c};draw();sfxCapture();await sleep(260);
   }
   promote(r,c);lastT={r,c};draw();
   addLog(`${turn===B?'⬛':'⬜'} ×${n} ဖမ်းမိ (${cl(fc)}${fr+1})`);
