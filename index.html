@@ -2021,6 +2021,7 @@ async function applyRemote(st){
       const _hr={board:board.map(r=>[...r]),turn:myColor,ver,over:false,winner:null,
         capBy:{[B]:[...capBy[B]],[W]:[...capBy[W]]},lastF,lastT,lastLog:glog[0]||'',
         huffAvail:false,huffPos:null,huffFor:null,
+        anim:{type:'huff'},
         huffAnim:_chosen,
         huffNotif:{by:myName,at:_hpVl,ts:Date.now()}};
       _huffAnimPending=null;
