@@ -1455,6 +1455,12 @@ function handleMsg(type,payload){
     addChatMsg({name:'System',text:`🎮 ${payload.guestName} ဝင်ရောက်လာပြီ! ဂိမ်းစပါသည်!`,sys:true,ts:Date.now()});
   } else if(type==='state'){
     applyRemote(payload.state);
+  } else if(type==='huff_anim'){
+    /* Real-time ghost walk: Player A receives this at same moment B starts their animation */
+    if(huffWaitMode&&payload.anim&&!aiMode){
+      _huffAnimAlreadyPlayed=true;
+      replayHuffGhost(payload.anim); /* fire-and-forget — runs in parallel with Player B */
+    }
   } else if(type==='chat'){
     addChatMsg(payload);
   } else if(type==='rematch_req'){
@@ -1580,6 +1586,7 @@ let chainOrigin=null, chainPaths=[], chainDone=0;
 let huffPickMode=false, huffPickCands=[], huffPickResolve=null;
 let huffWaitMode=false, huffWaitCands=[];  /* Player A: victim highlights while B picks */
 let _animPending=null, _huffAnimPending=null, _animBusy=false;
+let _huffAnimAlreadyPlayed=false; /* Set when huff_anim broadcast already triggered local replay */
 
 function onCell(r,c){
   if(over)return;
@@ -1961,7 +1968,7 @@ async function applyRemote(st){
       _animBusy=false;
     }
     const isNewOppMove = remoteVer>prevVer && !st.over && !_animBusy;
-    if(isNewOppMove&&(st.anim||st.huffAnim)){
+    if(isNewOppMove&&st.anim){
       _animBusy=true;
       const fBoard=st.board.map(r=>[...r]);
       const fCap={[B]:[...(st.capBy?.[B]||[])],[W]:[...(st.capBy?.[W]||[])]};
@@ -1979,7 +1986,8 @@ async function applyRemote(st){
           sfxMove();
           lastT={r:st.anim.tr,c:st.anim.tc};draw();await sleep(300);
         }
-        if(st.huffAnim)await replayHuffGhost(st.huffAnim);
+        if(st.huffAnim&&!_huffAnimAlreadyPlayed)await replayHuffGhost(st.huffAnim);
+        _huffAnimAlreadyPlayed=false;
       }catch(animErr){
         console.error('Animation error (non-fatal):',animErr);
       }
@@ -2010,6 +2018,8 @@ async function applyRemote(st){
     /* huffPending: Player B (us) picks which piece to huff */
     if(!st.over&&st.huffPending&&st.huffPending.length>0&&turn===myColor){
       const _chosen=await showHuffPicker(st.huffPending);
+      /* ── Real-time sync: broadcast animation signal NOW so Player A starts at same time ── */
+      sbBroadcast('huff_anim',{anim:_chosen});
       _huffAnimPending=_chosen;
       await doHuffAnimation(_chosen,true);
       const _hpVl=`${cl(_chosen.victimC)}${_chosen.victimR+1}`;
@@ -2018,8 +2028,7 @@ async function applyRemote(st){
       const _hr={board:board.map(r=>[...r]),turn:myColor,ver,over:false,winner:null,
         capBy:{[B]:[...capBy[B]],[W]:[...capBy[W]]},lastF,lastT,lastLog:glog[0]||'',
         huffAvail:false,huffPos:null,huffFor:null,
-        huffNotif:{by:myName,at:_hpVl,ts:Date.now()},
-        huffAnim:_chosen};
+        huffNotif:{by:myName,at:_hpVl,ts:Date.now()}};
       _huffAnimPending=null;
       turn=myColor;
       push(_hr);draw();uiUpdate();
@@ -2059,7 +2068,7 @@ function loadSt(st){
   huffPickMode=false;huffPickCands=[];huffPickResolve=null;
   huffWaitMode=false;huffWaitCands=[];
   _animPending=null;_huffAnimPending=null;_animBusy=false;_applyingRemote=false;
-  _pendingRemoteState=null;_skipNextApplyRemote=false;
+  _pendingRemoteState=null;_skipNextApplyRemote=false;_huffAnimAlreadyPlayed=false;
   const hpb=$('huff-pick-bar');if(hpb)hpb.classList.remove('on');
   const hwb=$('huff-wait-bar');if(hwb)hwb.classList.remove('on');
   const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
@@ -2095,7 +2104,7 @@ window.doLeave=function(){
   chatLog=[];huffPickMode=false;huffPickCands=[];huffPickResolve=null;
   huffWaitMode=false;huffWaitCands=[];
   _animPending=null;_huffAnimPending=null;_animBusy=false;_applyingRemote=false;
-  _pendingRemoteState=null;_skipNextApplyRemote=false;
+  _pendingRemoteState=null;_skipNextApplyRemote=false;_huffAnimAlreadyPlayed=false;
   const hpb2=$('huff-pick-bar');if(hpb2)hpb2.classList.remove('on');
   const hwb2=$('huff-wait-bar');if(hwb2)hwb2.classList.remove('on');
   $s('rematch-status','');
