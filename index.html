@@ -1471,9 +1471,9 @@ function handleMsg(type,payload){
     $s('rematch-status','');
     setTimeout(()=>doLeave(),400);
   } else if(type==='rematch_start'){
+    _skipNextApplyRemote=true;
     applyRematchColor(payload.state);
     loadSt(payload.state);
-    _skipNextApplyRemote=true;
     over=false;winShown=false;gameCount++;
     $('wino').classList.remove('on');$('rematch-req').classList.remove('on');
     $s('rematch-status','');
@@ -1699,7 +1699,7 @@ async function doNormalMove(fr,fc,mv){
       /* Show wait-bar + victim highlights to Player A */
       huffWaitMode=true;huffWaitCands=pendingCands;
       const _wlbl=pendingCands.map(h=>`${cl(h.victimC)}${h.victimR+1}`).join(', ');
-      $s('huff-wait-msg',`ဖမ်းမစားမိကျား (${_wlbl}) — ပြိုင်ဘက် ရွေးချယ်နေပြီ...`);
+      $s('huff-wait-msg',`ဖမ်းမစားမိကျား (${_wlbl}) `);
       $('huff-wait-bar').classList.add('on');
       push(_hp);turn=nxtT;draw();uiUpdate();
       return;
@@ -1863,7 +1863,6 @@ window.requestRematch=function(){
     huffOn=false;huffAt=null;_animPending=null;_huffAnimPending=null;_animBusy=false;
     huffPickMode=false;huffPickCands=[];huffPickResolve=null;
     huffWaitMode=false;huffWaitCands=[];
-    _aiThinking=false;_applyingRemote=false;_pendingRemoteState=null;_skipNextApplyRemote=false;
     $('wino').classList.remove('on');showGame();
     const dl={easy:'😊 Easy AI',normal:'🎯 Normal AI',hard:'🔥 Hard AI'}[aiDifficulty];
     $s('opp-nm',dl);$s('opp-pnm',dl);
@@ -1942,14 +1941,7 @@ window.cancelRoom=async function(){
   stopPeriodicSync();
   if(sbCh){try{await SB().removeChannel(sbCh);}catch(e){}}sbCh=null;
   if(roomId)try{await SB().from('rooms').delete().eq('id',roomId);}catch(e){}
-  showScr('lobby');
-  roomId='';myColor=null;isHost=false;chatLog=[];
-  board=[];turn=B;sel=null;legals=[];over=false;glog=[];ver=0;
-  capBy={[B]:[],[W]:[]};lastF=null;lastT=null;winShown=false;
-  huffOn=false;huffAt=null;huffPickMode=false;huffPickCands=[];huffPickResolve=null;
-  huffWaitMode=false;huffWaitCands=[];
-  _animPending=null;_huffAnimPending=null;_animBusy=false;_applyingRemote=false;
-  _pendingRemoteState=null;_skipNextApplyRemote=false;$s('lobby-st','');
+  showScr('lobby');roomId='';myColor=null;isHost=false;chatLog=[];
 };
 
 async function applyRemote(st){
@@ -1975,10 +1967,10 @@ async function applyRemote(st){
       const fCap={[B]:[...(st.capBy?.[B]||[])],[W]:[...(st.capBy?.[W]||[])]};
       sel=null;legals=[];
       try{
-        if(st.anim&&st.anim.type==='cap'){
+        if(st.anim.type==='cap'){
           lastF={r:st.anim.fr,c:st.anim.fc};draw();
           await replayCaptureAnim(st.anim.fr,st.anim.fc,st.anim.capPath);
-        } else if(st.anim&&st.anim.type==='move'){
+        } else if(st.anim.type==='move'){
           lastF={r:st.anim.fr,c:st.anim.fc};draw();await sleep(200);
           if(board[st.anim.fr]&&board[st.anim.fr][st.anim.fc]!==undefined){
             board[st.anim.tr][st.anim.tc]=board[st.anim.fr][st.anim.fc];
@@ -2008,7 +2000,7 @@ async function applyRemote(st){
       window._lastHuffTs=st.huffNotif.ts;
       $s('huff-piece-lbl',st.huffNotif.at);
       $('hn').classList.add('on');vibrate([200,80,200,80,200]);
-      sysChat(`💨 မစားမိသောကြောင့် ${st.huffNotif.at} ဖမ်းကောက်ခံလိုက်ရသည်`);
+      sysChat(`မစားမိသောကြောင့် ${st.huffNotif.at} ဖမ်းကောက်ခံလိုက်ရသည်`);
       setTimeout(()=>$('hn').classList.remove('on'),4000);
     }
     draw();uiUpdate();
@@ -2021,13 +2013,13 @@ async function applyRemote(st){
       _huffAnimPending=_chosen;
       await doHuffAnimation(_chosen,true);
       const _hpVl=`${cl(_chosen.victimC)}${_chosen.victimR+1}`;
-      sysChat(`\u{1F4A8} မစားမိသောကြောင့် ${_hpVl} ဖမ်းကောက်ခဲ့`);
+      sysChat(`\u{1F4A8} မစားမိသောကြောင့် ${_hpVl} ဖမ်းကောက်ခဲ့သည်`);
       ver++;
       const _hr={board:board.map(r=>[...r]),turn:myColor,ver,over:false,winner:null,
         capBy:{[B]:[...capBy[B]],[W]:[...capBy[W]]},lastF,lastT,lastLog:glog[0]||'',
         huffAvail:false,huffPos:null,huffFor:null,
-        huffAnim:_chosen,
-        huffNotif:{by:myName,at:_hpVl,ts:Date.now()}};
+        huffNotif:{by:myName,at:_hpVl,ts:Date.now()},
+        huffAnim:_chosen};
       _huffAnimPending=null;
       turn=myColor;
       push(_hr);draw();uiUpdate();
@@ -2037,7 +2029,7 @@ async function applyRemote(st){
     if(!st.over&&st.huffPending&&st.huffPending.length>0&&turn!==myColor){
       huffWaitMode=true;huffWaitCands=st.huffPending;
       const _wlbl=st.huffPending.map(h=>`${cl(h.victimC)}${h.victimR+1}`).join(', ');
-      $s('huff-wait-msg',`ဖမ်းမစားမိကျား (${_wlbl}) — ပြိုင်ဘက် ရွေးချယ်နေပြီ...`);
+      $s('huff-wait-msg',`ဖမ်းမစားမိကျား (${_wlbl}) `);
       $('huff-wait-bar').classList.add('on');
       draw();
     }
@@ -2410,7 +2402,6 @@ window.startAiGame=function(){
   huffOn=false;huffAt=null;leaving=false;huffPickMode=false;huffPickCands=[];huffPickResolve=null;
   huffWaitMode=false;huffWaitCands=[];
   _animPending=null;_huffAnimPending=null;_animBusy=false;
-  _aiThinking=false;_applyingRemote=false;_pendingRemoteState=null;_skipNextApplyRemote=false;
   showGame();
   const dl={easy:'😊 Easy AI',normal:'🎯 Normal AI',hard:'🔥 Hard AI'}[aiDifficulty];
   $s('opp-nm',dl);$s('opp-pnm',dl);
@@ -2548,7 +2539,7 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 <div id="yt-wrap" style="position:fixed;left:-9999px;top:0;width:480px;height:270px;pointer-events:none;z-index:-1;overflow:hidden;"></div>
 <script>
 (function(){
-  var SRC = 'https://www.youtube.com/embed/4eTE9X1G76M?autoplay=1&mute=0&loop=1&playlist=4eTE9X1G76M&playsinline=1&controls=0&rel=0';
+  var SRC = 'https://www.youtube.com/embed/3N04vXMzXtM?autoplay=1&mute=0&loop=1&playlist=3N04vXMzXtM&playsinline=1&controls=0&rel=0';
   var isOn = false;
   var wrap = document.getElementById('yt-wrap');
 
@@ -2586,4 +2577,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-</html>
+   </html>
