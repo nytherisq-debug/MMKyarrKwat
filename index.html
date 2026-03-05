@@ -1655,9 +1655,11 @@ async function doNormalMove(fr,fc,mv){
   const ac=allCaps(turn,board),had=ac.length>0;
   let huffCands=[];
   if(had){
-    const ml=maxCapLen(ac);
     for(const entry of ac){
-      const bp=entry.paths.find(p=>p.length===ml);
+      /* Use each piece's own best path — not global max — so ALL capturing pieces
+         become huff candidates and Player B can choose which to huff */
+      const pml=entry.paths.reduce((m,p)=>Math.max(m,p.length),0);
+      const bp=entry.paths.find(p=>p.length===pml);
       if(bp){
         const _wasMoved=(entry.r===fr&&entry.c===fc);
         huffCands.push({
@@ -1988,6 +1990,7 @@ async function applyRemote(st){
     } else {
       board=st.board.map(r=>[...r]);
       if(st.capBy){capBy[B]=[...(st.capBy[B]||[])];capBy[W]=[...(st.capBy[W]||[])];}
+      if(isNewOppMove&&st.huffAnim){try{await replayHuffGhost(st.huffAnim);}catch(e){console.error('huffAnim replay error (non-fatal):',e);}}
     }
     turn=st.turn;ver=remoteVer;
     lastF=st.lastF||null;lastT=st.lastT||null;
@@ -2000,7 +2003,7 @@ async function applyRemote(st){
       window._lastHuffTs=st.huffNotif.ts;
       $s('huff-piece-lbl',st.huffNotif.at);
       $('hn').classList.add('on');vibrate([200,80,200,80,200]);
-      sysChat(`မစားမိသောကြောင့် ${st.huffNotif.at} ဖမ်းကောက်ခဲ့သည်`);
+      sysChat(`မစားမိသောကြောင့် ${st.huffNotif.at} ဖမ်းကောက်ခံလိုက်ရသည်`);
       setTimeout(()=>$('hn').classList.remove('on'),4000);
     }
     draw();uiUpdate();
@@ -2013,7 +2016,7 @@ async function applyRemote(st){
       _huffAnimPending=_chosen;
       await doHuffAnimation(_chosen,true);
       const _hpVl=`${cl(_chosen.victimC)}${_chosen.victimR+1}`;
-      sysChat(`\u{1F4A8} မစားမိသောကြောင့် ${_hpVl} ဖမ်းကောက်ခံလိုက်ရသည်`);
+      sysChat(`\u{1F4A8} မစားမိသောကြောင့် ${_hpVl} ဖမ်းကောက်ခဲ့သည်`);
       ver++;
       const _hr={board:board.map(r=>[...r]),turn:myColor,ver,over:false,winner:null,
         capBy:{[B]:[...capBy[B]],[W]:[...capBy[W]]},lastF,lastT,lastLog:glog[0]||'',
