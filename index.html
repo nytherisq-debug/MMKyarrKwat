@@ -2000,7 +2000,7 @@ async function applyRemote(st){
       window._lastHuffTs=st.huffNotif.ts;
       $s('huff-piece-lbl',st.huffNotif.at);
       $('hn').classList.add('on');vibrate([200,80,200,80,200]);
-      sysChat(`မစားမိသောကြောင့် ${st.huffNotif.at} ဖမ်းကောက်ခံလိုက်ရသည်`);
+      sysChat(`မစားမိသောကြောင့် ${st.huffNotif.at} ဖမ်းကောက်ခဲ့သည်`);
       setTimeout(()=>$('hn').classList.remove('on'),4000);
     }
     draw();uiUpdate();
@@ -2013,12 +2013,11 @@ async function applyRemote(st){
       _huffAnimPending=_chosen;
       await doHuffAnimation(_chosen,true);
       const _hpVl=`${cl(_chosen.victimC)}${_chosen.victimR+1}`;
-      sysChat(`\u{1F4A8} မစားမိသောကြောင့် ${_hpVl} ဖမ်းကောက်ခဲ့သည်`);
+      sysChat(`\u{1F4A8} မစားမိသောကြောင့် ${_hpVl} ဖမ်းကောက်ခံလိုက်ရသည်`);
       ver++;
       const _hr={board:board.map(r=>[...r]),turn:myColor,ver,over:false,winner:null,
         capBy:{[B]:[...capBy[B]],[W]:[...capBy[W]]},lastF,lastT,lastLog:glog[0]||'',
         huffAvail:false,huffPos:null,huffFor:null,
-        huffAnim:_chosen,
         huffNotif:{by:myName,at:_hpVl,ts:Date.now()}};
       _huffAnimPending=null;
       turn=myColor;
@@ -2577,4 +2576,5 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-   </html>
+       </html>
+       
