@@ -2095,6 +2095,7 @@ window.doLeave=function(){
   huffWaitMode=false;huffWaitCands=[];
   _animPending=null;_huffAnimPending=null;_animBusy=false;_applyingRemote=false;
   _pendingRemoteState=null;_skipNextApplyRemote=false;
+  const hpb2=$('huff-pick-bar');if(hpb2)hpb2.classList.remove('on');
   const hwb2=$('huff-wait-bar');if(hwb2)hwb2.classList.remove('on');
   $s('rematch-status','');
   const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
@@ -2575,4 +2576,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-   </html>
+</html>
