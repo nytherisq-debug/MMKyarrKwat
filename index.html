@@ -1752,8 +1752,17 @@ async function _ghostWalk(or,oc,path,piece,victimR,victimC,doRemove){
   await sleep(200);
   ghost.style.transition='none';ghost.style.animation='ghost-pop .35s ease forwards';
   await sleep(350);ghost.remove();
+  /* FIX: Use position:fixed on document.body instead of appending to a cell element.
+     draw() calls innerHTML='' which detaches the cell so any child appended to it
+     never renders. Fixed overlay is immune to board rebuilds — shows on both sides. */
   const vFlEl=getCellEl(victimR,victimC);
-  if(vFlEl){const fl=document.createElement('div');fl.className='cap-flash';vFlEl.appendChild(fl);setTimeout(()=>fl.remove(),450);}
+  if(vFlEl){
+    const vrc=vFlEl.getBoundingClientRect();
+    const fl=document.createElement('div');
+    fl.style.cssText=`position:fixed;left:${vrc.left}px;top:${vrc.top}px;width:${vrc.width}px;height:${vrc.height}px;border-radius:50%;background:radial-gradient(circle,rgba(239,68,68,0.95),transparent 70%);animation:flash-out .35s ease-out forwards;pointer-events:none;z-index:950`;
+    document.body.appendChild(fl);
+    setTimeout(()=>fl.remove(),450);
+  }
   if(doRemove){
     /* Bug-4 fix: captor = whoever does NOT own the huffed piece.
        Determined by piece color, not `turn` (which may be wrong in remote flow). */
@@ -2168,12 +2177,7 @@ function renderChat(list){
    DRAW BOARD
 ══════════════════════════════════════════════ */
 function draw(){
-  const el=$('board');if(!el)return;
-  /* FIX: #cap-overlay SVG lives inside #board. innerHTML='' destroys it so
-     drawCapOverlay() always returned early (svg===null) — arrows were never
-     visible. Save the SVG before clearing, re-insert it, then re-render. */
-  const _svg=$('cap-overlay');
-  el.innerHTML='';
+  const el=$('board');if(!el)return;el.innerHTML='';
   const lm=new Map();for(const m of legals)lm.set(`${m.r},${m.c}`,m);
   for(let dr=0;dr<8;dr++){
     for(let dc=0;dc<8;dc++){
@@ -2217,10 +2221,6 @@ function draw(){
       el.appendChild(cell);
     }
   }
-  /* Re-append SVG AFTER all 64 cells so children[dr*8+dc] index in getCellEl()
-     stays correct (SVG as first child would shift every index by 1). */
-  if(_svg)el.appendChild(_svg);
-  drawCapOverlay();
 }
 
 /* ══════════════════════════════════════════════
