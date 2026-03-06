@@ -1763,9 +1763,14 @@ async function _ghostWalk(or,oc,path,piece,victimR,victimC,doRemove){
       capBy[captorColor].push(vp);
       board[victimR][victimC]=E;
     }
-    addLog(`💨 Huff! ${cl(victimC)}${victimR+1} ဖမ်းကောက်ခံရ`);draw();
+    addLog(`💨 Huff! ${cl(victimC)}${victimR+1} ဖမ်းကောက်ခံရ`);
   }
+  /* FIX: wait for cap-flash animation BEFORE calling draw() on both sides.
+     Previously draw() was called immediately inside doRemove which wiped the
+     cap-flash element from the DOM before it had a chance to animate, so
+     Player B never saw the red flash that Player A could see. */
   await sleep(400);
+  if(doRemove)draw();
 }
 async function doHuffAnimation(h,doRemove){await _ghostWalk(h.or,h.oc,h.path,h.piece,h.victimR,h.victimC,doRemove);}
 async function replayHuffGhost(h){await _ghostWalk(h.or,h.oc,h.path,h.piece,h.victimR,h.victimC,false);}
@@ -2163,7 +2168,12 @@ function renderChat(list){
    DRAW BOARD
 ══════════════════════════════════════════════ */
 function draw(){
-  const el=$('board');if(!el)return;el.innerHTML='';
+  const el=$('board');if(!el)return;
+  /* FIX: #cap-overlay SVG lives inside #board. innerHTML='' destroys it so
+     drawCapOverlay() always returned early (svg===null) — arrows were never
+     visible. Save the SVG before clearing, re-insert it, then re-render. */
+  const _svg=$('cap-overlay');
+  el.innerHTML='';
   const lm=new Map();for(const m of legals)lm.set(`${m.r},${m.c}`,m);
   for(let dr=0;dr<8;dr++){
     for(let dc=0;dc<8;dc++){
@@ -2207,6 +2217,10 @@ function draw(){
       el.appendChild(cell);
     }
   }
+  /* Re-append SVG AFTER all 64 cells so children[dr*8+dc] index in getCellEl()
+     stays correct (SVG as first child would shift every index by 1). */
+  if(_svg)el.appendChild(_svg);
+  drawCapOverlay();
 }
 
 /* ══════════════════════════════════════════════
@@ -2603,4 +2617,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-   </html>
+</html>
