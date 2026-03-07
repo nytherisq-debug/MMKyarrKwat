@@ -463,8 +463,15 @@ body::after{
 
 /* Logo - fixed width, no shrink */
 .tlogo-img{
-  height:36px;width:36px;object-fit:contain;flex:0 0 auto;margin-right:10px;
-  filter:drop-shadow(0 0 8px rgba(212,168,67,0.55));}
+  height:36px;width:36px;object-fit:cover;flex:0 0 auto;margin-right:10px;
+  border-radius:50%;
+  border:1.5px solid rgba(212,168,67,0.65);
+  box-shadow:
+    0 0 0 2px rgba(212,168,67,0.10),
+    0 0 12px rgba(212,168,67,0.55),
+    0 0 24px rgba(212,168,67,0.20),
+    0 2px 8px rgba(0,0,0,0.7);
+  outline:none;}
 
 /* Room pill - fixed, no shrink */
 .rpill{
@@ -2922,4 +2929,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-   </html>
+</html>
