@@ -140,25 +140,31 @@ body::after{
   animation:lobby-orb-float 11s ease-in-out infinite reverse}
 
 .logo-wrap{
-  text-align:center;margin-bottom:4px;
+  text-align:center;margin-bottom:8px;
   animation:bob 3.5s ease-in-out infinite}
 .logo-img{
-  width:160px;height:160px;object-fit:cover;
+  width:140px;height:140px;
+  object-fit:cover;
   border-radius:50%;
-  border:2px solid rgba(212,168,67,0.55);
+  border:2.5px solid rgba(212,168,67,0.70);
+  outline:1px solid rgba(212,168,67,0.18);
+  outline-offset:4px;
   box-shadow:
-    0 0 0 4px rgba(212,168,67,0.10),
-    0 0 28px rgba(212,168,67,0.65),
-    0 0 60px rgba(212,168,67,0.28),
-    0 12px 32px rgba(0,0,0,0.90);
-  transition:box-shadow .35s ease,transform .35s ease}
+    0 0 0 6px rgba(212,168,67,0.07),
+    0 0 30px rgba(212,168,67,0.70),
+    0 0 70px rgba(212,168,67,0.25),
+    inset 0 0 0 1px rgba(212,168,67,0.10),
+    0 14px 36px rgba(0,0,0,0.92);
+  transition:box-shadow .4s ease,transform .4s ease,outline-color .4s}
 .logo-img:hover{
-  transform:scale(1.04);
+  transform:scale(1.05);
+  outline-color:rgba(212,168,67,0.45);
   box-shadow:
-    0 0 0 4px rgba(212,168,67,0.18),
-    0 0 38px rgba(212,168,67,0.85),
-    0 0 80px rgba(212,168,67,0.40),
-    0 12px 32px rgba(0,0,0,0.90)}
+    0 0 0 6px rgba(212,168,67,0.12),
+    0 0 44px rgba(212,168,67,0.90),
+    0 0 90px rgba(212,168,67,0.38),
+    inset 0 0 0 1px rgba(212,168,67,0.15),
+    0 14px 36px rgba(0,0,0,0.92)}
 .ldiv{
   height:1px;margin:20px 0;
   background:linear-gradient(90deg,transparent,rgba(212,168,67,.12),rgba(212,168,67,.5),rgba(212,168,67,.12),transparent)}
@@ -985,8 +991,8 @@ body::after{
 ═══════════════════════════════════════════ */
 @media(max-width:960px){:root{--cell:44px;--side:155px}.main{gap:8px}}
 @media(max-width:780px){:root{--cell:38px}.panel{display:none}.main{justify-content:center}}
-@media(max-width:500px){:root{--cell:34px}.lbox{padding:26px 22px}.logo-img{width:130px;height:130px}#lobby{padding:12px 0}}
-@media(max-width:380px){:root{--cell:32px}.logo-img{width:110px;height:110px}}
+@media(max-width:500px){:root{--cell:34px}.lbox{padding:26px 22px}.logo-img{width:120px;height:120px}#lobby{padding:12px 0}}
+@media(max-width:380px){:root{--cell:32px}.logo-img{width:100px;height:100px}}
 /* ── Music Button ── */
 #mbtn{
   display:flex;align-items:center;gap:5px;
@@ -2621,4 +2627,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-   </html>
+</html>
