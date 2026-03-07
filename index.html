@@ -164,7 +164,7 @@ body::after{
 .lobby-flower{flex-shrink:0;width:72px;height:172px;position:relative}
 .lobby-flower svg{width:100%;height:100%;overflow:visible}
 .lobby-flower-left{transform-origin:center center}
-.lobby-flower-right{transform-origin:center center;transform:scaleX(-1)}
+.lobby-flower-right{transform-origin:center center}
 
 @keyframes o-draw{from{stroke-dashoffset:var(--dl,900)}to{stroke-dashoffset:0}}
 @keyframes o-glow{0%,100%{filter:drop-shadow(0 0 2px rgba(212,168,67,.4)) drop-shadow(0 0 5px rgba(212,168,67,.15))}50%{filter:drop-shadow(0 0 8px rgba(212,168,67,.9)) drop-shadow(0 0 18px rgba(212,168,67,.5))}}
@@ -195,6 +195,150 @@ body::after{
 .od{fill:#D4A843;animation:o-shimmer 2.8s ease-in-out infinite 2.2s}
 /* Whole ornament ambient glow */
 .lobby-flower{animation:o-glow 3.8s ease-in-out infinite 2.8s}
+
+
+/* ══════════════════════════════════════════════
+   MECHANIC SCENE — around & behind logo
+══════════════════════════════════════════════ */
+@keyframes mc-cw    {to{transform:rotate(360deg)}}
+@keyframes mc-ccw   {to{transform:rotate(-360deg)}}
+@keyframes mc-pulse {0%,100%{opacity:.4;transform:translate(-50%,-50%) scale(.8)}
+                     50%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}}
+@keyframes mc-orbit {to{transform:rotate(360deg)}}
+@keyframes mc-glow  {0%,100%{opacity:.35}50%{opacity:.8}}
+@keyframes mc-spark {0%,85%,100%{opacity:0;transform:translate(-50%,-50%) scale(0)}
+                     40%,60%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes mc-dash  {to{stroke-dashoffset:-48}}
+
+/* scene container — sits around the logo-cyber-wrap */
+.mg-scene{
+  position:relative;
+  width:300px;height:300px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0}
+
+/* ── large gear rings behind logo ── */
+.mg-ring{
+  position:absolute;left:50%;top:50%;
+  border-radius:50%;border-style:solid;pointer-events:none}
+.mg-r1{/* outermost dashed */
+  width:280px;height:280px;margin:-140px 0 0 -140px;
+  border-width:1px;
+  border-color:rgba(212,168,67,.12) transparent rgba(212,168,67,.12) transparent;
+  animation:mc-cw 28s linear infinite}
+.mg-r2{
+  width:240px;height:240px;margin:-120px 0 0 -120px;
+  border-width:1.5px;
+  border-color:rgba(212,168,67,.30) rgba(212,168,67,.06) rgba(212,168,67,.30) rgba(212,168,67,.06);
+  animation:mc-ccw 18s linear infinite}
+.mg-r3{
+  width:200px;height:200px;margin:-100px 0 0 -100px;
+  border-width:1px;
+  border-color:rgba(212,168,67,.18) rgba(212,168,67,.04) rgba(212,168,67,.18) rgba(212,168,67,.04);
+  animation:mc-cw 12s linear infinite}
+.mg-r4{/* inner detail ring */
+  width:168px;height:168px;margin:-84px 0 0 -84px;
+  border-width:1px;
+  border-color:rgba(212,168,67,.10) transparent rgba(212,168,67,.10) transparent;
+  animation:mc-ccw 9s linear infinite}
+
+/* SVG dashed overlay ring */
+.mg-svg{
+  position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  pointer-events:none}
+.mg-svg circle{
+  animation:mc-dash 3s linear infinite}
+
+/* ── 4 spoke arms from center ── */
+.mg-spoke{
+  position:absolute;left:50%;top:50%;
+  height:1.5px;transform-origin:0 50%;
+  pointer-events:none}
+.mg-spoke::after{/* node dot at tip */
+  content:'';position:absolute;right:-5px;top:50%;
+  width:8px;height:8px;border-radius:50%;
+  transform:translateY(-50%);
+  background:rgba(212,168,67,.8);
+  box-shadow:0 0 8px rgba(212,168,67,.7),0 0 16px rgba(212,168,67,.35);
+  animation:mc-glow 2.4s ease-in-out infinite}
+.mg-sp1{transform:rotate(0deg);  width:100px;
+  background:linear-gradient(90deg,rgba(212,168,67,.05),rgba(212,168,67,.5))}
+.mg-sp2{transform:rotate(90deg); width:100px;
+  background:linear-gradient(90deg,rgba(212,168,67,.05),rgba(212,168,67,.5))}
+.mg-sp3{transform:rotate(180deg);width:100px;
+  background:linear-gradient(90deg,rgba(212,168,67,.05),rgba(212,168,67,.5));animation-delay:.6s}
+.mg-sp4{transform:rotate(270deg);width:100px;
+  background:linear-gradient(90deg,rgba(212,168,67,.05),rgba(212,168,67,.5));animation-delay:1.2s}
+.mg-sp1::after{animation-delay:0s}
+.mg-sp2::after{animation-delay:.6s}
+.mg-sp3::after{animation-delay:1.2s}
+.mg-sp4::after{animation-delay:1.8s}
+
+/* ── satellite mini-gears at spoke tips, orbiting ── */
+.mg-orbit-ring{
+  position:absolute;left:50%;top:50%;
+  width:0;height:0;pointer-events:none;
+  animation:mc-orbit 20s linear infinite}
+.mg-sat{
+  position:absolute;
+  display:flex;align-items:center;justify-content:center}
+.mg-sat:nth-child(1){transform:translateY(-120px) translateX(-14px)}
+.mg-sat:nth-child(2){transform:rotate(90deg) translateY(-120px) rotate(-90deg) translateX(-14px)}
+.mg-sat:nth-child(3){transform:rotate(180deg) translateY(-120px) rotate(-180deg) translateX(-14px)}
+.mg-sat:nth-child(4){transform:rotate(270deg) translateY(-120px) rotate(-270deg) translateX(-14px)}
+.mg-sat-g{
+  width:28px;height:28px;border-radius:50%;
+  border:1.5px solid rgba(212,168,67,.5);
+  position:relative;display:flex;align-items:center;justify-content:center;
+  animation:mc-ccw 20s linear infinite}
+.mg-sat-g::before{
+  content:'';position:absolute;inset:5px;border-radius:50%;
+  border:1px solid rgba(212,168,67,.25);
+  animation:mc-cw 12s linear infinite}
+.mg-sat-dot{
+  position:absolute;width:5px;height:5px;border-radius:50%;
+  background:rgba(212,168,67,.9);
+  box-shadow:0 0 6px rgba(212,168,67,.8)}
+
+/* ── corner mini-gear (NW, NE, SW, SE at ~100px diagonal) ── */
+.mg-corner-gear{
+  position:absolute;
+  width:20px;height:20px;pointer-events:none}
+.mg-cg-NW{top:calc(50% - 88px);left:calc(50% - 88px)}
+.mg-cg-NE{top:calc(50% - 88px);left:calc(50% + 68px)}
+.mg-cg-SW{top:calc(50% + 68px);left:calc(50% - 88px)}
+.mg-cg-SE{top:calc(50% + 68px);left:calc(50% + 68px)}
+.mg-cg-ring{
+  position:absolute;inset:0;border-radius:50%;
+  border:1px solid rgba(212,168,67,.4)}
+.mg-cg-ring:nth-child(1){animation:mc-cw 6s linear infinite}
+.mg-cg-ring:nth-child(2){
+  inset:4px;border-color:rgba(212,168,67,.22);
+  animation:mc-ccw 4s linear infinite}
+.mg-cg-dot{
+  position:absolute;top:50%;left:50%;
+  width:4px;height:4px;border-radius:50%;
+  transform:translate(-50%,-50%);
+  background:rgba(212,168,67,.8);
+  box-shadow:0 0 5px rgba(212,168,67,.7)}
+.mg-cg-NE .mg-cg-ring:nth-child(1){animation-direction:reverse}
+.mg-cg-SW .mg-cg-ring:nth-child(1){animation-direction:reverse}
+
+/* ── energy sparks at 4 axis points on outer ring ── */
+.mg-spark{
+  position:absolute;left:50%;top:50%;
+  width:10px;height:10px;border-radius:50%;
+  background:radial-gradient(circle,#fff 0%,#F0CC72 35%,transparent 75%);
+  pointer-events:none}
+.mg-sk1{transform:translate(-50%,-145px);animation:mc-spark 2.8s ease-in-out infinite 0s}
+.mg-sk2{transform:translate(135px,-50%); animation:mc-spark 2.8s ease-in-out infinite .7s}
+.mg-sk3{transform:translate(-50%, 135px);animation:mc-spark 2.8s ease-in-out infinite 1.4s}
+.mg-sk4{transform:translate(-145px,-50%);animation:mc-spark 2.8s ease-in-out infinite 2.1s}
+
+/* ── the logo sits on top, perfectly centered ── */
+.mg-scene .logo-cyber-wrap{
+  position:relative;z-index:10;flex-shrink:0}
 
 /* ── TOPBAR LOGO IMG ── */
 .tlogo-img{height:26px;width:26px;border-radius:50%;object-fit:cover;
@@ -1158,150 +1302,73 @@ body::after{
   <div class="lbox">
     <div class="lobby-orb lobby-orb-1"></div>
     <div class="lobby-orb lobby-orb-2"></div>
-    <!-- Logo Section: Cyber Ring + Flowers -->
+    <!-- Logo Section: Mechanic System around Logo -->
     <div class="logo-section">
-      <!-- Left Myanmar Kanut Ornament -->
-      <div class="lobby-flower lobby-flower-left">
-        <svg viewBox="0 0 72 192" fill="none" xmlns="http://www.w3.org/2000/svg" class="ornament-svg">
-          <g class="ornament-wrap">
+      <div class="mg-scene">
 
-            <!-- ① FLAME CLUSTER — fan of 5 elongated fire tips -->
-            <path class="of draw" style="--dl:155;--d:0.00s;--dur:0.95s"
-              d="M16,53 C8,42 6,26 14,15 C18,8 24,11 22,23 C20,33 16,46 16,53 Z"/>
-            <path class="of draw" style="--dl:145;--d:0.08s;--dur:0.90s"
-              d="M26,48 C20,37 19,21 26,11 C30,5 36,8 34,21 C32,32 26,42 26,48 Z"/>
-            <path class="of draw" style="--dl:138;--d:0.00s;--dur:1.00s"
-              d="M35,45 C33,31 33,15 36,3 C39,15 39,31 37,45 Z"/>
-            <path class="of draw" style="--dl:133;--d:0.10s;--dur:0.90s"
-              d="M47,48 C51,37 51,21 46,12 C51,5 57,9 55,23 C53,33 47,42 47,48 Z"/>
-            <path class="of draw" style="--dl:105;--d:0.20s;--dur:0.80s"
-              d="M58,55 C57,46 60,37 65,35 C69,40 66,50 58,55 Z"/>
+        <!-- Outer rotating rings -->
+        <div class="mg-ring mg-r1"></div>
+        <div class="mg-ring mg-r2"></div>
+        <div class="mg-ring mg-r3"></div>
+        <div class="mg-ring mg-r4"></div>
 
-            <!-- ② MAIN SPINE — S-curve backbone -->
-            <path class="os draw" style="--dl:680;--d:0.04s;--dur:2.55s"
-              d="M36,48 C34,60 27,73 29,90 C31,107 42,117 42,134 C42,150 35,163 36,180"/>
-
-            <!-- ③ UPPER-LEFT BIG SNAIL SPIRAL — signature kanut feature, 2.5 loops -->
-            <path class="os draw" style="--dl:820;--d:0.85s;--dur:2.35s"
-              d="M30,75 C9,69 -5,86 0,109 C5,132 26,138 38,122 C51,106 49,87 35,81 C21,75 11,87 14,102 C17,117 31,118 37,106 C41,97 37,88 30,92 C24,96 25,103 31,103"/>
-            <!-- tight inner coil terminus -->
-            <path class="os thin draw" style="--dl:68;--d:3.10s;--dur:0.48s"
-              d="M31,103 C32,99 30,95 27,97 C25,100 27,104 30,103"/>
-
-            <!-- ④ UPPER-RIGHT SMALL HOOK CURL + tight tip -->
-            <path class="os draw" style="--dl:190;--d:0.72s;--dur:1.05s"
-              d="M38,63 C50,57 62,65 58,77 C55,87 43,85 41,75"/>
-            <path class="os thin draw" style="--dl:72;--d:1.68s;--dur:0.48s"
-              d="M41,75 C41,70 37,68 35,72 C34,76 37,78 40,77"/>
-
-            <!-- ⑤ SMALL LEFT-TOP LEAF (just below upper-left scroll top) -->
-            <path class="os thin draw" style="--dl:90;--d:1.22s;--dur:0.68s"
-              d="M10,74 C3,63 4,51 13,51 C20,57 17,68 10,74 Z"/>
-
-            <!-- ⑥ FLOWER — prominent, centered right, y≈91 -->
-            <circle class="oc" cx="59" cy="91" r="12.5" style="--dl:79;--d:1.75s;--dur:1.0s;--ox:59px;--oy:91px"/>
-            <circle class="oc" cx="59" cy="91" r="7"    style="--dl:44;--d:2.00s;--dur:0.82s;--ox:59px;--oy:91px"/>
-            <ellipse class="os draw" cx="59"   cy="78.5" rx="2.4" ry="5.2"  fill="rgba(212,168,67,.14)" style="--dl:27;--d:2.12s;--dur:0.48s"/>
-            <ellipse class="os draw" cx="70.4" cy="84.5" rx="5.2" ry="2.4"  transform="rotate(-32,70.4,84.5)" fill="rgba(212,168,67,.14)" style="--dl:27;--d:2.24s;--dur:0.48s"/>
-            <ellipse class="os draw" cx="66.5" cy="98.5" rx="5.2" ry="2.4"  transform="rotate(30,66.5,98.5)"  fill="rgba(212,168,67,.14)" style="--dl:27;--d:2.36s;--dur:0.48s"/>
-            <ellipse class="os draw" cx="51.5" cy="98.5" rx="5.2" ry="2.4"  transform="rotate(-30,51.5,98.5)" fill="rgba(212,168,67,.14)" style="--dl:27;--d:2.48s;--dur:0.48s"/>
-            <ellipse class="os draw" cx="47.6" cy="84.5" rx="5.2" ry="2.4"  transform="rotate(32,47.6,84.5)"  fill="rgba(212,168,67,.14)" style="--dl:27;--d:2.58s;--dur:0.48s"/>
-            <circle class="od" cx="59" cy="91" r="3.5" style="animation-delay:2.72s"/>
-
-            <!-- ⑦ LOWER-RIGHT LARGE C-SCROLL with coiled tip -->
-            <path class="os draw" style="--dl:620;--d:1.42s;--dur:2.05s"
-              d="M41,126 C62,118 78,133 74,154 C70,172 52,173 43,159 C34,146 38,129 53,131 C63,131 67,143 62,152 C59,158 51,157 49,149"/>
-            <path class="os thin draw" style="--dl:82;--d:3.30s;--dur:0.52s"
-              d="M49,149 C47,145 44,143 41,146 C39,150 41,154 45,153"/>
-
-            <!-- ⑧ LOWER-LEFT SMALL CURL + coil tip -->
-            <path class="os thin draw" style="--dl:165;--d:1.95s;--dur:0.98s"
-              d="M25,136 C10,128 4,143 12,153 C19,161 32,154 29,143"/>
-            <path class="os thin draw" style="--dl:60;--d:2.82s;--dur:0.42s"
-              d="M29,143 C31,138 28,134 24,137 C22,140 24,144 27,143"/>
-
-            <!-- ⑨ LOWER-RIGHT ACCENT LEAF -->
-            <path class="os thin draw" style="--dl:118;--d:2.32s;--dur:0.80s"
-              d="M53,162 C63,154 72,157 71,166 C70,174 60,175 53,168 Z"/>
-
-            <!-- ⑩ BOTTOM FLAME TIP — single elegant downward flame -->
-            <path class="of draw" style="--dl:172;--d:2.20s;--dur:1.08s"
-              d="M32,172 C27,183 30,190 36,192 C37,192 39,192 40,192 C44,190 46,183 45,172 C44,165 40,168 32,172 Z"/>
-
-            <!-- ⑪ BOTTOM-LEFT SMALL CURL ACCENT -->
-            <path class="os thin draw" style="--dl:102;--d:2.55s;--dur:0.75s"
-              d="M26,165 C15,158 9,168 14,177 C19,184 31,178 27,169"/>
-
-          </g>
+        <!-- SVG dashed detail ring -->
+        <svg class="mg-svg" width="222" height="222" viewBox="0 0 222 222">
+          <circle cx="111" cy="111" r="108" stroke="rgba(212,168,67,0.18)"
+            stroke-width="1" fill="none"
+            stroke-dasharray="8 6" stroke-linecap="round"/>
         </svg>
-      </div>
 
-      <!-- Cyber ring logo -->
-      <div class="logo-cyber-wrap">
-        <div class="cyber-ring-outer"></div>
-        <div class="cyber-ring-mid"></div>
-        <div class="cyber-ring-inner"></div>
-        <div class="cyber-dot-wrap">
-          <div class="cyber-dot"></div>
-          <div class="cyber-dot2"></div>
+        <!-- 4 spoke arms radiating from center -->
+        <div class="mg-spoke mg-sp1"></div>
+        <div class="mg-spoke mg-sp2"></div>
+        <div class="mg-spoke mg-sp3"></div>
+        <div class="mg-spoke mg-sp4"></div>
+
+        <!-- Corner micro-gears (diagonal) -->
+        <div class="mg-corner-gear mg-cg-NW">
+          <div class="mg-cg-ring"></div><div class="mg-cg-ring"></div><div class="mg-cg-dot"></div>
         </div>
-        <div class="cyber-tick t1"></div>
-        <div class="cyber-tick t2"></div>
-        <div class="cyber-tick t3"></div>
-        <div class="cyber-tick t4"></div>
-        <img src="logo.png" class="logo-img" alt="Kyar Kwat Logo">
-      </div>
+        <div class="mg-corner-gear mg-cg-NE">
+          <div class="mg-cg-ring"></div><div class="mg-cg-ring"></div><div class="mg-cg-dot"></div>
+        </div>
+        <div class="mg-corner-gear mg-cg-SW">
+          <div class="mg-cg-ring"></div><div class="mg-cg-ring"></div><div class="mg-cg-dot"></div>
+        </div>
+        <div class="mg-corner-gear mg-cg-SE">
+          <div class="mg-cg-ring"></div><div class="mg-cg-ring"></div><div class="mg-cg-dot"></div>
+        </div>
 
-      <!-- Right Myanmar Kanut Ornament (mirrored via CSS scaleX) -->
-      <div class="lobby-flower lobby-flower-right">
-        <svg viewBox="0 0 72 192" fill="none" xmlns="http://www.w3.org/2000/svg" class="ornament-svg">
-          <g class="ornament-wrap">
-            <path class="of draw" style="--dl:155;--d:0.00s;--dur:0.95s"
-              d="M16,53 C8,42 6,26 14,15 C18,8 24,11 22,23 C20,33 16,46 16,53 Z"/>
-            <path class="of draw" style="--dl:145;--d:0.08s;--dur:0.90s"
-              d="M26,48 C20,37 19,21 26,11 C30,5 36,8 34,21 C32,32 26,42 26,48 Z"/>
-            <path class="of draw" style="--dl:138;--d:0.00s;--dur:1.00s"
-              d="M35,45 C33,31 33,15 36,3 C39,15 39,31 37,45 Z"/>
-            <path class="of draw" style="--dl:133;--d:0.10s;--dur:0.90s"
-              d="M47,48 C51,37 51,21 46,12 C51,5 57,9 55,23 C53,33 47,42 47,48 Z"/>
-            <path class="of draw" style="--dl:105;--d:0.20s;--dur:0.80s"
-              d="M58,55 C57,46 60,37 65,35 C69,40 66,50 58,55 Z"/>
-            <path class="os draw" style="--dl:680;--d:0.04s;--dur:2.55s"
-              d="M36,48 C34,60 27,73 29,90 C31,107 42,117 42,134 C42,150 35,163 36,180"/>
-            <path class="os draw" style="--dl:820;--d:0.85s;--dur:2.35s"
-              d="M30,75 C9,69 -5,86 0,109 C5,132 26,138 38,122 C51,106 49,87 35,81 C21,75 11,87 14,102 C17,117 31,118 37,106 C41,97 37,88 30,92 C24,96 25,103 31,103"/>
-            <path class="os thin draw" style="--dl:68;--d:3.10s;--dur:0.48s"
-              d="M31,103 C32,99 30,95 27,97 C25,100 27,104 30,103"/>
-            <path class="os draw" style="--dl:190;--d:0.72s;--dur:1.05s"
-              d="M38,63 C50,57 62,65 58,77 C55,87 43,85 41,75"/>
-            <path class="os thin draw" style="--dl:72;--d:1.68s;--dur:0.48s"
-              d="M41,75 C41,70 37,68 35,72 C34,76 37,78 40,77"/>
-            <path class="os thin draw" style="--dl:90;--d:1.22s;--dur:0.68s"
-              d="M10,74 C3,63 4,51 13,51 C20,57 17,68 10,74 Z"/>
-            <circle class="oc" cx="59" cy="91" r="12.5" style="--dl:79;--d:1.75s;--dur:1.0s;--ox:59px;--oy:91px"/>
-            <circle class="oc" cx="59" cy="91" r="7"    style="--dl:44;--d:2.00s;--dur:0.82s;--ox:59px;--oy:91px"/>
-            <ellipse class="os draw" cx="59"   cy="78.5" rx="2.4" ry="5.2"  fill="rgba(212,168,67,.14)" style="--dl:27;--d:2.12s;--dur:0.48s"/>
-            <ellipse class="os draw" cx="70.4" cy="84.5" rx="5.2" ry="2.4"  transform="rotate(-32,70.4,84.5)" fill="rgba(212,168,67,.14)" style="--dl:27;--d:2.24s;--dur:0.48s"/>
-            <ellipse class="os draw" cx="66.5" cy="98.5" rx="5.2" ry="2.4"  transform="rotate(30,66.5,98.5)"  fill="rgba(212,168,67,.14)" style="--dl:27;--d:2.36s;--dur:0.48s"/>
-            <ellipse class="os draw" cx="51.5" cy="98.5" rx="5.2" ry="2.4"  transform="rotate(-30,51.5,98.5)" fill="rgba(212,168,67,.14)" style="--dl:27;--d:2.48s;--dur:0.48s"/>
-            <ellipse class="os draw" cx="47.6" cy="84.5" rx="5.2" ry="2.4"  transform="rotate(32,47.6,84.5)"  fill="rgba(212,168,67,.14)" style="--dl:27;--d:2.58s;--dur:0.48s"/>
-            <circle class="od" cx="59" cy="91" r="3.5" style="animation-delay:2.72s"/>
-            <path class="os draw" style="--dl:620;--d:1.42s;--dur:2.05s"
-              d="M41,126 C62,118 78,133 74,154 C70,172 52,173 43,159 C34,146 38,129 53,131 C63,131 67,143 62,152 C59,158 51,157 49,149"/>
-            <path class="os thin draw" style="--dl:82;--d:3.30s;--dur:0.52s"
-              d="M49,149 C47,145 44,143 41,146 C39,150 41,154 45,153"/>
-            <path class="os thin draw" style="--dl:165;--d:1.95s;--dur:0.98s"
-              d="M25,136 C10,128 4,143 12,153 C19,161 32,154 29,143"/>
-            <path class="os thin draw" style="--dl:60;--d:2.82s;--dur:0.42s"
-              d="M29,143 C31,138 28,134 24,137 C22,140 24,144 27,143"/>
-            <path class="os thin draw" style="--dl:118;--d:2.32s;--dur:0.80s"
-              d="M53,162 C63,154 72,157 71,166 C70,174 60,175 53,168 Z"/>
-            <path class="of draw" style="--dl:172;--d:2.20s;--dur:1.08s"
-              d="M32,172 C27,183 30,190 36,192 C37,192 39,192 40,192 C44,190 46,183 45,172 C44,165 40,168 32,172 Z"/>
-            <path class="os thin draw" style="--dl:102;--d:2.55s;--dur:0.75s"
-              d="M26,165 C15,158 9,168 14,177 C19,184 31,178 27,169"/>
-          </g>
-        </svg>
+        <!-- Orbiting satellite gears -->
+        <div class="mg-orbit-ring">
+          <div class="mg-sat"><div class="mg-sat-g"></div><div class="mg-sat-dot"></div></div>
+          <div class="mg-sat"><div class="mg-sat-g"></div><div class="mg-sat-dot"></div></div>
+          <div class="mg-sat"><div class="mg-sat-g"></div><div class="mg-sat-dot"></div></div>
+          <div class="mg-sat"><div class="mg-sat-g"></div><div class="mg-sat-dot"></div></div>
+        </div>
+
+        <!-- Energy sparks at axis points -->
+        <div class="mg-spark mg-sk1"></div>
+        <div class="mg-spark mg-sk2"></div>
+        <div class="mg-spark mg-sk3"></div>
+        <div class="mg-spark mg-sk4"></div>
+
+        <!-- Logo on top -->
+        <div class="logo-cyber-wrap">
+          <div class="cyber-ring-outer"></div>
+          <div class="cyber-ring-mid"></div>
+          <div class="cyber-ring-inner"></div>
+          <div class="cyber-dot-wrap">
+            <div class="cyber-dot"></div>
+            <div class="cyber-dot2"></div>
+          </div>
+          <div class="cyber-tick t1"></div>
+          <div class="cyber-tick t2"></div>
+          <div class="cyber-tick t3"></div>
+          <div class="cyber-tick t4"></div>
+          <img src="logo.png" class="logo-img" alt="Kyar Kwat Logo">
+        </div>
+
       </div>
     </div>
     <div class="lsub">မြန်မာ ကျားကွက် · Online Multiplayer</div>
@@ -2978,4 +3045,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-</html>
+   </html>
