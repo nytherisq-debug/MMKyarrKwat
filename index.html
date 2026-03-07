@@ -60,7 +60,7 @@ body::after{
 ═══════════════════════════════════════════ */
 .scr{position:fixed;inset:0;z-index:10;display:none}
 .scr.show{display:flex}
-#lobby{align-items:center;justify-content:center;background:transparent;overflow-y:auto;align-items:flex-start;padding:16px 0}
+#lobby{align-items:center;justify-content:center;background:transparent}
 #waiting{align-items:center;justify-content:center;background:rgba(4,2,12,0.6);backdrop-filter:blur(12px)}
 #game{flex-direction:column;padding:8px 12px 8px;gap:8px;background:transparent}
 
@@ -99,29 +99,160 @@ body::after{
   100%{transform:translate(0,0) scale(1)}
 }
 
-/* ── Cyber Logo Animations ── */
-@keyframes cyber-spin-cw{to{transform:rotate(360deg)}}
-@keyframes cyber-spin-ccw{to{transform:rotate(-360deg)}}
-@keyframes cyber-scan-sweep{to{transform:rotate(360deg)}}
-@keyframes cyber-node-pulse{
-  0%,100%{opacity:.4;transform:scale(.75);box-shadow:0 0 4px rgba(212,168,67,.3)}
-  50%{opacity:1;transform:scale(1.4);box-shadow:0 0 16px rgba(212,168,67,.95),0 0 32px rgba(212,168,67,.4)}
+/* ── LOGO WRAPPER ── */
+@keyframes logo-float{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(-9px) scale(1.025)}
 }
-@keyframes cyber-node-pulse-w{
-  0%,100%{opacity:.3;transform:scale(.75);box-shadow:0 0 4px rgba(180,130,255,.3)}
-  50%{opacity:.9;transform:scale(1.4);box-shadow:0 0 14px rgba(180,130,255,.9),0 0 28px rgba(180,130,255,.4)}
+@keyframes ring-spin-cw{to{transform:rotate(360deg)}}
+@keyframes ring-spin-ccw{to{transform:rotate(-360deg)}}
+@keyframes ring-pulse{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes cyber-dot{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:1;transform:scale(1.6)}}
+@keyframes floral-sway-l{
+  0%,100%{transform:translateX(0) rotate(-4deg) scaleY(1)}
+  50%{transform:translateX(-6px) rotate(4deg) scaleY(1.04)}
 }
-@keyframes cyber-bracket-pulse{
-  0%,100%{opacity:.5}50%{opacity:1}
+@keyframes floral-sway-r{
+  0%,100%{transform:translateX(0) rotate(4deg) scaleY(1)}
+  50%{transform:translateX(6px) rotate(-4deg) scaleY(1.04)}
 }
-@keyframes cyber-hex-float{
-  0%,100%{opacity:.18;transform:translateY(0) scale(1)}
-  50%{opacity:.36;transform:translateY(-8px) scale(1.1)}
+@keyframes cyber-scan{
+  0%{top:0%;opacity:.7}
+  100%{top:100%;opacity:0}
 }
-@keyframes cyber-hex-float2{
-  0%,100%{opacity:.14;transform:translateY(0) scale(1)}
-  50%{opacity:.28;transform:translateY(6px) scale(.92)}
+@keyframes orb-glow{
+  0%,100%{box-shadow:0 0 18px 4px rgba(212,168,67,.35),0 0 40px 10px rgba(212,168,67,.12)}
+  50%{box-shadow:0 0 32px 8px rgba(212,168,67,.6),0 0 60px 18px rgba(212,168,67,.22)}
 }
+@keyframes circuit-flow{
+  0%{stroke-dashoffset:200}
+  100%{stroke-dashoffset:0}
+}
+
+.logo-wrapper{
+  display:flex;align-items:center;justify-content:center;
+  gap:0;margin-bottom:6px;position:relative;width:100%}
+
+/* Cyber + floral deco sides */
+.logo-deco{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  position:relative;height:120px;overflow:visible}
+.logo-deco svg{width:100%;height:100%;overflow:visible}
+
+/* Center logo circle */
+.logo-circle-wrap{
+  position:relative;flex:0 0 auto;
+  width:120px;height:120px;
+  animation:logo-float 3.8s ease-in-out infinite}
+.logo-img{
+  width:120px;height:120px;border-radius:50%;
+  object-fit:cover;display:block;position:relative;z-index:3;
+  animation:orb-glow 3s ease-in-out infinite}
+/* Cyber rings */
+.cyber-ring{
+  position:absolute;border-radius:50%;pointer-events:none;z-index:2}
+.cr1{
+  inset:-12px;
+  border:1.5px solid transparent;
+  background:transparent;
+  border-top-color:rgba(212,168,67,.9);
+  border-right-color:rgba(212,168,67,.4);
+  animation:ring-spin-cw 4s linear infinite}
+.cr2{
+  inset:-22px;
+  border:1px dashed rgba(212,168,67,.3);
+  animation:ring-spin-ccw 7s linear infinite,ring-pulse 3s ease-in-out infinite}
+.cr3{
+  inset:-32px;
+  border:1px solid transparent;
+  border-bottom-color:rgba(180,130,50,.5);
+  border-left-color:rgba(180,130,50,.25);
+  animation:ring-spin-cw 12s linear infinite}
+/* Scan line */
+.logo-scan{
+  position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(212,168,67,.6),transparent);
+  animation:cyber-scan 3s linear infinite;z-index:4;pointer-events:none}
+/* Corner dots */
+.logo-dot{
+  position:absolute;width:5px;height:5px;border-radius:50%;
+  background:var(--g100);z-index:5;
+  animation:cyber-dot 2s ease-in-out infinite}
+.ld1{top:-34px;left:50%;transform:translateX(-50%);animation-delay:0s}
+.ld2{bottom:-34px;left:50%;transform:translateX(-50%);animation-delay:.6s}
+.ld3{left:-34px;top:50%;transform:translateY(-50%);animation-delay:1.2s}
+.ld4{right:-34px;top:50%;transform:translateY(-50%);animation-delay:1.8s}
+
+/* ── SPECTATOR MODE ── */
+.bspec{
+  flex:1;padding:12px 16px;border:none;border-radius:var(--r-sm);
+  background:linear-gradient(135deg,#051a10 0%,#0d5530 40%,#1a8050 60%,#0a4020 100%);
+  color:#a8f0c8;font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:700;
+  cursor:pointer;letter-spacing:.3px;
+  box-shadow:0 2px 22px rgba(20,140,70,0.25),inset 0 1px 0 rgba(255,255,255,0.12);
+  transition:all .2s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden;z-index:1}
+.bspec::before{
+  content:'';position:absolute;inset:0;border-radius:inherit;
+  background:linear-gradient(90deg,transparent,rgba(80,220,140,0.18),transparent);
+  transform:translateX(-100%);transition:transform .5s}
+.bspec:hover{transform:translateY(-2px);box-shadow:0 6px 32px rgba(20,140,70,0.4);filter:brightness(1.08)}
+.bspec:hover::before{transform:translateX(100%)}
+
+/* Spectator Modal */
+#spec-modal{
+  position:fixed;inset:0;z-index:9000;display:none;
+  align-items:center;justify-content:center;
+  background:rgba(2,1,8,0.82);backdrop-filter:blur(18px)}
+#spec-modal.on{display:flex}
+.spec-box{
+  position:relative;
+  background:linear-gradient(165deg,rgba(4,12,6,0.99) 0%,rgba(3,8,14,0.99) 100%);
+  border:1px solid rgba(40,200,100,0.22);
+  border-radius:22px;padding:36px 40px;width:380px;max-width:90vw;
+  box-shadow:0 0 80px rgba(20,140,70,0.12),0 30px 80px rgba(0,0,0,0.95);
+  animation:fadeUp .4s cubic-bezier(.16,1,.3,1) both}
+.spec-inner{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.spec-icon{font-size:2.4rem;margin-bottom:4px;filter:drop-shadow(0 0 18px rgba(40,200,100,.6))}
+.spec-title{
+  font-family:'Cinzel Decorative',cursive;font-size:1.1rem;
+  color:#a8f0c8;letter-spacing:4px;margin-bottom:2px;
+  text-shadow:0 0 40px rgba(40,200,100,.5)}
+.spec-sub{font-size:.72rem;color:rgba(120,200,150,.6);letter-spacing:1.5px;margin-bottom:14px;font-family:'Outfit',sans-serif}
+.spec-divider{height:1px;width:100%;background:linear-gradient(90deg,transparent,rgba(40,200,100,.25),transparent);margin:8px 0 16px}
+.spec-lbl{font-size:.62rem;color:rgba(120,200,150,.5);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;font-family:'Outfit',sans-serif;align-self:flex-start}
+.spec-inp{
+  width:100%;padding:11px 14px;
+  background:rgba(20,200,80,0.04);
+  border:1px solid rgba(40,200,100,0.18);
+  border-radius:var(--r-sm);color:var(--text-1);
+  font-family:'Orbitron',monospace;font-size:1.1rem;letter-spacing:6px;text-align:center;
+  margin-bottom:14px;outline:none;
+  transition:border-color .2s,box-shadow .2s}
+.spec-inp:focus{border-color:rgba(40,200,100,.5);box-shadow:0 0 0 3px rgba(40,200,100,.06)}
+.spec-inp::placeholder{color:rgba(40,200,100,.2);font-size:.8rem;letter-spacing:2px}
+.spec-btn{
+  width:100%;padding:12px 16px;border:none;border-radius:var(--r-sm);
+  background:linear-gradient(135deg,#052010 0%,#1a6a40 40%,#28a060 60%,#0f4020 100%);
+  color:#c8f0d8;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;
+  cursor:pointer;margin-bottom:8px;
+  box-shadow:0 2px 20px rgba(20,140,70,.2),inset 0 1px 0 rgba(255,255,255,.12);
+  transition:all .2s}
+.spec-btn:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(20,140,70,.38);filter:brightness(1.08)}
+.spec-cancel{
+  width:100%;padding:9px;border:1px solid rgba(40,200,100,.12);border-radius:var(--r-sm);
+  background:transparent;color:rgba(120,200,150,.5);
+  font-family:'Outfit',sans-serif;font-size:.8rem;cursor:pointer;transition:all .2s}
+.spec-cancel:hover{background:rgba(40,200,100,.05);color:rgba(160,230,180,.7)}
+.spec-status{font-size:.72rem;color:rgba(40,200,100,.7);min-height:16px;margin-top:4px;font-family:'Outfit',sans-serif}
+
+/* Spectator game label */
+#spec-banner{
+  display:none;position:fixed;top:0;left:50%;transform:translateX(-50%);
+  background:rgba(20,100,50,.9);border:1px solid rgba(40,200,100,.3);
+  border-radius:0 0 12px 12px;padding:5px 20px;z-index:600;
+  font-size:.7rem;color:#a8f0c8;letter-spacing:2px;font-family:'Outfit',sans-serif;
+  backdrop-filter:blur(10px)}
+#spec-banner.on{display:block}
 
 /* ═══════════════════════════════════════════
    LOBBY — PREMIUM REDESIGN
@@ -163,171 +294,17 @@ body::after{
   background:radial-gradient(circle,rgba(60,30,100,0.12),transparent 70%);
   animation:lobby-orb-float 11s ease-in-out infinite reverse}
 
-/* ── Cyber Logo Wrap ── */
-.logo-cyber-outer{
-  position:relative;width:196px;height:196px;
-  margin:0 auto 12px;
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0}
-
-/* Animated hex floating decorations */
-.cyber-hex{
-  position:absolute;pointer-events:none;
-  font-size:.65rem;color:rgba(212,168,67,.22);
-  letter-spacing:-.5px;line-height:1;
-  font-family:'Orbitron',monospace;font-weight:700}
-.cyber-hex-1{top:4px;right:8px;animation:cyber-hex-float 4.2s ease-in-out infinite}
-.cyber-hex-2{bottom:6px;left:4px;animation:cyber-hex-float2 5.1s ease-in-out infinite;color:rgba(180,130,255,.18)}
-.cyber-hex-3{top:50%;right:-4px;font-size:.52rem;animation:cyber-hex-float 3.8s ease-in-out infinite .8s}
-.cyber-hex-4{top:50%;left:-2px;font-size:.48rem;animation:cyber-hex-float2 4.6s ease-in-out infinite .4s;color:rgba(180,130,255,.15)}
-
-/* Rotating ring 1 – outer */
-.cyber-ring-1{
-  position:absolute;width:188px;height:188px;border-radius:50%;
-  border:1.5px solid transparent;
-  border-top:1.5px solid rgba(212,168,67,.85);
-  border-right:1.5px dashed rgba(212,168,67,.35);
-  border-bottom:1.5px dashed rgba(212,168,67,.15);
-  border-left:1.5px dashed rgba(212,168,67,.35);
-  animation:cyber-spin-cw 9s linear infinite;
-  pointer-events:none;
-  filter:drop-shadow(0 0 4px rgba(212,168,67,.4))}
-
-/* Rotating ring 2 – middle, CCW */
-.cyber-ring-2{
-  position:absolute;width:170px;height:170px;border-radius:50%;
-  border:1px dashed rgba(180,130,255,.28);
-  border-top-color:rgba(180,130,255,.70);
-  border-bottom-color:rgba(180,130,255,.10);
-  animation:cyber-spin-ccw 6s linear infinite;
-  pointer-events:none;
-  filter:drop-shadow(0 0 3px rgba(180,130,255,.3))}
-
-/* Rotating ring 3 – fast inner accent */
-.cyber-ring-3{
-  position:absolute;width:152px;height:152px;border-radius:50%;
-  border:1px solid rgba(212,168,67,.06);
-  border-top:1px solid rgba(212,168,67,.40);
-  border-left:1px solid rgba(212,168,67,.12);
-  animation:cyber-spin-cw 4s linear infinite;
-  pointer-events:none}
-
-/* Orbital glow dot 1 */
-.cyber-orbit-1{
-  position:absolute;width:188px;height:188px;border-radius:50%;
-  animation:cyber-spin-cw 5s linear infinite;pointer-events:none}
-.cyber-orbit-1::before{
-  content:'';position:absolute;top:-3px;left:50%;
-  width:6px;height:6px;border-radius:50%;
-  background:#F0CC72;
-  box-shadow:0 0 10px rgba(212,168,67,1),0 0 22px rgba(212,168,67,.6),0 0 40px rgba(212,168,67,.25);
-  transform:translateX(-50%)}
-
-/* Orbital glow dot 2 – counter, purple */
-.cyber-orbit-2{
-  position:absolute;width:170px;height:170px;border-radius:50%;
-  animation:cyber-spin-ccw 7s linear infinite;pointer-events:none}
-.cyber-orbit-2::after{
-  content:'';position:absolute;bottom:-3px;left:50%;
-  width:4px;height:4px;border-radius:50%;
-  background:rgba(200,160,255,1);
-  box-shadow:0 0 8px rgba(180,130,255,1),0 0 18px rgba(180,130,255,.5);
-  transform:translateX(-50%)}
-
-/* HUD corner brackets */
-.cyber-bracket{
-  position:absolute;width:18px;height:18px;pointer-events:none;
-  animation:cyber-bracket-pulse 2.5s ease-in-out infinite}
-.cyber-bracket::before,.cyber-bracket::after{
-  content:'';position:absolute;background:rgba(212,168,67,.88)}
-.cyber-bracket::before{width:100%;height:1.5px;top:0;left:0}
-.cyber-bracket::after{width:1.5px;height:100%;top:0;left:0}
-.cb-tl{top:4px;left:4px;animation-delay:0s}
-.cb-tr{top:4px;right:4px;transform:scaleX(-1);animation-delay:.6s}
-.cb-bl{bottom:4px;left:4px;transform:scaleY(-1);animation-delay:1.2s}
-.cb-br{bottom:4px;right:4px;transform:scale(-1,-1);animation-delay:1.8s}
-
-/* Cardinal pulse nodes */
-.cyber-node{
-  position:absolute;width:5px;height:5px;border-radius:50%;
-  background:rgba(212,168,67,.9);pointer-events:none}
-.cn-n{top:1px;left:calc(50% - 2.5px);animation:cyber-node-pulse 2.2s ease-in-out infinite}
-.cn-s{bottom:1px;left:calc(50% - 2.5px);animation:cyber-node-pulse 2.2s ease-in-out infinite .55s}
-.cn-e{right:1px;top:calc(50% - 2.5px);animation:cyber-node-pulse-w 2.2s ease-in-out infinite 1.1s}
-.cn-w{left:1px;top:calc(50% - 2.5px);animation:cyber-node-pulse-w 2.2s ease-in-out infinite 1.65s}
-
-/* Scanning conic beam (layered over logo, clipped to circle) */
-.cyber-scan{
-  position:absolute;width:148px;height:148px;border-radius:50%;
-  overflow:hidden;pointer-events:none;z-index:3;opacity:.9}
-.cyber-scan::before{
-  content:'';position:absolute;inset:0;
-  background:conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    rgba(212,168,67,.02) 20deg,
-    rgba(212,168,67,.12) 55deg,
-    rgba(212,168,67,.04) 80deg,
-    transparent 81deg
-  );
-  animation:cyber-scan-sweep 4s linear infinite}
-
-/* The actual logo-wrap inside cyber container */
-.logo-cyber-outer .logo-wrap{
-  margin-bottom:0;position:relative;z-index:4;
+.licon{
+  text-align:center;font-size:2.8rem;margin-bottom:8px;
+  filter:drop-shadow(0 0 32px rgba(212,168,67,.7));
   animation:bob 3.5s ease-in-out infinite}
-
-/* ── Spectator Mode Styles ── */
-.bspect{
-  flex:1;padding:10px 16px;border-radius:var(--r-sm);
-  background:rgba(40,180,140,0.07);
-  border:1px solid rgba(40,180,140,0.22);
-  color:rgba(100,210,180,.85);font-family:'Outfit',sans-serif;font-size:.82rem;font-weight:600;
-  cursor:pointer;letter-spacing:.3px;transition:all .2s}
-.bspect:hover{background:rgba(40,180,140,0.14);border-color:rgba(40,180,140,.48);color:#5EECD8}
-
-.spectator-badge{
-  display:none;align-items:center;gap:6px;
-  padding:4px 10px;border-radius:8px;
-  background:rgba(40,180,140,0.10);
-  border:1px solid rgba(40,180,140,0.30);
-  font-size:.62rem;font-family:'Orbitron',monospace;font-weight:700;
-  color:rgba(80,210,170,.9);letter-spacing:1.5px;
-  animation:border-glow 2s ease-in-out infinite;
-  flex-shrink:0}
-
-/* Spectator read-only board overlay hint */
-.spectator-overlay-lbl{
-  position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);
-  font-size:.58rem;color:rgba(80,210,170,.6);letter-spacing:1.5px;
-  font-family:'Orbitron',monospace;white-space:nowrap;pointer-events:none}
-
-.logo-wrap{
-  text-align:center;margin-bottom:8px;
-  animation:bob 3.5s ease-in-out infinite}
-.logo-img{
-  width:140px;height:140px;
-  object-fit:cover;
-  border-radius:50%;
-  border:2.5px solid rgba(212,168,67,0.70);
-  outline:1px solid rgba(212,168,67,0.18);
-  outline-offset:4px;
-  box-shadow:
-    0 0 0 6px rgba(212,168,67,0.07),
-    0 0 30px rgba(212,168,67,0.70),
-    0 0 70px rgba(212,168,67,0.25),
-    inset 0 0 0 1px rgba(212,168,67,0.10),
-    0 14px 36px rgba(0,0,0,0.92);
-  transition:box-shadow .4s ease,transform .4s ease,outline-color .4s}
-.logo-img:hover{
-  transform:scale(1.05);
-  outline-color:rgba(212,168,67,0.45);
-  box-shadow:
-    0 0 0 6px rgba(212,168,67,0.12),
-    0 0 44px rgba(212,168,67,0.90),
-    0 0 90px rgba(212,168,67,0.38),
-    inset 0 0 0 1px rgba(212,168,67,0.15),
-    0 14px 36px rgba(0,0,0,0.92)}
+.ltitle{
+  font-family:'Cinzel Decorative',cursive;font-size:1.65rem;
+  color:var(--g100);text-align:center;letter-spacing:5px;margin-bottom:3px;
+  text-shadow:0 0 60px rgba(212,168,67,0.5),0 0 20px rgba(212,168,67,0.28)}
+.lsub{
+  font-size:.73rem;color:var(--text-3);text-align:center;letter-spacing:2px;
+  font-family:'Outfit',sans-serif;font-weight:400}
 .ldiv{
   height:1px;margin:20px 0;
   background:linear-gradient(90deg,transparent,rgba(212,168,67,.12),rgba(212,168,67,.5),rgba(212,168,67,.12),transparent)}
@@ -462,29 +439,14 @@ body::after{
   height:var(--topbar-h)}
 
 /* Logo - fixed width, no shrink */
-.tlogo-img{
-  height:36px;width:36px;object-fit:cover;flex:0 0 auto;margin-right:10px;
-  border-radius:50%;
-  border:1.5px solid rgba(212,168,67,0.65);
-  box-shadow:
-    0 0 0 2px rgba(212,168,67,0.10),
-    0 0 12px rgba(212,168,67,0.55),
-    0 0 24px rgba(212,168,67,0.20),
-    0 2px 8px rgba(0,0,0,0.7);
-  outline:none;}
-
-/* Logo title */
-.tlogo-title{
-  font-family:'Noto Sans Myanmar','Outfit',sans-serif;
-  font-size:.72rem;font-weight:700;
-  letter-spacing:.5px;
-  white-space:nowrap;
-  flex-shrink:0;
-  background:linear-gradient(135deg,#F0CC72 0%,#E8B840 35%,#FFF0A0 55%,#C89030 80%,#F0CC72 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  text-shadow:none;
-  filter:drop-shadow(0 0 6px rgba(212,168,67,0.45));
-  margin-right:4px;}
+.tlogo{
+  font-family:'Cinzel Decorative',cursive;font-size:.82rem;
+  color:var(--g100);letter-spacing:2px;
+  text-shadow:0 0 20px rgba(212,168,67,0.4);
+  white-space:nowrap;flex:0 0 auto;margin-right:10px}
+.tlogo small{
+  display:block;font-size:.48rem;color:var(--text-3);
+  letter-spacing:1.5px;font-family:'Outfit',sans-serif;margin-top:1px;font-weight:400}
 
 /* Room pill - fixed, no shrink */
 .rpill{
@@ -1174,8 +1136,8 @@ body::after{
 ═══════════════════════════════════════════ */
 @media(max-width:960px){:root{--cell:44px;--side:155px}.main{gap:8px}}
 @media(max-width:780px){:root{--cell:38px}.panel{display:none}.main{justify-content:center}}
-@media(max-width:500px){:root{--cell:34px}.lbox{padding:26px 22px}.logo-img{width:120px;height:120px}#lobby{padding:12px 0}}
-@media(max-width:380px){:root{--cell:32px}.logo-img{width:100px;height:100px}}
+@media(max-width:500px){:root{--cell:34px}.lbox{padding:26px 22px}}
+@media(max-width:380px){:root{--cell:32px}}
 /* ── Music Button ── */
 #mbtn{
   display:flex;align-items:center;gap:5px;
@@ -1213,37 +1175,87 @@ body::after{
   <div class="lbox">
     <div class="lobby-orb lobby-orb-1"></div>
     <div class="lobby-orb lobby-orb-2"></div>
-    <!-- Cyber Premium Logo Animation -->
-    <div class="logo-cyber-outer">
-      <!-- Floating hex accent text -->
-      <span class="cyber-hex cyber-hex-1">◈ HEX</span>
-      <span class="cyber-hex cyber-hex-2">⬡ SYS</span>
-      <span class="cyber-hex cyber-hex-3">⬟</span>
-      <span class="cyber-hex cyber-hex-4">◇</span>
-      <!-- Rotating rings -->
-      <div class="cyber-ring-1"></div>
-      <div class="cyber-ring-2"></div>
-      <div class="cyber-ring-3"></div>
-      <!-- Orbiting glow dots -->
-      <div class="cyber-orbit-1"></div>
-      <div class="cyber-orbit-2"></div>
-      <!-- HUD corner brackets -->
-      <div class="cyber-bracket cb-tl"></div>
-      <div class="cyber-bracket cb-tr"></div>
-      <div class="cyber-bracket cb-bl"></div>
-      <div class="cyber-bracket cb-br"></div>
-      <!-- Cardinal pulse nodes -->
-      <div class="cyber-node cn-n"></div>
-      <div class="cyber-node cn-s"></div>
-      <div class="cyber-node cn-e"></div>
-      <div class="cyber-node cn-w"></div>
-      <!-- Scanning beam (clipped to logo circle) -->
-      <div class="cyber-scan"></div>
-      <!-- The actual logo -->
-      <div class="logo-wrap">
-        <img class="logo-img" src="logo.png" alt="Kyar Kwat">
+    <!-- ══ PREMIUM LOGO ══ -->
+    <div class="logo-wrapper">
+      <!-- Left Myanmar floral + cyber deco -->
+      <div class="logo-deco" style="transform-origin:right center">
+        <svg viewBox="0 0 90 120" xmlns="http://www.w3.org/2000/svg" style="animation:floral-sway-l 4.5s ease-in-out infinite">
+          <!-- Circuit lines -->
+          <line x1="80" y1="60" x2="20" y2="60" stroke="rgba(212,168,67,0.35)" stroke-width=".8" stroke-dasharray="4 3">
+            <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="1.5s" repeatCount="indefinite"/>
+          </line>
+          <line x1="80" y1="45" x2="35" y2="45" stroke="rgba(212,168,67,0.2)" stroke-width=".6" stroke-dasharray="3 4">
+            <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="2s" repeatCount="indefinite"/>
+          </line>
+          <line x1="80" y1="75" x2="35" y2="75" stroke="rgba(212,168,67,0.2)" stroke-width=".6" stroke-dasharray="3 4">
+            <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="2.4s" repeatCount="indefinite"/>
+          </line>
+          <!-- Circuit nodes -->
+          <circle cx="22" cy="60" r="2.5" fill="rgba(212,168,67,0.7)"><animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/></circle>
+          <circle cx="38" cy="45" r="1.8" fill="rgba(212,168,67,0.5)"><animate attributeName="opacity" values="0.3;0.9;0.3" dur="2.8s" repeatCount="indefinite"/></circle>
+          <circle cx="38" cy="75" r="1.8" fill="rgba(212,168,67,0.5)"><animate attributeName="opacity" values="0.3;0.9;0.3" dur="3.2s" repeatCount="indefinite"/></circle>
+          <!-- Myanmar floral stem -->
+          <path d="M72,60 Q55,40 42,28 Q38,20 44,14 Q50,8 52,16 Q50,22 46,26 Q60,34 68,50" fill="none" stroke="rgba(212,168,67,0.55)" stroke-width="1.2"/>
+          <!-- Floral petals top -->
+          <ellipse cx="44" cy="14" rx="5" ry="8" fill="rgba(212,168,67,0.18)" stroke="rgba(212,168,67,0.45)" stroke-width=".8" transform="rotate(-30 44 14)"/>
+          <ellipse cx="52" cy="11" rx="4" ry="7" fill="rgba(212,168,67,0.12)" stroke="rgba(212,168,67,0.35)" stroke-width=".7" transform="rotate(20 52 11)"/>
+          <!-- Floral spiral leaf -->
+          <path d="M46,26 Q36,30 32,40 Q30,50 36,54 Q42,58 46,50 Q50,42 44,36 Q40,32 42,28" fill="rgba(212,168,67,0.1)" stroke="rgba(212,168,67,0.4)" stroke-width=".9"/>
+          <path d="M68,50 Q58,52 54,62 Q52,70 58,72 Q65,72 66,64 Q68,56 64,52" fill="rgba(212,168,67,0.08)" stroke="rgba(212,168,67,0.3)" stroke-width=".8"/>
+          <!-- Floral dots -->
+          <circle cx="44" cy="14" r="2" fill="rgba(212,168,67,0.8)"><animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite"/></circle>
+          <circle cx="52" cy="16" r="1.5" fill="rgba(212,168,67,0.6)"><animate attributeName="opacity" values="0.4;0.9;0.4" dur="2.5s" repeatCount="indefinite"/></circle>
+          <!-- Bottom floral stem -->
+          <path d="M72,60 Q55,80 42,92 Q38,100 44,106 Q50,112 52,104 Q50,98 46,94 Q60,86 68,70" fill="none" stroke="rgba(212,168,67,0.45)" stroke-width="1.1"/>
+          <ellipse cx="44" cy="106" rx="5" ry="8" fill="rgba(212,168,67,0.15)" stroke="rgba(212,168,67,0.38)" stroke-width=".8" transform="rotate(30 44 106)"/>
+          <ellipse cx="52" cy="109" rx="4" ry="7" fill="rgba(212,168,67,0.1)" stroke="rgba(212,168,67,0.3)" stroke-width=".7" transform="rotate(-20 52 109)"/>
+          <circle cx="44" cy="106" r="2" fill="rgba(212,168,67,0.7)"><animate attributeName="opacity" values="0.5;1;0.5" dur="3.4s" repeatCount="indefinite"/></circle>
+        </svg>
+      </div>
+
+      <!-- Center: Circle logo with cyber rings -->
+      <div class="logo-circle-wrap">
+        <div class="cyber-ring cr1"></div>
+        <div class="cyber-ring cr2"></div>
+        <div class="cyber-ring cr3"></div>
+        <div class="logo-scan"></div>
+        <div class="logo-dot ld1"></div>
+        <div class="logo-dot ld2"></div>
+        <div class="logo-dot ld3"></div>
+        <div class="logo-dot ld4"></div>
+        <img src="logo.png" class="logo-img" alt="မြန်မာ ကျားကွက်">
+      </div>
+
+      <!-- Right Myanmar floral + cyber deco (mirrored) -->
+      <div class="logo-deco" style="transform:scaleX(-1);transform-origin:left center">
+        <svg viewBox="0 0 90 120" xmlns="http://www.w3.org/2000/svg" style="animation:floral-sway-r 4.5s ease-in-out infinite">
+          <line x1="80" y1="60" x2="20" y2="60" stroke="rgba(212,168,67,0.35)" stroke-width=".8" stroke-dasharray="4 3">
+            <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="1.5s" repeatCount="indefinite"/>
+          </line>
+          <line x1="80" y1="45" x2="35" y2="45" stroke="rgba(212,168,67,0.2)" stroke-width=".6" stroke-dasharray="3 4">
+            <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="2s" repeatCount="indefinite"/>
+          </line>
+          <line x1="80" y1="75" x2="35" y2="75" stroke="rgba(212,168,67,0.2)" stroke-width=".6" stroke-dasharray="3 4">
+            <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="2.4s" repeatCount="indefinite"/>
+          </line>
+          <circle cx="22" cy="60" r="2.5" fill="rgba(212,168,67,0.7)"><animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/></circle>
+          <circle cx="38" cy="45" r="1.8" fill="rgba(212,168,67,0.5)"><animate attributeName="opacity" values="0.3;0.9;0.3" dur="2.8s" repeatCount="indefinite"/></circle>
+          <circle cx="38" cy="75" r="1.8" fill="rgba(212,168,67,0.5)"><animate attributeName="opacity" values="0.3;0.9;0.3" dur="3.2s" repeatCount="indefinite"/></circle>
+          <path d="M72,60 Q55,40 42,28 Q38,20 44,14 Q50,8 52,16 Q50,22 46,26 Q60,34 68,50" fill="none" stroke="rgba(212,168,67,0.55)" stroke-width="1.2"/>
+          <ellipse cx="44" cy="14" rx="5" ry="8" fill="rgba(212,168,67,0.18)" stroke="rgba(212,168,67,0.45)" stroke-width=".8" transform="rotate(-30 44 14)"/>
+          <ellipse cx="52" cy="11" rx="4" ry="7" fill="rgba(212,168,67,0.12)" stroke="rgba(212,168,67,0.35)" stroke-width=".7" transform="rotate(20 52 11)"/>
+          <path d="M46,26 Q36,30 32,40 Q30,50 36,54 Q42,58 46,50 Q50,42 44,36 Q40,32 42,28" fill="rgba(212,168,67,0.1)" stroke="rgba(212,168,67,0.4)" stroke-width=".9"/>
+          <path d="M68,50 Q58,52 54,62 Q52,70 58,72 Q65,72 66,64 Q68,56 64,52" fill="rgba(212,168,67,0.08)" stroke="rgba(212,168,67,0.3)" stroke-width=".8"/>
+          <circle cx="44" cy="14" r="2" fill="rgba(212,168,67,0.8)"><animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite"/></circle>
+          <circle cx="52" cy="16" r="1.5" fill="rgba(212,168,67,0.6)"><animate attributeName="opacity" values="0.4;0.9;0.4" dur="2.5s" repeatCount="indefinite"/></circle>
+          <path d="M72,60 Q55,80 42,92 Q38,100 44,106 Q50,112 52,104 Q50,98 46,94 Q60,86 68,70" fill="none" stroke="rgba(212,168,67,0.45)" stroke-width="1.1"/>
+          <ellipse cx="44" cy="106" rx="5" ry="8" fill="rgba(212,168,67,0.15)" stroke="rgba(212,168,67,0.38)" stroke-width=".8" transform="rotate(30 44 106)"/>
+          <ellipse cx="52" cy="109" rx="4" ry="7" fill="rgba(212,168,67,0.1)" stroke="rgba(212,168,67,0.3)" stroke-width=".7" transform="rotate(-20 52 109)"/>
+          <circle cx="44" cy="106" r="2" fill="rgba(212,168,67,0.7)"><animate attributeName="opacity" values="0.5;1;0.5" dur="3.4s" repeatCount="indefinite"/></circle>
+        </svg>
       </div>
     </div>
+    <div class="lsub" style="margin-bottom:0">မြန်မာ ကျားကွက် · Online Multiplayer</div>
     <div class="ldiv"></div>
     <div class="llbl">👤 သင့်အမည်</div>
     <input class="linp" id="inp-name" type="text" placeholder="အမည်ထည့်ပါ..." maxlength="20" autocomplete="off">
@@ -1254,7 +1266,7 @@ body::after{
       <button class="bai" onclick="openAiModal()">🤖 AI Mode</button>
     </div>
     <div class="brow" style="margin-top:4px">
-      <button class="bspect" onclick="spectateRoom()">👁 Spectate Room</button>
+      <button class="bspec" onclick="openSpecModal()">👁 Spectate</button>
     </div>
     <div class="lor">─── သို့မဟုတ် ───</div>
     <div class="llbl">🔑 Room Code ဖြင့် ဝင်ပါ</div>
@@ -1296,9 +1308,10 @@ body::after{
 
   <!-- Topbar — fixed overflow layout -->
   <div class="topbar">
-    <img class="tlogo-img" src="logo.png" alt="Kyar Kwat">
-    <div class="tlogo-title">မြန်မာရိုးရာ ကျားကွက်</div>
-    <div class="spectator-badge" id="spectator-badge">👁 SPECTATING</div>
+    <div class="tlogo" style="display:flex;align-items:center;gap:8px">
+      <img src="logo.png" style="width:32px;height:32px;border-radius:50%;object-fit:cover;filter:drop-shadow(0 0 6px rgba(212,168,67,.5))" alt="">
+      <span style="display:flex;flex-direction:column">မြန်မာ ကျားကွက်<small>Online Multiplayer</small></span>
+    </div>
     <div class="topbar-space"></div>
     <div class="topbar-right">
       <button id="mbtn" onclick="mToggle()" title="Music">
@@ -1500,7 +1513,6 @@ let glog=[], capBy={[B]:[],[W]:[]}, lastF=null, lastT=null;
 let myName='', myColor=null, roomId='', isHost=false;
 let ver=0, huffOn=false, huffAt=null;
 let leaving=false, winShown=false, gameCount=0;
-let isSpectator=false;
 
 /* ══════════════════════════════════════════════
    SUPABASE
@@ -1524,7 +1536,6 @@ function sbBroadcast(type,payload){
 }
 
 async function push(state){
-  if(isSpectator)return;/* Spectators never push state */
   sbBroadcast('state',{state});
   if(!roomId||aiMode)return;
   try{
@@ -1569,8 +1580,8 @@ async function resyncFromDB(){
     const lastState=data.data?.lastState;
     if(!lastState)return;
     const remoteVer=lastState.ver||0;
-    if(isSpectator||remoteVer>ver){
-      if(!isSpectator)console.log(`DB resync: local ver=${ver} remote ver=${remoteVer}`);
+    if(remoteVer>ver){
+      console.log(`DB resync: local ver=${ver} remote ver=${remoteVer}`);
       await applyRemote(lastState);
     }
   }catch(e){
@@ -1582,7 +1593,7 @@ function startPeriodicSync(){
   stopPeriodicSync();
   _syncInterval=setInterval(async()=>{
     if(aiMode||over||leaving||!roomId)return;
-    if(isSpectator||turn!==myColor){
+    if(turn!==myColor){
       await resyncFromDB();
     }
   },8000);
@@ -1674,14 +1685,6 @@ function sfxCapture() {
 }
 
 function handleMsg(type,payload){
-  if(isSpectator){
-    if(type==='state'){applyRemote(payload.state);}
-    else if(type==='chat'){addChatMsg(payload);}
-    else if(type==='join'){
-      $s('opp-nm',payload.guestName);$s('opp-pnm',payload.guestName);
-    }
-    return;
-  }
   if(type==='join'){
     $s('opp-nm',payload.guestName);$s('opp-pnm',payload.guestName);
     loadSt({board:newBoard(),turn:B,ver:0,over:false,winner:null,
@@ -1818,7 +1821,7 @@ let huffWaitMode=false, huffWaitCands=[];  /* Player A: victim highlights while 
 let _animPending=null, _huffAnimPending=null, _animBusy=false;
 
 function onCell(r,c){
-  if(isSpectator)return;
+  if(typeof specMode!=='undefined'&&specMode)return;
   if(over)return;
   if(huffPickMode){
     const hit=huffPickCands.find(h=>h.victimR===r&&h.victimC===c);
@@ -1829,7 +1832,7 @@ function onCell(r,c){
   if(sel){
     const hit=legals.find(m=>m.r===r&&m.c===c);
     if(hit){hit.isCap?commitCapStep(hit):doNormalMove(sel.r,sel.c,hit);return;}
-    if(chainDone>0&&chainOrigin){const _or=chainOrigin.r,_oc=chainOrigin.c;clearSel();pick(_or,_oc);return;}
+    if(chainDone>0){const _or=chainOrigin.r,_oc=chainOrigin.c;clearSel();pick(_or,_oc);return;}
     if(board[r][c]!==E&&isOwn(board[r][c],turn)){clearSel();pick(r,c);return;}
     clearSel();draw();
     return;
@@ -1880,17 +1883,11 @@ function commitCapStep(hit){
   const hasMore=chainPaths.some(p=>p.length>chainDone);
   if(hasMore){sel={r:hit.r,c:hit.c};legals=buildLegalsAtStep(chainPaths,chainDone);draw();}
   else{
-    const fullPath=chainPaths&&chainPaths.length?chainPaths[0]:null;
-    if(!fullPath||!chainOrigin){clearSel();draw();return;}/* BUG FIX: guard against empty/null chain state */
-    const origin=chainOrigin;
+    const fullPath=chainPaths[0],origin=chainOrigin;
     clearSel();lastF={r:origin.r,c:origin.c};draw();
     _animPending={type:'cap',fr:origin.r,fc:origin.c,capPath:fullPath};
     _huffAnimPending=null;
-    /* BUG FIX: Add .catch() so a rejection in applyPath never becomes an
-       unhandled promise — without this the game silently freezes mid-capture */
-    applyPath(origin.r,origin.c,fullPath)
-      .then(()=>finish(false,null))
-      .catch(e=>{console.error('applyPath error in commitCapStep:',e);clearSel();draw();});
+    applyPath(origin.r,origin.c,fullPath).then(()=>finish(false,null));
   }
 }
 
@@ -2180,59 +2177,16 @@ window.joinRoom=async function(){
   roomId=code;myColor=W;isHost=false;
   $s('lobby-st','⏳ Room ရှာနေသည်...');
   const{data,error}=await SB().from('rooms').select('data').eq('id',roomId).single();
-  if(error||!data){
-    /* BUG FIX: Reset stale state on all error paths so subsequent createRoom/joinRoom calls start clean */
-    $s('lobby-st','❌ Room မတွေ့ပါ — Code စစ်ကြည့်ပါ');
-    roomId='';myColor=null;isHost=false;return;
-  }
+  if(error||!data){$s('lobby-st','❌ Room မတွေ့ပါ — Code စစ်ကြည့်ပါ');return;}
   const rd=data.data;
-  if(rd.status!=='waiting'){
-    $s('lobby-st','❌ Room ပြည့်နေသည်');
-    roomId='';myColor=null;isHost=false;return;
-  }
-  /* BUG FIX: Guard against room with no initial state to prevent loadSt crash */
-  const initialSt=rd.lastState||rd.state;
-  if(!initialSt||!initialSt.board){
-    $s('lobby-st','❌ Room state မှားယွင်းနေသည်');
-    roomId='';myColor=null;isHost=false;return;
-  }
+  if(rd.status!=='waiting'){$s('lobby-st','❌ Room ပြည့်နေသည်');return;}
   $s('opp-nm',rd.hostName);$s('opp-pnm',rd.hostName);
   await SB().from('rooms').update({data:{...rd,status:'playing',guestName:myName}}).eq('id',roomId);
   subscribeChannel(roomId,()=>{
-    loadSt(initialSt);showGame();
+    const st=rd.lastState||rd.state;
+    loadSt(st);showGame();
     sbBroadcast('join',{guestName:myName});
     addChatMsg({name:'System',text:`🎮 ${myName} ဝင်ရောက်လာပြီ! ဂိမ်းစပါသည်!`,sys:true,ts:Date.now()});
-    startPeriodicSync();
-  });
-};
-
-/* ─── SPECTATOR MODE ─── */
-window.spectateRoom=async function(){
-  const code=$('inp-code').value.trim().toUpperCase();
-  if(code.length<4){$s('lobby-st','⚠️ Room Code ထည့်ပါ');return;}
-  roomId=code;
-  myName='👁 Spectator';
-  myColor=B;/* Watch from Blue side */
-  isHost=false;isSpectator=true;
-  $s('lobby-st','⏳ Room ရှာနေသည်...');
-  const{data,error}=await SB().from('rooms').select('data').eq('id',roomId).single();
-  if(error||!data){
-    $s('lobby-st','❌ Room မတွေ့ပါ — Code စစ်ကြည့်ပါ');
-    isSpectator=false;roomId='';return;
-  }
-  const rd=data.data;
-  if(rd.status!=='playing'&&rd.status!=='waiting'){
-    $s('lobby-st','❌ Room မရှိပါ သို့မဟုတ် ပြီးဆုံးသွားပြီ');
-    isSpectator=false;roomId='';return;
-  }
-  $s('opp-nm',rd.hostName||'Player 1');$s('opp-pnm',rd.hostName||'Player 1');
-  $s('my-nm','👁 Spectator');
-  subscribeChannel(roomId,()=>{
-    const st=rd.lastState||rd.state;
-    if(st){loadSt(st);}
-    else{board=newBoard();turn=B;ver=0;over=false;capBy={[B]:[],[W]:[]};}
-    showGame();
-    addChatMsg({name:'System',text:'👁 Spectator mode — ကြည့်ရှုမှုသာဖြစ်သည်',sys:true,ts:Date.now()});
     startPeriodicSync();
   });
 };
@@ -2245,12 +2199,8 @@ window.cancelRoom=async function(){
 };
 
 async function applyRemote(st){
-  /* BUG FIX: Guard against null or malformed state — silently ignore */
-  if(!st||!st.board||!Array.isArray(st.board)){
-    console.warn('applyRemote: invalid state received, skipping');return;
-  }
   if(_applyingRemote){
-    /* Queue latest state instead of dropping — prevents game stall */
+    /* Queue latest state instead of dropping — prevents game stall (Bug-3 fix) */
     _pendingRemoteState=st;
     return;
   }
@@ -2418,7 +2368,11 @@ window.doLeave=function(){
   },200);
   $('wino').classList.remove('on');$('rematch-req').classList.remove('on');
   aiMode=false;showScr('lobby');
-  isSpectator=false;_applySpectatorUI(false);
+  if(typeof specMode!=='undefined'&&specMode){
+    specMode=false;$('spec-banner').classList.remove('on');
+    if(specCh){try{SB().removeChannel(specCh);}catch(e){}}specCh=null;specRoomId='';
+    $('board').style.pointerEvents='';$('board').style.opacity='';
+  }
   roomId='';myColor=null;isHost=false;leaving=false;
   board=[];turn=B;sel=null;legals=[];over=false;glog=[];
   capBy={[B]:[],[W]:[]};ver=0;huffOn=false;huffAt=null;
@@ -2561,26 +2515,6 @@ function showGame(){
   $s('opp-prl',isBlk?'နီ':'ပြာ');$('opp-pc').className=`pbpc ${isBlk?'w':'b'}`;
   buildCoords();draw();uiUpdate();
   if(!aiMode)startPeriodicSync();
-  if(isSpectator)_applySpectatorUI(true);
-}
-
-function _applySpectatorUI(show){
-  const badge=$('spectator-badge');
-  if(badge)badge.style.display=show?'flex':'none';
-  const resign=document.querySelector('.brsg');
-  if(resign)resign.style.display=show?'none':'';
-  const csend=document.querySelector('.csnd');
-  if(csend)csend.style.display=show?'none':'';
-  const cinp=$('cinp');
-  if(cinp){cinp.disabled=show;cinp.placeholder=show?'Spectator mode — read only':'Message ရေးပါ...';}
-  const lbl=$('conn-lbl');
-  if(lbl&&show)lbl.textContent='WATCH';
-  if(show){
-    const pill=$('ping-pill');const val=$('ping-val');const unit=$('ping-unit');
-    if(pill){pill.className='ping-pill ai-local';}
-    if(val){val.textContent='SPEC';}
-    if(unit){unit.textContent='MODE';}
-  }
 }
 
 function buildCoords(){
@@ -2773,16 +2707,7 @@ function evalBoard(bs){
 }
 function allMoves(t,bs){
   const caps=allCaps(t,bs);
-  if(caps.length){
-    /* BUG FIX: Use GLOBAL max capture length — same rule as human game (maxCapLen).
-       Previous code used per-entry max which allowed AI to choose shorter chains. */
-    const globalMax=maxCapLen(caps);
-    const moves=[];
-    for(const e of caps)
-      for(const path of e.paths)
-        if(path.length===globalMax)moves.push({type:'cap',fr:e.r,fc:e.c,path});
-    return moves;
-  }
+  if(caps.length){const moves=[];for(const e of caps){const maxL=e.paths.reduce((m,p)=>Math.max(m,p.length),0);for(const path of e.paths)if(path.length===maxL)moves.push({type:'cap',fr:e.r,fc:e.c,path});}return moves;}
   const moves=[];for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(bs[r][c]!==E&&isOwn(bs[r][c],t))for(const m of normalMoves(r,c,t,bs))moves.push({type:'mv',fr:r,fc:c,tr:m.r,tc:m.c});
   return moves;
 }
@@ -2811,20 +2736,13 @@ async function doAiMove(){
   const _aiCol=myColor===B?W:B;
   if(!aiMode||over||_aiThinking||turn!==_aiCol)return;
   _aiThinking=true;
-  try{
-    await sleep(aiDifficulty==='easy'?350:aiDifficulty==='normal'?600:900);
-    if(over){return;}
-    const aiColor=myColor===B?W:B;const mv=pickAiMove(aiColor);
-    if(!mv){return;}
-    if(mv.type==='cap'){lastF={r:mv.fr,c:mv.fc};await applyPath(mv.fr,mv.fc,mv.path);lastT={r:mv.path[mv.path.length-1].r,c:mv.path[mv.path.length-1].c};}
-    else{lastF={r:mv.fr,c:mv.fc};board[mv.tr][mv.tc]=board[mv.fr][mv.fc];board[mv.fr][mv.fc]=E;lastT={r:mv.tr,c:mv.tc};promote(mv.tr,mv.tc);addLog((aiColor===B?'⬛':'⬜')+' AI: '+cl(mv.fc)+(mv.fr+1)+'→'+cl(mv.tc)+(mv.tr+1));draw();}
-    aiFinish();
-  }catch(e){
-    console.error('doAiMove error:',e);
-  }finally{
-    /* BUG FIX: Always clear _aiThinking so AI can move again even after errors */
-    _aiThinking=false;
-  }
+  await sleep(aiDifficulty==='easy'?350:aiDifficulty==='normal'?600:900);
+  if(over){_aiThinking=false;return;}
+  const aiColor=myColor===B?W:B;const mv=pickAiMove(aiColor);
+  if(!mv){_aiThinking=false;return;}
+  if(mv.type==='cap'){lastF={r:mv.fr,c:mv.fc};await applyPath(mv.fr,mv.fc,mv.path);lastT={r:mv.path[mv.path.length-1].r,c:mv.path[mv.path.length-1].c};}
+  else{lastF={r:mv.fr,c:mv.fc};board[mv.tr][mv.tc]=board[mv.fr][mv.fc];board[mv.fr][mv.fc]=E;lastT={r:mv.tr,c:mv.tc};promote(mv.tr,mv.tc);addLog((aiColor===B?'⬛':'⬜')+' AI: '+cl(mv.fc)+(mv.fr+1)+'→'+cl(mv.tc)+(mv.tr+1));draw();}
+  _aiThinking=false;aiFinish();
 }
 function aiFinish(){
   const{bc,wc}=cnt();if(!bc){aiEndGame(W);return;}if(!wc){aiEndGame(B);return;}
@@ -2836,6 +2754,63 @@ function aiFinish(){
 function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြာ':'နီ');}
 
 /* ══════════════════════════════════════════════
+   SPECTATOR MODE
+══════════════════════════════════════════════ */
+let specMode=false,specCh=null,specRoomId='';
+
+window.openSpecModal=function(){
+  $('spec-modal').classList.add('on');
+  const inp=$('spec-code-inp');if(inp){inp.value='';inp.focus();}
+  $s('spec-st','');
+};
+window.closeSpecModal=function(){
+  $('spec-modal').classList.remove('on');
+  $s('spec-st','');
+};
+
+window.joinAsSpectator=async function(){
+  const code=($('spec-code-inp').value||'').trim().toUpperCase();
+  if(code.length<4){$s('spec-st','⚠️ Room Code ထည့်ပါ');return;}
+  $s('spec-st','⏳ Room ရှာနေသည်...');
+  try{
+    const{data,error}=await SB().from('rooms').select('*').eq('id',code).single();
+    if(error||!data){$s('spec-st','❌ Room မတွေ့ပါ — Code စစ်ကြည့်ပါ');return;}
+    specRoomId=code;specMode=true;
+    /* Set up read-only board state */
+    board=data.board?JSON.parse(JSON.stringify(data.board)):newBoard();
+    turn=data.turn||B;over=data.over||false;
+    capBy=data.capBy?JSON.parse(JSON.stringify(data.capBy)):{[B]:[],[W]:[]};
+    lastF=data.lastF||null;lastT=data.lastT||null;
+    myColor=B;/* spectator views as Blue perspective */
+    /* Subscribe to channel for live updates */
+    if(specCh){try{await SB().removeChannel(specCh);}catch(e){}}
+    specCh=SB().channel('room:'+code);
+    specCh.on('broadcast',{event:'state'},({payload})=>{
+      if(!specMode)return;
+      if(payload.board)board=payload.board;
+      if(payload.turn!==undefined)turn=payload.turn;
+      if(payload.over!==undefined)over=payload.over;
+      if(payload.capBy)capBy=payload.capBy;
+      if(payload.lastF!==undefined)lastF=payload.lastF;
+      if(payload.lastT!==undefined)lastT=payload.lastT;
+      draw();uiUpdate();
+    }).subscribe();
+    closeSpecModal();
+    /* Switch to game screen in view-only mode */
+    sel=null;legals=[];
+    const _nm=$('inp-name').value.trim()||'Spectator';
+    myName=_nm;
+    $s('my-nm',_nm);$s('my-pnm',_nm);
+    $s('opp-nm','—');$s('opp-pnm','—');
+    showScr('game');draw();uiUpdate();
+    $('spec-banner').classList.add('on');
+    /* Disable board interaction */
+    $('board').style.pointerEvents='none';
+    $('board').style.opacity='0.9';
+  }catch(e){$s('spec-st','❌ Error: '+e.message);}
+};
+
+/* ══════════════════════════════════════════════
    REAL-TIME PING — FIX: Skip in AI mode
 ══════════════════════════════════════════════ */
 (function(){
@@ -2843,9 +2818,10 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
   const PING_URL=SB_URL+'/rest/v1/?apikey='+SB_KEY;
 
   async function measurePing(){
-    /* FIX: In AI mode or Spectator mode, skip Supabase ping — don't overwrite custom display */
-    if(typeof aiMode!=='undefined'&&aiMode){return;}
-    if(typeof isSpectator!=='undefined'&&isSpectator){return;}
+    /* FIX: In AI mode, show LOCAL indicator — no Supabase ping */
+    if(typeof aiMode!=='undefined'&&aiMode){
+      return;/* Keep AI LOCAL display, don't overwrite */
+    }
     const pill=$('ping-pill');
     const val=$('ping-val');
     if(!pill||!val)return;
@@ -2897,6 +2873,26 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
       </div>
       <button class="ai-start" onclick="startAiGame()">▶ &nbsp;ကစားမည်</button><br>
       <button class="ai-cancel" onclick="closeAiModal()">← ပြန်သွားမည်</button>
+    </div>
+  </div>
+</div>
+
+<!-- SPECTATOR BANNER -->
+<div id="spec-banner">👁 SPECTATOR MODE — VIEW ONLY</div>
+
+<!-- SPECTATOR MODAL -->
+<div id="spec-modal">
+  <div class="spec-box">
+    <div class="spec-inner">
+      <div class="spec-icon">👁</div>
+      <div class="spec-title">SPECTATE</div>
+      <div class="spec-sub">လက်ရှိ ဂိမ်းကို ကြည့်မည်</div>
+      <div class="spec-divider"></div>
+      <div class="spec-lbl">🔑 Room Code ထည့်ပါ</div>
+      <input class="spec-inp" id="spec-code-inp" type="text" placeholder="CODE..." maxlength="6" style="text-transform:uppercase" autocomplete="off">
+      <button class="spec-btn" onclick="joinAsSpectator()">👁 &nbsp;ကြည့်မည်</button>
+      <button class="spec-cancel" onclick="closeSpecModal()">← ပြန်သွားမည်</button>
+      <div class="spec-status" id="spec-st"></div>
     </div>
   </div>
 </div>
