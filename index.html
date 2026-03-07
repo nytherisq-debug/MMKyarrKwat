@@ -473,6 +473,19 @@ body::after{
     0 2px 8px rgba(0,0,0,0.7);
   outline:none;}
 
+/* Logo title */
+.tlogo-title{
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif;
+  font-size:.72rem;font-weight:700;
+  letter-spacing:.5px;
+  white-space:nowrap;
+  flex-shrink:0;
+  background:linear-gradient(135deg,#F0CC72 0%,#E8B840 35%,#FFF0A0 55%,#C89030 80%,#F0CC72 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  text-shadow:none;
+  filter:drop-shadow(0 0 6px rgba(212,168,67,0.45));
+  margin-right:4px;}
+
 /* Room pill - fixed, no shrink */
 .rpill{
   display:flex;align-items:center;gap:5px;
@@ -1284,6 +1297,7 @@ body::after{
   <!-- Topbar — fixed overflow layout -->
   <div class="topbar">
     <img class="tlogo-img" src="logo.png" alt="Kyar Kwat">
+    <div class="tlogo-title">မြန်မာရိုးရာ ကျားကွက်</div>
     <div class="spectator-badge" id="spectator-badge">👁 SPECTATING</div>
     <div class="topbar-space"></div>
     <div class="topbar-right">
