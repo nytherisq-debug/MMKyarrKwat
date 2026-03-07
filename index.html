@@ -352,7 +352,7 @@ body::after{
   background:rgba(40,160,220,.12);
   border:1px solid rgba(80,200,255,.35);
   font-size:.62rem;font-weight:700;color:rgba(100,210,255,.9);
-  letter-spacing:1.2px;white-space:nowrap;font-family:'Orbitron',monospace;
+  letter-spacing:.2px;white-space:nowrap;font-family:'Orbitron',monospace;
   animation:spec-badge-glow 2s ease-in-out infinite}
 
 /* ── SPECTATOR PANEL (lobby) ── */
@@ -586,19 +586,15 @@ body::after{
     #FFF8DC 76%,
     #D4A020 88%,
     #FFE566 100%);
-  background-size:200% auto;
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
   background-clip:text;
-  animation:gold-shimmer 3.6s linear infinite;
   filter:
     drop-shadow(0 0 8px rgba(255,210,50,0.70))
     drop-shadow(0 0 20px rgba(200,150,10,0.35))
     drop-shadow(0 1px 2px rgba(0,0,0,1));
-  line-height:1.3}
-@keyframes gold-shimmer{
-  0%{background-position:200% center}
-  100%{background-position:-200% center}}
+  line-height:1.6;overflow:visible}
+
 
 /* Room pill - fixed, no shrink */
 .rpill{
@@ -3070,4 +3066,5 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-</html>
+   </html>
+   
