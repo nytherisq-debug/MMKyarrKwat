@@ -3,14 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>မြန်မာ ကျားကွက် | Multiplayer</title>
+<title>မြန်မာ ရိုးရာကျားကွက် | Multiplayer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Noto+Sans+Myanmar:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* ═══════════════════════════════════════════
-   DESIGN TOKENS
-═══════════════════════════════════════════ */
 :root{
   --g50:#FFF8E8;--g100:#F0CC72;--g200:#D4A843;--g300:#B8882A;--g400:#8A6410;--g500:#5A400A;
   --glass-white:rgba(255,255,255,0.04);--glass-white-hi:rgba(255,255,255,0.08);
@@ -31,9 +28,6 @@
   --topbar-h:52px;
 }
 
-/* ═══════════════════════════════════════════
-   RESET & BASE
-═══════════════════════════════════════════ */
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html,body{
   width:100%;height:100%;background:var(--surface-1);
@@ -55,18 +49,12 @@ body::after{
   background-size:100px 100px}
 #mm-bg{position:fixed;inset:0;z-index:0;pointer-events:none}
 
-/* ═══════════════════════════════════════════
-   SCREENS
-═══════════════════════════════════════════ */
 .scr{position:fixed;inset:0;z-index:10;display:none}
 .scr.show{display:flex}
 #lobby{align-items:center;justify-content:center;background:transparent}
 #waiting{align-items:center;justify-content:center;background:rgba(4,2,12,0.6);backdrop-filter:blur(12px)}
 #game{flex-direction:column;padding:8px 12px 8px;gap:8px;background:transparent}
 
-/* ═══════════════════════════════════════════
-   ANIMATIONS
-═══════════════════════════════════════════ */
 @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -99,9 +87,6 @@ body::after{
   100%{transform:translate(0,0) scale(1)}
 }
 
-/* ═══════════════════════════════════════════
-   LOBBY — PREMIUM REDESIGN
-═══════════════════════════════════════════ */
 .lbox{
   position:relative;z-index:1;
   background:linear-gradient(165deg,rgba(14,10,7,0.99) 0%,rgba(7,5,12,0.99) 100%);
@@ -236,9 +221,6 @@ body::after{
   text-align:center;font-size:.75rem;color:var(--g100);
   min-height:18px;margin-top:8px;transition:opacity .2s;font-family:'Outfit',sans-serif}
 
-/* ═══════════════════════════════════════════
-   WAITING SCREEN
-═══════════════════════════════════════════ */
 .wbox{text-align:center;animation:fadeUp .5s ease both}
 .wspin{
   width:60px;height:60px;border-radius:50%;margin:0 auto 22px;
@@ -267,9 +249,6 @@ body::after{
   opacity:0;pointer-events:none;transition:opacity .2s;font-family:'Outfit',sans-serif}
 .copy-tip.show{opacity:1}
 
-/* ═══════════════════════════════════════════
-   TOPBAR — FIXED OVERFLOW
-═══════════════════════════════════════════ */
 .topbar{
   display:flex;align-items:center;
   padding:7px 14px;flex-shrink:0;
@@ -353,9 +332,6 @@ body::after{
   max-width:80px}/* cap width to prevent overflow */
 @media(max-width:400px){.conn-lbl{display:none}}
 
-/* ═══════════════════════════════════════════
-   GAME LAYOUT
-═══════════════════════════════════════════ */
 .main{display:flex;gap:10px;flex:1;min-height:0;align-items:stretch;justify-content:center}
 .panel{width:var(--side);flex-shrink:0;display:flex;flex-direction:column;gap:8px;overflow:hidden}
 .center{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
@@ -430,9 +406,6 @@ body::after{
   animation:slide-in .15s ease both}
 .crow{display:flex;flex-wrap:wrap;gap:3px;min-height:12px}
 
-/* ═══════════════════════════════════════════
-   PLAYER PROGRESS BARS — PREMIUM
-═══════════════════════════════════════════ */
 .pbar{
   display:flex;align-items:center;gap:9px;
   padding:9px 14px;border-radius:var(--r-md);
@@ -488,9 +461,6 @@ body::after{
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Outfit',sans-serif}
 .pbrl{font-size:.55rem;color:var(--text-3);font-family:'Outfit',sans-serif}
 
-/* ═══════════════════════════════════════════
-   BOARD FRAME — PREMIUM WOOD & GOLD
-═══════════════════════════════════════════ */
 .bframe{
   background:linear-gradient(145deg,#1e0d00,#120700,#1a0a00);
   border:2px solid rgba(212,168,67,0.55);
@@ -564,9 +534,6 @@ body::after{
   width:10px;height:10px;border-radius:50%;pointer-events:none;
   background:rgba(200,170,80,0.5);border:1.5px solid rgba(220,190,100,0.55);opacity:.65}
 
-/* ═══════════════════════════════════════════
-   GLASS PIECES — SAPPHIRE BLUE & RUBY RED
-═══════════════════════════════════════════ */
 .piece{
   width:calc(var(--cell) - 8px);height:calc(var(--cell) - 8px);
   border-radius:50%;position:relative;z-index:2;
@@ -660,9 +627,6 @@ body::after{
   color:var(--g100);pointer-events:none}
 @keyframes ghost-pop{0%{transform:scale(1)}40%{transform:scale(1.3)}100%{transform:scale(0);opacity:0}}
 
-/* ═══════════════════════════════════════════
-   CAPTURE OVERLAY SVG
-═══════════════════════════════════════════ */
 #cap-overlay{position:absolute;top:0;left:0;pointer-events:none;z-index:10;overflow:visible}
 .cap-path-line{
   stroke:rgba(245,158,11,0.65);stroke-width:2;stroke-dasharray:6 4;
@@ -676,9 +640,6 @@ body::after{
   z-index:5;border:1.5px solid rgba(255,255,255,0.8);
   pointer-events:none;animation:badge-pop .2s ease both}
 
-/* ═══════════════════════════════════════════
-   HUFF BARS — premium frosted glass
-═══════════════════════════════════════════ */
 .huff-pick-bar,.huff-wait-bar{
   display:none;align-items:center;gap:11px;
   padding:10px 14px;border-radius:var(--r-sm);width:100%;
@@ -714,9 +675,6 @@ body::after{
 .huff-wait-bar .hwb-sub{font-size:.60rem;color:rgba(200,100,100,.48);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* ═══════════════════════════════════════════
-   CHAT — PREMIUM REDESIGN
-═══════════════════════════════════════════ */
 .chat{
   background:rgba(255,255,255,0.018);
   border:1px solid rgba(212,168,67,0.10);
@@ -789,9 +747,6 @@ body::after{
   font-size:.85rem;font-weight:700;cursor:pointer;transition:all .2s}
 .csnd:hover{filter:brightness(1.1);transform:scale(1.05)}
 
-/* ═══════════════════════════════════════════
-   WIN OVERLAY — PREMIUM
-═══════════════════════════════════════════ */
 #wino{
   position:fixed;inset:0;z-index:500;
   display:flex;align-items:center;justify-content:center;
@@ -833,9 +788,6 @@ body::after{
   font-size:.7rem;color:rgba(212,168,67,0.52);
   margin-top:10px;min-height:18px;font-family:'Outfit',sans-serif}
 
-/* ═══════════════════════════════════════════
-   REMATCH REQUEST
-═══════════════════════════════════════════ */
 #rematch-req{
   position:fixed;inset:0;z-index:600;
   display:flex;align-items:center;justify-content:center;
@@ -866,9 +818,6 @@ body::after{
   font-family:'Outfit',sans-serif;font-size:.88rem;cursor:pointer;transition:all .22s}
 .rr-decline:hover{background:rgba(239,68,68,0.14)}
 
-/* ═══════════════════════════════════════════
-   TOAST
-═══════════════════════════════════════════ */
 .toast{
   position:fixed;top:10px;left:50%;
   transform:translateX(-50%) translateY(-70px);
@@ -881,9 +830,6 @@ body::after{
   font-family:'Outfit',sans-serif}
 .toast.on{transform:translateX(-50%) translateY(0)}
 
-/* ═══════════════════════════════════════════
-   AI MODAL — PREMIUM REDESIGN
-═══════════════════════════════════════════ */
 #ai-modal{
   position:fixed;inset:0;z-index:950;display:none;/* z-index above everything */
   align-items:center;justify-content:center;
@@ -976,9 +922,6 @@ body::after{
   transition:color .18s;letter-spacing:.5px}
 .ai-cancel:hover{color:rgba(212,168,67,0.52)}
 
-/* ═══════════════════════════════════════════
-   RESPONSIVE
-═══════════════════════════════════════════ */
 @media(max-width:960px){:root{--cell:44px;--side:155px}.main{gap:8px}}
 @media(max-width:780px){:root{--cell:38px}.panel{display:none}.main{justify-content:center}}
 @media(max-width:500px){:root{--cell:34px}.lbox{padding:26px 22px}}
@@ -1013,16 +956,17 @@ body::after{
 <body>
 <canvas id="mm-bg"></canvas>
 
-<!-- ══════════════════════════════════════════
-     LOBBY
-══════════════════════════════════════════ -->
 <div id="lobby" class="scr show">
   <div class="lbox">
-    <div class="lobby-orb lobby-orb-1"></div>
-    <div class="lobby-orb lobby-orb-2"></div>
-    <div class="licon">🎭</div>
-    <div class="ltitle">KYAR KWAT</div>
-    <div class="lsub">မြန်မာ ကျားကွက် · Online Multiplayer</div>
+  <div class="lobby-orb lobby-orb-1"></div>
+  <div class="lobby-orb lobby-orb-2"></div>
+
+  <div class="licon">
+    <img src="logo.png" class="logo-img">
+  </div>
+
+  <div class="lsub">မြန်မာ ရိုးရာကျားကွက် · Online Multiplayer</div>
+</div>
     <div class="ldiv"></div>
     <div class="llbl">👤 သင့်အမည်</div>
     <input class="linp" id="inp-name" type="text" placeholder="အမည်ထည့်ပါ..." maxlength="20" autocomplete="off">
@@ -1049,9 +993,6 @@ body::after{
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     WAITING
-══════════════════════════════════════════ -->
 <div id="waiting" class="scr">
   <div class="wbox">
     <div class="wspin"></div>
@@ -1065,14 +1006,11 @@ body::after{
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     GAME
-══════════════════════════════════════════ -->
 <div id="game" class="scr">
 
   <!-- Topbar — fixed overflow layout -->
   <div class="topbar">
-    <div class="tlogo">🎭 KYAR KWAT<small>မြန်မာ ကျားကွက်</small></div>
+    <div class="tlogo">🎭 KYAR KWAT<small>မြန်မာ ရိုးရာကျားကွက်</small></div>
     <div class="topbar-space"></div>
     <div class="topbar-right">
       <button id="mbtn" onclick="mToggle()" title="Music">
@@ -1191,11 +1129,11 @@ body::after{
         <div class="cmsgs" id="cmsgs"></div>
         <div class="erow">
           <button class="eb" onclick="qmsg('👏')">👏</button>
-          <button class="eb" onclick="qmsg('😄')">😄</button>
+          <button class="eb" onclick="qmsg('😁')">😁</button>
           <button class="eb" onclick="qmsg('🤔')">🤔</button>
-          <button class="eb" onclick="qmsg('😅')">😅</button>
+          <button class="eb" onclick="qmsg('🤪')">🤪</button>
           <button class="eb" onclick="qmsg('🔥')">🔥</button>
-          <button class="eb" onclick="qmsg('🙏')">🙏</button>
+          <button class="eb" onclick="qmsg('😎')">😎</button>
           <button class="eb" onclick="qmsg('Good game!')">GG</button>
         </div>
         <div class="cinr">
@@ -1256,9 +1194,7 @@ body::after{
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-/* ══════════════════════════════════════════════
-   PIECE IDs
-══════════════════════════════════════════════ */
+
 const E=0,B=1,W=2,BK=3,WK=4;
 const isB=p=>p===B||p===BK;
 const isW=p=>p===W||p===WK;
@@ -1266,18 +1202,12 @@ const isK=p=>p===BK||p===WK;
 const isOwn=(p,t)=>t===B?isB(p):isW(p);
 const isOpp=(p,t)=>t===B?isW(p):isB(p);
 
-/* ══════════════════════════════════════════════
-   STATE
-══════════════════════════════════════════════ */
 let board=[], turn=B, sel=null, legals=[], over=false;
 let glog=[], capBy={[B]:[],[W]:[]}, lastF=null, lastT=null;
 let myName='', myColor=null, roomId='', isHost=false;
 let ver=0, huffOn=false, huffAt=null;
 let leaving=false, winShown=false, gameCount=0;
 
-/* ══════════════════════════════════════════════
-   SUPABASE
-══════════════════════════════════════════════ */
 const SB_URL='https://oxziinvwdhligrbllqbj.supabase.co';
 const SB_KEY='sb_publishable_8uBlwuN8DbyDfccT2uMaNw_9fpqYb6s';
 let _sb=null, sbCh=null, chatLog=[];
@@ -1322,7 +1252,7 @@ function subscribeChannel(rid,onReady){
         if(onReady)onReady();
       } else {
         console.log('Channel reconnected — resyncing from DB');
-        sysChat('🔄 ပြန်ချိတ်ဆက်ပြီ — အနေအထားကို ပြန်ရယူနေသည်...');
+        sysChat('🔄 ပြန်ချိတ်ဆက်ပြီး — အနေအထားကို ပြန်ရယူနေသည်...');
         resyncFromDB();
       }
     } else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){
@@ -1490,9 +1420,6 @@ function addChatMsg(msg){
 }
 function vibrate(p){try{if(navigator.vibrate)navigator.vibrate(p);}catch(e){}}
 
-/* ══════════════════════════════════════════════
-   HELPERS
-══════════════════════════════════════════════ */
 const $=id=>document.getElementById(id);
 const $s=(id,v)=>{const e=$(id);if(e)e.textContent=v;};
 function showScr(id){
@@ -1511,9 +1438,6 @@ function newBoard(){
   return b;
 }
 
-/* ══════════════════════════════════════════════
-   MOVE GENERATION
-══════════════════════════════════════════════ */
 function capPaths(r,c,t,bs,vis,isChain){
   const p=bs[r][c],king=isK(p);
   const dirs=king?[[-1,-1],[-1,1],[1,-1],[1,1]]:(t===B?[[1,-1],[1,1]]:[[-1,-1],[-1,1]]);
@@ -1573,9 +1497,6 @@ function normalMoves(r,c,t,bs){
   return mv;
 }
 
-/* ══════════════════════════════════════════════
-   CELL CLICK
-══════════════════════════════════════════════ */
 let chainOrigin=null, chainPaths=[], chainDone=0;
 let huffPickMode=false, huffPickCands=[], huffPickResolve=null;
 let huffWaitMode=false, huffWaitCands=[];  /* Player A: victim highlights while B picks */
@@ -1699,7 +1620,7 @@ async function doNormalMove(fr,fc,mv){
       /* Show wait-bar + victim highlights to Player A */
       huffWaitMode=true;huffWaitCands=pendingCands;
       const _wlbl=pendingCands.map(h=>`${cl(h.victimC)}${h.victimR+1}`).join(', ');
-      $s('huff-wait-msg',`ဖမ်းမစားမိကျား (${_wlbl}) `);
+      $s('huff-wait-msg',`ဖမ်းမစားမိသောကျား (${_wlbl}) `);
       $('huff-wait-bar').classList.add('on');
       push(_hp);turn=nxtT;draw();uiUpdate();
       return;
@@ -1825,9 +1746,6 @@ function promote(r,c){
 }
 const cl=c=>String.fromCharCode(65+c);
 
-/* ══════════════════════════════════════════════
-   FINISH TURN
-══════════════════════════════════════════════ */
 function finish(tHuff,hPos,huffNotif){
   const{bc,wc}=cnt();
   if(!bc){endGame(W,'နီ');return;}
@@ -1866,9 +1784,6 @@ window.doResign=function(){
   endGame(myColor===B?W:B,myColor===B?'နီ':'ပြာ');
 };
 
-/* ══════════════════════════════════════════════
-   REMATCH
-══════════════════════════════════════════════ */
 window.requestRematch=function(){
   if(aiMode){
     aiGoesFirst=!aiGoesFirst;myColor=aiGoesFirst?W:B;
@@ -1912,9 +1827,6 @@ function applyRematchColor(st){
   myColor=isHost?st.hostColor:(st.hostColor===B?W:B);
 }
 
-/* ══════════════════════════════════════════════
-   ROOM MANAGEMENT
-══════════════════════════════════════════════ */
 window.createRoom=async function(){
   myName=$('inp-name').value.trim()||'ကစားသမား ①';
   myColor=B;isHost=true;
@@ -1946,7 +1858,7 @@ window.joinRoom=async function(){
     const st=rd.lastState||rd.state;
     loadSt(st);showGame();
     sbBroadcast('join',{guestName:myName});
-    addChatMsg({name:'System',text:`🎮 ${myName} ဝင်ရောက်လာပြီ! ဂိမ်းစပါသည်!`,sys:true,ts:Date.now()});
+    addChatMsg({name:'System',text:`🎮 ${myName} ဝင်ရောက်လာပြီး ဂိမ်းစတင်ပါသည်!`,sys:true,ts:Date.now()});
     startPeriodicSync();
   });
 };
@@ -2069,7 +1981,7 @@ async function applyRemote(st){
     if(!st.over&&st.huffPending&&st.huffPending.length>0&&turn!==myColor){
       huffWaitMode=true;huffWaitCands=st.huffPending;
       const _wlbl=st.huffPending.map(h=>`${cl(h.victimC)}${h.victimR+1}`).join(', ');
-      $s('huff-wait-msg',`ဖမ်းမစားမိကျား (${_wlbl}) `);
+      $s('huff-wait-msg',`ဖမ်းမစားမိသောကျား (${_wlbl}) `);
       $('huff-wait-bar').classList.add('on');
       draw();
     }
@@ -2145,9 +2057,6 @@ window.doLeave=function(){
   const pu=$('ping-unit');if(pu)pu.textContent='ms';
 };
 
-/* ══════════════════════════════════════════════
-   CHAT
-══════════════════════════════════════════════ */
 window.sendChat=function(){
   const e=$('cinp'),t=e.value.trim();if(!t)return;e.value='';
   const msg={name:myName,text:t,sys:false,ts:Date.now()};
@@ -2173,9 +2082,6 @@ function renderChat(list){
   if(atBot)el.scrollTop=el.scrollHeight;
 }
 
-/* ══════════════════════════════════════════════
-   DRAW BOARD
-══════════════════════════════════════════════ */
 function draw(){
   const el=$('board');if(!el)return;el.innerHTML='';
   const lm=new Map();for(const m of legals)lm.set(`${m.r},${m.c}`,m);
@@ -2223,9 +2129,6 @@ function draw(){
   }
 }
 
-/* ══════════════════════════════════════════════
-   UI UPDATE
-══════════════════════════════════════════════ */
 function uiUpdate(){
   if(!myColor)return;
   const{bc,wc}=cnt();
@@ -2256,9 +2159,6 @@ function addLog(t){
 }
 function clearSel(){sel=null;legals=[];chainOrigin=null;chainPaths=[];chainDone=0;clearCapOverlay();}
 
-/* ══════════════════════════════════════════════
-   SHOW GAME
-══════════════════════════════════════════════ */
 function showGame(){
   showScr('game');$s('top-room',roomId);
   const isBlk=myColor===B;
@@ -2280,9 +2180,6 @@ function buildCoords(){
   for(const n of RN){const s=document.createElement('span');s.textContent=n;rows.appendChild(s);}
 }
 
-/* ══════════════════════════════════════════════
-   CAPTURE OVERLAY
-══════════════════════════════════════════════ */
 let highlightedPaths=[],selectedPathIdx=-1;
 function cellCenter(r,c){
   const dr=myColor===B?7-r:r,dc=myColor===B?7-c:c;
@@ -2404,9 +2301,6 @@ $('inp-code').addEventListener('input',e=>{e.target.value=e.target.value.toUpper
   loop();
 })();
 
-/* ══════════════════════════════════════════════
-   AI MODE
-══════════════════════════════════════════════ */
 let aiMode=false,aiDifficulty='easy',_aiThinking=false,aiGoesFirst=false;
 
 window.openAiModal=function(){
@@ -2508,9 +2402,6 @@ function aiFinish(){
 }
 function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြာ':'နီ');}
 
-/* ══════════════════════════════════════════════
-   REAL-TIME PING — FIX: Skip in AI mode
-══════════════════════════════════════════════ */
 (function(){
   let _pingTimer=null;
   const PING_URL=SB_URL+'/rest/v1/?apikey='+SB_KEY;
@@ -2556,7 +2447,7 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
     <div class="ai-inner">
       <div class="ai-icon">🤖</div>
       <div class="ai-title">AI MODE</div>
-      <div class="ai-sub">မြန်မာ ကျားကွက် · AI နှင့် ကစားမည်</div>
+      <div class="ai-sub">မြန်မာ ရိုးရာကျားကွက် · AI နှင့် ကစားမည်</div>
       <div class="ai-divider"></div>
       <div class="ai-lbl">⚔️ အဆင့် ရွေးချယ်ပါ</div>
       <div class="ai-diff-row">
@@ -2617,4 +2508,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-</html>
+   </html>
