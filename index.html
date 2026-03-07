@@ -60,7 +60,7 @@ body::after{
 ═══════════════════════════════════════════ */
 .scr{position:fixed;inset:0;z-index:10;display:none}
 .scr.show{display:flex}
-#lobby{align-items:center;justify-content:center;background:transparent}
+#lobby{align-items:center;justify-content:center;background:transparent;overflow-y:auto;align-items:flex-start;padding:16px 0}
 #waiting{align-items:center;justify-content:center;background:rgba(4,2,12,0.6);backdrop-filter:blur(12px)}
 #game{flex-direction:column;padding:8px 12px 8px;gap:8px;background:transparent}
 
@@ -981,8 +981,8 @@ body::after{
 ═══════════════════════════════════════════ */
 @media(max-width:960px){:root{--cell:44px;--side:155px}.main{gap:8px}}
 @media(max-width:780px){:root{--cell:38px}.panel{display:none}.main{justify-content:center}}
-@media(max-width:500px){:root{--cell:34px}.lbox{padding:26px 22px}}
-@media(max-width:380px){:root{--cell:32px}}
+@media(max-width:500px){:root{--cell:34px}.lbox{padding:26px 22px}.logo-img{width:150px;height:150px}#lobby{padding:12px 0}}
+@media(max-width:380px){:root{--cell:32px}.logo-img{width:120px;height:120px}}
 /* ── Music Button ── */
 #mbtn{
   display:flex;align-items:center;gap:5px;
