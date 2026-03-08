@@ -2414,7 +2414,7 @@ async function applyRemote(st){
       window._lastHuffTs=st.huffNotif.ts;
       $s('huff-piece-lbl',st.huffNotif.at);
       $('hn').classList.add('on');vibrate([200,80,200,80,200]);
-      sysChat(`မစားမိသောကြောင့် ${st.huffNotif.at} ဖမ်းကောက်ခဲ့သည်`);
+      sysChat(`မစားမိသောကြောင့် ${st.huffNotif.at} ဖမ်းကောက်ခံလိုက်ရသည်`);
       setTimeout(()=>$('hn').classList.remove('on'),4000);
     }
     draw();uiUpdate();
@@ -2431,7 +2431,7 @@ async function applyRemote(st){
       $s('huff-piece-lbl',_hpVl);
       $('hn').classList.add('on');
       setTimeout(()=>$('hn').classList.remove('on'),4000);
-      sysChat(`\u{1F4A8} မစားမိသောကြောင့် ${_hpVl} ဖမ်းကောက်ခံလိုက်ရသည်`);
+      sysChat(`\u{1F4A8} မစားမိသောကြောင့် ${_hpVl} ဖမ်းကောက်ခဲ့သည်`);
       /* BUG FIX: Check game-over after huff — if the huffed piece was the last one,
          _hr was previously hardcoded over:false which caused the game to never end. */
       const{bc:_hbc,wc:_hwc}=cnt();
@@ -3062,4 +3062,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-   </html>
+</html>
