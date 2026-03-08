@@ -62,9 +62,8 @@ body::after{
 .scr.show{display:flex}
 #lobby{
   align-items:center;justify-content:center;
-  overflow-y:auto;
   background:
-    linear-gradient(160deg,rgba(4,2,14,0.30) 0%,rgba(6,3,16,0.28) 50%,rgba(4,2,10,0.32) 100%),
+    linear-gradient(160deg,rgba(4,2,14,0.10) 0%,rgba(6,3,16,0.08) 50%,rgba(4,2,10,0.12) 100%),
     url('background.png') center center / cover no-repeat}
 #waiting{align-items:center;justify-content:center;background:rgba(4,2,12,0.6);backdrop-filter:blur(12px)}
 #game{flex-direction:column;padding:8px 12px 8px;gap:8px;background:transparent}
@@ -121,10 +120,10 @@ body::after{
   display:flex;align-items:center;justify-content:center;
   gap:12px;margin-bottom:10px;position:relative}
 .logo-cyber-wrap{
-  position:relative;width:150px;height:150px;
+  position:relative;width:100px;height:100px;
   display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .logo-img{
-  width:124px;height:124px;border-radius:50%;object-fit:cover;
+  width:82px;height:82px;border-radius:50%;object-fit:cover;
   position:relative;z-index:3;
   animation:logo-float 3.8s ease-in-out infinite;
   filter:drop-shadow(0 0 14px rgba(212,168,67,.65)) drop-shadow(0 0 28px rgba(212,168,67,.3))}
@@ -218,7 +217,7 @@ body::after{
 /* scene container — sits around the logo-cyber-wrap */
 .mg-scene{
   position:relative;
-  width:300px;height:300px;
+  width:200px;height:200px;
   display:flex;align-items:center;justify-content:center;
   flex-shrink:0}
 
@@ -227,22 +226,22 @@ body::after{
   position:absolute;left:50%;top:50%;
   border-radius:50%;border-style:solid;pointer-events:none}
 .mg-r1{/* outermost dashed */
-  width:280px;height:280px;margin:-140px 0 0 -140px;
+  width:188px;height:188px;margin:-94px 0 0 -94px;
   border-width:1px;
   border-color:rgba(212,168,67,.12) transparent rgba(212,168,67,.12) transparent;
   animation:mc-cw 28s linear infinite}
 .mg-r2{
-  width:240px;height:240px;margin:-120px 0 0 -120px;
+  width:162px;height:162px;margin:-81px 0 0 -81px;
   border-width:1.5px;
   border-color:rgba(212,168,67,.30) rgba(212,168,67,.06) rgba(212,168,67,.30) rgba(212,168,67,.06);
   animation:mc-ccw 18s linear infinite}
 .mg-r3{
-  width:200px;height:200px;margin:-100px 0 0 -100px;
+  width:136px;height:136px;margin:-68px 0 0 -68px;
   border-width:1px;
   border-color:rgba(212,168,67,.18) rgba(212,168,67,.04) rgba(212,168,67,.18) rgba(212,168,67,.04);
   animation:mc-cw 12s linear infinite}
 .mg-r4{/* inner detail ring */
-  width:168px;height:168px;margin:-84px 0 0 -84px;
+  width:114px;height:114px;margin:-57px 0 0 -57px;
   border-width:1px;
   border-color:rgba(212,168,67,.10) transparent rgba(212,168,67,.10) transparent;
   animation:mc-ccw 9s linear infinite}
@@ -394,8 +393,8 @@ body::after{
   background:linear-gradient(165deg,rgba(14,10,7,0.99) 0%,rgba(7,5,12,0.99) 100%);
   border:1px solid rgba(212,168,67,0.22);
   border-radius:24px;
-  padding:24px 28px;width:430px;max-width:94vw;
-  max-height:92vh;overflow-y:auto;overflow-x:hidden;
+  padding:14px 22px;width:430px;max-width:94vw;
+  overflow:visible;
   box-shadow:
     0 0 0 1px rgba(212,168,67,0.04),
     0 0 100px rgba(212,168,67,0.07),
@@ -421,7 +420,7 @@ body::after{
   position:absolute;border-radius:50%;pointer-events:none;
   filter:blur(80px);z-index:-2}
 .lobby-orb-1{
-  width:300px;height:300px;top:-100px;left:-80px;
+  width:200px;height:200px;top:-100px;left:-80px;
   background:radial-gradient(circle,rgba(120,80,20,0.15),transparent 70%);
   animation:lobby-orb-float 9s ease-in-out infinite}
 .lobby-orb-2{
@@ -441,18 +440,18 @@ body::after{
   font-size:.73rem;color:var(--text-3);text-align:center;letter-spacing:2px;
   font-family:'Outfit',sans-serif;font-weight:400}
 .ldiv{
-  height:1px;margin:20px 0;
+  height:1px;margin:10px 0;
   background:linear-gradient(90deg,transparent,rgba(212,168,67,.12),rgba(212,168,67,.5),rgba(212,168,67,.12),transparent)}
 .llbl{
   font-size:.62rem;color:var(--text-3);letter-spacing:2.5px;
-  text-transform:uppercase;margin-bottom:7px;font-family:'Outfit',sans-serif;font-weight:500}
+  text-transform:uppercase;margin-bottom:4px;font-family:'Outfit',sans-serif;font-weight:500}
 .linp{
-  width:100%;padding:11px 14px;
+  width:100%;padding:8px 14px;
   background:rgba(255,255,255,0.025);
   border:1px solid rgba(212,168,67,0.12);
   border-radius:var(--r-sm);
   color:var(--text-1);font-family:'Outfit',sans-serif;font-size:.88rem;
-  margin-bottom:10px;outline:none;
+  margin-bottom:7px;outline:none;
   transition:border-color .2s,box-shadow .2s,background .2s}
 .linp:focus{
   border-color:rgba(212,168,67,0.48);
@@ -460,12 +459,12 @@ body::after{
   background:rgba(255,255,255,0.04)}
 .linp::placeholder{color:rgba(212,168,67,0.16);font-family:'Outfit',sans-serif}
 
-.brow{display:flex;gap:10px;margin-bottom:4px}
-.jrow{display:flex;gap:8px;margin-bottom:12px}
+.brow{display:flex;gap:10px;margin-bottom:3px}
+.jrow{display:flex;gap:8px;margin-bottom:6px}
 .jrow .linp{margin-bottom:0;flex:1}
 
 .bgold{
-  flex:1;padding:12px 16px;border:none;border-radius:var(--r-sm);
+  flex:1;padding:9px 16px;border:none;border-radius:var(--r-sm);
   background:linear-gradient(135deg,#5A3A08 0%,#C8962A 35%,#E8C050 50%,#C89030 65%,#7A5012 100%);
   color:#060300;font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:700;
   cursor:pointer;letter-spacing:.3px;
@@ -491,7 +490,7 @@ body::after{
 
 /* AI Mode button — special premium style */
 .bai{
-  flex:1;padding:12px 16px;border:none;border-radius:var(--r-sm);
+  flex:1;padding:9px 16px;border:none;border-radius:var(--r-sm);
   background:linear-gradient(135deg,#1a0840 0%,#4a1598 40%,#7020d0 60%,#4010a0 100%);
   color:#e8d8ff;font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:700;
   cursor:pointer;letter-spacing:.3px;
@@ -1343,8 +1342,8 @@ body::after{
         <div class="mg-ring mg-r4"></div>
 
         <!-- SVG dashed detail ring -->
-        <svg class="mg-svg" width="222" height="222" viewBox="0 0 222 222">
-          <circle cx="111" cy="111" r="108" stroke="rgba(212,168,67,0.18)"
+        <svg class="mg-svg" width="150" height="150" viewBox="0 0 150 150">
+          <circle cx="75" cy="75" r="72" stroke="rgba(212,168,67,0.18)"
             stroke-width="1" fill="none"
             stroke-dasharray="8 6" stroke-linecap="round"/>
         </svg>
@@ -3075,4 +3074,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-</html>
+   </html>
