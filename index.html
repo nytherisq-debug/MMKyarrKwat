@@ -62,12 +62,9 @@ body::after{
 .scr.show{display:flex}
 #lobby{
   align-items:center;justify-content:center;
-  background:url('background.png') center center / cover no-repeat;
-  isolation:isolate}
-#lobby::before{
-  content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
-  background:linear-gradient(160deg,rgba(4,2,14,0.55) 0%,rgba(8,4,20,0.50) 50%,rgba(4,2,10,0.60) 100%)}
-#lobby > *{position:relative;z-index:1}
+  background:
+    linear-gradient(160deg,rgba(4,2,14,0.42) 0%,rgba(6,3,16,0.38) 50%,rgba(4,2,10,0.45) 100%),
+    url('background.png') center center / cover no-repeat}
 #waiting{align-items:center;justify-content:center;background:rgba(4,2,12,0.6);backdrop-filter:blur(12px)}
 #game{flex-direction:column;padding:8px 12px 8px;gap:8px;background:transparent}
 
@@ -3074,4 +3071,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-</html>
+   </html>
