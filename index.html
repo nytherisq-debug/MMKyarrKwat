@@ -626,6 +626,16 @@ body::after{
   flex:0 0 auto;flex-wrap:nowrap;
   overflow:hidden}
 
+/* Compact topbar when spec-count-pill is visible */
+.topbar.has-spectators .tlogo small{font-size:.72rem;letter-spacing:.6px}
+.topbar.has-spectators .rpill{padding:3px 7px;font-size:.6rem}
+.topbar.has-spectators .rpill strong{font-size:.62rem;letter-spacing:2px}
+.topbar.has-spectators .ping-pill{padding:3px 6px}
+.topbar.has-spectators .ping-val{font-size:.58rem;min-width:18px}
+.topbar.has-spectators .ping-unit{font-size:.46rem}
+.topbar.has-spectators #mbtn{padding:0 7px;font-size:.55rem}
+.topbar.has-spectators .topbar-right{gap:5px}
+
 /* Ping pill */
 .ping-pill{
   display:flex;align-items:center;gap:4px;
@@ -1478,7 +1488,7 @@ body::after{
     <div class="tlogo"><img src="logo.png" class="tlogo-img" alt="KK"><small>မြန်မာ ကျားကွက်</small></div>
     <div class="topbar-space"></div>
     <div class="topbar-right">
-      <div class="spectator-badge" id="spectator-badge">👁 SPECTATING</div>
+      <div class="spectator-badge" id="spectator-badge">👁</div>
       <div class="spec-count-pill" id="spec-count-pill">👥 <span id="spec-count-val">0</span></div>
       <button id="mbtn" onclick="mToggle()" title="Music">
         <span id="mico">🎵</span>
@@ -1732,17 +1742,25 @@ function subscribeChannel(rid,onReady){
     if(!specs.length)return;
     _specCount=Object.values(sbCh.presenceState()).flat().filter(p=>p.role==='spectator').length;
     const pill=$('spec-count-pill');if(pill){pill.style.display='flex';$s('spec-count-val',_specCount);}
+    document.querySelector('.topbar')?.classList.add('has-spectators');
     toast(`👥 Spectator ${_specCount} ဦး ကြည့်ရှုနေသည်`);
-    sysChat(`👥 Spectator ဝင်ရောက်လာသည် — လက်ရှိ ${_specCount} ဦး ကြည့်ရှုနေသည်`);
+    sysChat(`👥 Spectator ${_specCount} ဦး ကြည့်ရှုနေသည်`);
+    vibrate([60,30,60]);
   });
   sbCh.on('presence',{event:'leave'},({leftPresences})=>{
     const specs=(leftPresences||[]).filter(p=>p.role==='spectator');
     if(!specs.length)return;
-    _specCount=Math.max(0,Object.values(sbCh.presenceState()).flat().filter(p=>p.role==='spectator').length);
+    /* presenceState() is already updated after leave */
+    _specCount=Object.values(sbCh.presenceState()).flat().filter(p=>p.role==='spectator').length;
     const pill=$('spec-count-pill');
-    if(_specCount>0){if(pill){pill.style.display='flex';$s('spec-count-val',_specCount);}}
-    else{if(pill)pill.style.display='none';}
-    sysChat(`👥 Spectator ထွက်သွားသည် — လက်ရှိ ${_specCount} ဦး ကြည့်ရှုနေသည်`);
+    if(_specCount>0){
+      if(pill){pill.style.display='flex';$s('spec-count-val',_specCount);}
+      sysChat(`👥 Spectator ထွက်သွားသည် — လက်ရှိ ${_specCount} ဦး ကြည့်ရှုနေသည်`);
+    } else {
+      if(pill)pill.style.display='none';
+      document.querySelector('.topbar')?.classList.remove('has-spectators');
+      sysChat(`👥 Spectator ထွက်သွားသည်`);
+    }
   });
   let firstConnect=true;
   sbCh.subscribe(status=>{
@@ -2570,6 +2588,8 @@ window.doLeave=function(){
   },200);
   $('wino').classList.remove('on');$('rematch-req').classList.remove('on');
   const _olv=$('opp-left-overlay');if(_olv)_olv.classList.remove('on');
+  document.querySelector('.topbar')?.classList.remove('has-spectators');
+  _specCount=0;
   aiMode=false;showScr('lobby');
   roomId='';myColor=null;isHost=false;leaving=false;
   board=[];turn=B;sel=null;legals=[];over=false;glog=[];
@@ -2796,12 +2816,10 @@ window.joinSpectator=async function(){
   /* Subscribe to channel (listen only) */
   const ch=SB().channel(`room:${roomId}`,{config:{broadcast:{ack:false},presence:{key:''}}});
   ch.on('broadcast',{event:'state'},({payload})=>{if(payload&&spectatorMode)applyRemote(payload);})
-    .on('broadcast',{event:'spec_count'},({payload})=>{if(payload&&payload.n!=null){const p=$('spec-count-val');if(p)p.textContent=payload.n;}})
     .subscribe((status)=>{
       if(status==='SUBSCRIBED'&&!aiMode){
-        /* Announce presence as spectator — players will detect via presence events */
+        /* Track presence as spectator — players detect via presence join event */
         ch.track({role:'spectator',ts:Date.now()}).catch(()=>{});
-        ch.send({type:'broadcast',event:'spec_join',payload:{ts:Date.now()}}).catch(()=>{});
       }
     });
   sbCh=ch;
@@ -2825,8 +2843,8 @@ window.joinSpectator=async function(){
   const sendBtn=document.querySelector('.csend');if(sendBtn)sendBtn.style.opacity='.3';
   /* Disable quick messages */
   const qbtns=document.querySelectorAll('.qbtn');qbtns.forEach(b=>{b.style.opacity='.3';b.style.pointerEvents='none';});
-  /* Show spectator count pill */
-  const sp=$('spec-count-pill');if(sp)sp.style.display='flex';
+  /* Show spectator count pill only on player screens, not spectator */
+  /* const sp=$('spec-count-pill');if(sp)sp.style.display='flex'; */
   /* Board: disable cell interactions (onCell checks turn===myColor, so it won't allow moves) */
   /* myColor cycles with perspective — spectator auto-follows current turn */
   sysChat('👁 Spectator Mode — ကြည့်ရှုနေသည်');
@@ -3123,4 +3141,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-</html>
+   </html>
