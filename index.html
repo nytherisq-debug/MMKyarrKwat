@@ -63,7 +63,7 @@ body::after{
 #lobby{
   align-items:center;justify-content:center;
   background:
-    linear-gradient(160deg,rgba(4,2,14,0.10) 0%,rgba(6,3,16,0.08) 50%,rgba(4,2,10,0.12) 100%),
+    linear-gradient(160deg,rgba(4,2,14,0.62) 0%,rgba(6,3,16,0.55) 50%,rgba(4,2,10,0.68) 100%),
     url('background.png') center center / cover no-repeat}
 #waiting{align-items:center;justify-content:center;background:rgba(4,2,12,0.6);backdrop-filter:blur(12px)}
 #game{flex-direction:column;padding:8px 12px 8px;gap:8px;background:transparent}
@@ -118,12 +118,12 @@ body::after{
 /* ── LOGO SECTION ── */
 .logo-section{
   display:flex;align-items:center;justify-content:center;
-  gap:12px;margin-bottom:10px;position:relative}
+  gap:12px;margin-bottom:4px;position:relative}
 .logo-cyber-wrap{
-  position:relative;width:100px;height:100px;
+  position:relative;width:82px;height:82px;
   display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .logo-img{
-  width:82px;height:82px;border-radius:50%;object-fit:cover;
+  width:66px;height:66px;border-radius:50%;object-fit:cover;
   position:relative;z-index:3;
   animation:logo-float 3.8s ease-in-out infinite;
   filter:drop-shadow(0 0 14px rgba(212,168,67,.65)) drop-shadow(0 0 28px rgba(212,168,67,.3))}
@@ -217,7 +217,7 @@ body::after{
 /* scene container — sits around the logo-cyber-wrap */
 .mg-scene{
   position:relative;
-  width:200px;height:200px;
+  width:160px;height:160px;
   display:flex;align-items:center;justify-content:center;
   flex-shrink:0}
 
@@ -226,22 +226,22 @@ body::after{
   position:absolute;left:50%;top:50%;
   border-radius:50%;border-style:solid;pointer-events:none}
 .mg-r1{/* outermost dashed */
-  width:188px;height:188px;margin:-94px 0 0 -94px;
+  width:150px;height:150px;margin:-75px 0 0 -75px;
   border-width:1px;
   border-color:rgba(212,168,67,.12) transparent rgba(212,168,67,.12) transparent;
   animation:mc-cw 28s linear infinite}
 .mg-r2{
-  width:162px;height:162px;margin:-81px 0 0 -81px;
+  width:130px;height:130px;margin:-65px 0 0 -65px;
   border-width:1.5px;
   border-color:rgba(212,168,67,.30) rgba(212,168,67,.06) rgba(212,168,67,.30) rgba(212,168,67,.06);
   animation:mc-ccw 18s linear infinite}
 .mg-r3{
-  width:136px;height:136px;margin:-68px 0 0 -68px;
+  width:108px;height:108px;margin:-54px 0 0 -54px;
   border-width:1px;
   border-color:rgba(212,168,67,.18) rgba(212,168,67,.04) rgba(212,168,67,.18) rgba(212,168,67,.04);
   animation:mc-cw 12s linear infinite}
 .mg-r4{/* inner detail ring */
-  width:114px;height:114px;margin:-57px 0 0 -57px;
+  width:90px;height:90px;margin:-45px 0 0 -45px;
   border-width:1px;
   border-color:rgba(212,168,67,.10) transparent rgba(212,168,67,.10) transparent;
   animation:mc-ccw 9s linear infinite}
@@ -266,13 +266,13 @@ body::after{
   background:rgba(212,168,67,.8);
   box-shadow:0 0 8px rgba(212,168,67,.7),0 0 16px rgba(212,168,67,.35);
   animation:mc-glow 2.4s ease-in-out infinite}
-.mg-sp1{transform:rotate(0deg);  width:100px;
+.mg-sp1{transform:rotate(0deg);  width:80px;
   background:linear-gradient(90deg,rgba(212,168,67,.05),rgba(212,168,67,.5))}
-.mg-sp2{transform:rotate(90deg); width:100px;
+.mg-sp2{transform:rotate(90deg); width:80px;
   background:linear-gradient(90deg,rgba(212,168,67,.05),rgba(212,168,67,.5))}
-.mg-sp3{transform:rotate(180deg);width:100px;
+.mg-sp3{transform:rotate(180deg);width:80px;
   background:linear-gradient(90deg,rgba(212,168,67,.05),rgba(212,168,67,.5));animation-delay:.6s}
-.mg-sp4{transform:rotate(270deg);width:100px;
+.mg-sp4{transform:rotate(270deg);width:80px;
   background:linear-gradient(90deg,rgba(212,168,67,.05),rgba(212,168,67,.5));animation-delay:1.2s}
 .mg-sp1::after{animation-delay:0s}
 .mg-sp2::after{animation-delay:.6s}
@@ -287,10 +287,10 @@ body::after{
 .mg-sat{
   position:absolute;
   display:flex;align-items:center;justify-content:center}
-.mg-sat:nth-child(1){transform:translateY(-120px) translateX(-14px)}
-.mg-sat:nth-child(2){transform:rotate(90deg) translateY(-120px) rotate(-90deg) translateX(-14px)}
-.mg-sat:nth-child(3){transform:rotate(180deg) translateY(-120px) rotate(-180deg) translateX(-14px)}
-.mg-sat:nth-child(4){transform:rotate(270deg) translateY(-120px) rotate(-270deg) translateX(-14px)}
+.mg-sat:nth-child(1){transform:translateY(-96px) translateX(-11px)}
+.mg-sat:nth-child(2){transform:rotate(90deg) translateY(-96px) rotate(-90deg) translateX(-11px)}
+.mg-sat:nth-child(3){transform:rotate(180deg) translateY(-96px) rotate(-180deg) translateX(-11px)}
+.mg-sat:nth-child(4){transform:rotate(270deg) translateY(-96px) rotate(-270deg) translateX(-11px)}
 .mg-sat-g{
   width:28px;height:28px;border-radius:50%;
   border:1.5px solid rgba(212,168,67,.5);
@@ -309,10 +309,10 @@ body::after{
 .mg-corner-gear{
   position:absolute;
   width:20px;height:20px;pointer-events:none}
-.mg-cg-NW{top:calc(50% - 88px);left:calc(50% - 88px)}
-.mg-cg-NE{top:calc(50% - 88px);left:calc(50% + 68px)}
-.mg-cg-SW{top:calc(50% + 68px);left:calc(50% - 88px)}
-.mg-cg-SE{top:calc(50% + 68px);left:calc(50% + 68px)}
+.mg-cg-NW{top:calc(50% - 70px);left:calc(50% - 70px)}
+.mg-cg-NE{top:calc(50% - 70px);left:calc(50% + 50px)}
+.mg-cg-SW{top:calc(50% + 50px);left:calc(50% - 70px)}
+.mg-cg-SE{top:calc(50% + 50px);left:calc(50% + 50px)}
 .mg-cg-ring{
   position:absolute;inset:0;border-radius:50%;
   border:1px solid rgba(212,168,67,.4)}
@@ -390,11 +390,11 @@ body::after{
 ═══════════════════════════════════════════ */
 .lbox{
   position:relative;z-index:1;
-  background:linear-gradient(165deg,rgba(14,10,7,0.99) 0%,rgba(7,5,12,0.99) 100%);
+  background:linear-gradient(165deg,rgba(14,10,7,0.96) 0%,rgba(7,5,12,0.96) 100%);
   border:1px solid rgba(212,168,67,0.22);
   border-radius:24px;
-  padding:14px 22px;width:430px;max-width:94vw;
-  overflow:visible;
+  padding:10px 20px 12px;width:430px;max-width:94vw;
+  max-height:98dvh;overflow:hidden;
   box-shadow:
     0 0 0 1px rgba(212,168,67,0.04),
     0 0 100px rgba(212,168,67,0.07),
@@ -440,18 +440,18 @@ body::after{
   font-size:.73rem;color:var(--text-3);text-align:center;letter-spacing:2px;
   font-family:'Outfit',sans-serif;font-weight:400}
 .ldiv{
-  height:1px;margin:10px 0;
+  height:1px;margin:7px 0;
   background:linear-gradient(90deg,transparent,rgba(212,168,67,.12),rgba(212,168,67,.5),rgba(212,168,67,.12),transparent)}
 .llbl{
   font-size:.62rem;color:var(--text-3);letter-spacing:2.5px;
-  text-transform:uppercase;margin-bottom:4px;font-family:'Outfit',sans-serif;font-weight:500}
+  text-transform:uppercase;margin-bottom:3px;font-family:'Outfit',sans-serif;font-weight:500}
 .linp{
-  width:100%;padding:8px 14px;
+  width:100%;padding:7px 14px;
   background:rgba(255,255,255,0.025);
   border:1px solid rgba(212,168,67,0.12);
   border-radius:var(--r-sm);
   color:var(--text-1);font-family:'Outfit',sans-serif;font-size:.88rem;
-  margin-bottom:7px;outline:none;
+  margin-bottom:6px;outline:none;
   transition:border-color .2s,box-shadow .2s,background .2s}
 .linp:focus{
   border-color:rgba(212,168,67,0.48);
@@ -459,12 +459,12 @@ body::after{
   background:rgba(255,255,255,0.04)}
 .linp::placeholder{color:rgba(212,168,67,0.16);font-family:'Outfit',sans-serif}
 
-.brow{display:flex;gap:10px;margin-bottom:3px}
-.jrow{display:flex;gap:8px;margin-bottom:6px}
+.brow{display:flex;gap:10px;margin-bottom:2px}
+.jrow{display:flex;gap:8px;margin-bottom:5px}
 .jrow .linp{margin-bottom:0;flex:1}
 
 .bgold{
-  flex:1;padding:9px 16px;border:none;border-radius:var(--r-sm);
+  flex:1;padding:8px 16px;border:none;border-radius:var(--r-sm);
   background:linear-gradient(135deg,#5A3A08 0%,#C8962A 35%,#E8C050 50%,#C89030 65%,#7A5012 100%);
   color:#060300;font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:700;
   cursor:pointer;letter-spacing:.3px;
@@ -486,11 +486,11 @@ body::after{
   cursor:pointer;white-space:nowrap;transition:all .2s}
 .bout:hover{background:var(--glass-gold-hi);border-color:rgba(212,168,67,0.5)}
 
-.lor{text-align:center;color:var(--text-4);font-size:.65rem;letter-spacing:2px;margin:5px 0;font-family:'Outfit',sans-serif}
+.lor{text-align:center;color:var(--text-4);font-size:.65rem;letter-spacing:2px;margin:3px 0;font-family:'Outfit',sans-serif}
 
 /* AI Mode button — special premium style */
 .bai{
-  flex:1;padding:9px 16px;border:none;border-radius:var(--r-sm);
+  flex:1;padding:8px 16px;border:none;border-radius:var(--r-sm);
   background:linear-gradient(135deg,#1a0840 0%,#4a1598 40%,#7020d0 60%,#4010a0 100%);
   color:#e8d8ff;font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:700;
   cursor:pointer;letter-spacing:.3px;
@@ -505,7 +505,7 @@ body::after{
 .bai:active{transform:translateY(0)}
 
 /* Telegram link */
-.tg-box{position:relative;margin-top:14px;border-radius:var(--r-sm);padding:1.5px;z-index:0;isolation:isolate}
+.tg-box{position:relative;margin-top:8px;border-radius:var(--r-sm);padding:1.5px;z-index:0;isolation:isolate}
 .tg-box::before{
   content:'';position:absolute;inset:0;border-radius:var(--r-sm);
   background:conic-gradient(from var(--tg-angle),#29b6f6,#7c4dff,#f06292,#ffb300,#29b6f6);
@@ -523,7 +523,7 @@ body::after{
 
 .lobby-status{
   text-align:center;font-size:.75rem;color:var(--g100);
-  min-height:18px;margin-top:8px;transition:opacity .2s;font-family:'Outfit',sans-serif;
+  min-height:14px;margin-top:5px;transition:opacity .2s;font-family:'Outfit',sans-serif;
   white-space:normal;overflow:visible;width:100%;word-break:keep-all}
 
 /* ═══════════════════════════════════════════
@@ -1319,135 +1319,6 @@ body::after{
 @keyframes _mb1{from{height:3px}to{height:12px}}
 @keyframes _mb2{from{height:8px}to{height:3px}}
 @keyframes _mb3{from{height:2px}to{height:10px}}
-
-/* ═══════════════════════════════════════════
-   LOBBY FRAME FIT + PANEL SYSTEM
-═══════════════════════════════════════════ */
-/* Scale down mechanic scene to save vertical space */
-.mg-scene{
-  transform:scale(0.70);
-  margin:-30px 0 -20px;
-}
-/* Lbox: fit in frame, glassy premium */
-.lbox{
-  overflow:hidden !important;
-  max-height:calc(100dvh - 18px);
-  padding:10px 20px 28px !important;
-  background:linear-gradient(165deg,rgba(10,7,5,0.88) 0%,rgba(5,3,10,0.91) 100%) !important;
-  backdrop-filter:blur(18px) saturate(1.2) !important;
-}
-/* Lobby background: make background.png visible */
-#lobby{
-  background:
-    linear-gradient(180deg,rgba(3,1,10,0.48) 0%,rgba(3,1,10,0.30) 50%,rgba(3,1,10,0.52) 100%),
-    url('background.png') center center / cover no-repeat !important;
-}
-/* Main lobby view */
-.lobby-main{
-  display:flex;
-  flex-direction:column;
-  transition:opacity .26s ease,transform .26s ease;
-}
-.lobby-main.lp-hide{
-  opacity:0;
-  transform:translateX(-16px);
-  pointer-events:none;
-}
-/* Sub-panel — slides in from right, overlays lbox */
-.lobby-subpanel{
-  position:absolute;
-  inset:0;
-  padding:22px 20px 28px;
-  display:flex;
-  flex-direction:column;
-  background:linear-gradient(165deg,rgba(9,6,4,0.98) 0%,rgba(4,2,9,0.98) 100%);
-  border-radius:23px;
-  opacity:0;
-  transform:translateX(24px);
-  pointer-events:none;
-  transition:opacity .32s cubic-bezier(.16,1,.3,1),transform .32s cubic-bezier(.16,1,.3,1);
-  overflow-y:auto;
-  scrollbar-width:none;
-}
-.lobby-subpanel::-webkit-scrollbar{display:none}
-.lobby-subpanel.lp-show{
-  opacity:1;
-  transform:translateX(0);
-  pointer-events:auto;
-}
-/* Premium top-line accent in sub-panel */
-.lobby-subpanel::after{
-  content:'';
-  position:absolute;
-  top:0;left:15%;right:15%;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(212,168,67,0.55),transparent);
-  pointer-events:none;
-}
-/* Back button */
-.lback-btn{
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-  background:rgba(212,168,67,0.04);
-  border:1px solid rgba(212,168,67,0.12);
-  border-radius:8px;
-  color:rgba(212,168,67,0.5);
-  font-size:.72rem;
-  cursor:pointer;
-  font-family:'Outfit',sans-serif;
-  margin-bottom:16px;
-  padding:6px 12px;
-  transition:color .2s,border-color .2s,background .2s;
-  letter-spacing:.5px;
-  align-self:flex-start;
-}
-.lback-btn:hover{
-  color:rgba(212,168,67,.85);
-  border-color:rgba(212,168,67,0.35);
-  background:rgba(212,168,67,0.07);
-}
-/* Sub-panel section title */
-.spanel-title{
-  font-size:.65rem;
-  color:var(--g100);
-  letter-spacing:3px;
-  text-transform:uppercase;
-  margin-bottom:14px;
-  font-family:'Outfit',sans-serif;
-  font-weight:600;
-  text-shadow:0 0 24px rgba(212,168,67,0.35);
-}
-/* Join button in main view — styled like bout but full row */
-.bjoin{
-  width:100%;
-  padding:9px 16px;
-  border-radius:var(--r-sm);
-  background:var(--glass-gold);
-  border:1px solid var(--glass-gold-border);
-  color:var(--g100);
-  font-family:'Outfit',sans-serif;
-  font-size:.88rem;
-  cursor:pointer;
-  transition:all .2s;
-  letter-spacing:.3px;
-  font-weight:600;
-  margin-top:6px;
-}
-.bjoin:hover{background:var(--glass-gold-hi);border-color:rgba(212,168,67,0.5);transform:translateY(-1px)}
-/* Global lobby status: absolute at lbox bottom, always on top */
-#lobby-st{
-  position:absolute !important;
-  bottom:8px !important;
-  left:20px !important;
-  right:20px !important;
-  z-index:30 !important;
-  text-align:center;
-  font-size:.73rem;
-  color:var(--g100);
-  min-height:0 !important;
-  margin-top:0 !important;
-  pointer-events:none;
-}
 </style>
 </head>
 <body>
@@ -1460,38 +1331,6 @@ body::after{
   <div class="lbox">
     <div class="lobby-orb lobby-orb-1"></div>
     <div class="lobby-orb lobby-orb-2"></div>
-
-    <!-- ── JOIN / SPECTATOR SUB-PANEL ── -->
-    <div id="lobby-join" class="lobby-subpanel">
-      <button class="lback-btn" onclick="closeLobbyPanel()">← ပြန်သွားမည်</button>
-      <div class="spanel-title">🔑 Room ဝင်မည်</div>
-      <div class="llbl">Room Code ထည့်ပါ</div>
-      <div class="jrow" style="margin-bottom:10px">
-        <input class="linp" id="inp-code" type="text" placeholder="CODE..." maxlength="6" style="text-transform:uppercase;letter-spacing:3px;text-align:center" autocomplete="off">
-        <button class="bout" onclick="joinRoom()">ဝင်မည်</button>
-      </div>
-      <div class="lor" style="margin:8px 0">─── သို့မဟုတ် ───</div>
-      <button class="bspec" onclick="toggleSpectatorPanel()" style="background:linear-gradient(135deg,rgba(8,40,80,.9) 0%,rgba(12,60,100,.9) 50%,rgba(8,40,80,.9) 100%);border:1px solid rgba(80,200,255,.25);width:100%;font-size:.82rem;padding:9px">👁 &nbsp;Spectator Mode — ကြည့်ရှုမည်</button>
-      <div class="spec-panel" id="spec-panel" style="margin-top:6px">
-        <div class="llbl" style="color:rgba(100,200,255,.7);letter-spacing:2px">🔑 Room Code ထည့်ပါ</div>
-        <div class="jrow">
-          <input class="linp" id="inp-spectate-code" type="text" placeholder="CODE..." maxlength="6" style="text-transform:uppercase;letter-spacing:3px;text-align:center;border-color:rgba(80,200,255,.2)" autocomplete="off">
-          <button class="bout" style="border-color:rgba(80,200,255,.3);color:rgba(100,200,255,.85)" onclick="joinSpectator()">ကြည့်မည်</button>
-        </div>
-      </div>
-      <div style="margin-top:auto;padding-top:12px">
-        <div class="tg-box">
-          <a class="tg-link" href="https://t.me/Nytheris_q" target="_blank" rel="noopener">
-            <span class="tg-icon">✈</span>
-            <span class="tg-text">TG &nbsp;·&nbsp; <strong>@Nytheris_q</strong></span>
-            <span class="tg-arrow">↗</span>
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── MAIN LOBBY VIEW ── -->
-    <div id="lobby-main" class="lobby-main">
     <!-- Logo Section: Mechanic System around Logo -->
     <div class="logo-section">
       <div class="mg-scene">
@@ -1503,8 +1342,8 @@ body::after{
         <div class="mg-ring mg-r4"></div>
 
         <!-- SVG dashed detail ring -->
-        <svg class="mg-svg" width="150" height="150" viewBox="0 0 150 150">
-          <circle cx="75" cy="75" r="72" stroke="rgba(212,168,67,0.18)"
+        <svg class="mg-svg" width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="58" stroke="rgba(212,168,67,0.18)"
             stroke-width="1" fill="none"
             stroke-dasharray="8 6" stroke-linecap="round"/>
         </svg>
@@ -1571,17 +1410,30 @@ body::after{
     <div class="brow" style="margin-top:4px">
       <button class="bai" onclick="openAiModal()">🤖 AI Mode</button>
     </div>
-    <button class="bjoin" onclick="openLobbyPanel('join')">🔑 Room ဝင်မည် · Spectator</button>
-    <div class="tg-box" style="margin-top:8px">
+    <div class="lor">─── သို့မဟုတ် ───</div>
+    <div class="llbl">🔑 Room Code ဖြင့် ဝင်ပါ</div>
+    <div class="jrow">
+      <input class="linp" id="inp-code" type="text" placeholder="CODE..." maxlength="6" style="text-transform:uppercase;letter-spacing:3px;text-align:center" autocomplete="off">
+      <button class="bout" onclick="joinRoom()">ဝင်မည်</button>
+    </div>
+    <!-- Spectator -->
+    <div style="margin-top:6px">
+      <button class="bspec" onclick="toggleSpectatorPanel()" style="background:linear-gradient(135deg,rgba(8,40,80,.9) 0%,rgba(12,60,100,.9) 50%,rgba(8,40,80,.9) 100%);border:1px solid rgba(80,200,255,.25);width:100%;font-size:.82rem;padding:9px">👁 &nbsp;Spectator Mode — ကြည့်ရှုမည်</button>
+      <div class="spec-panel" id="spec-panel">
+        <div class="llbl" style="color:rgba(100,200,255,.7);letter-spacing:2px">🔑 Room Code ထည့်ပါ</div>
+        <div class="jrow">
+          <input class="linp" id="inp-spectate-code" type="text" placeholder="CODE..." maxlength="6" style="text-transform:uppercase;letter-spacing:3px;text-align:center;border-color:rgba(80,200,255,.2)" autocomplete="off">
+          <button class="bout" style="border-color:rgba(80,200,255,.3);color:rgba(100,200,255,.85)" onclick="joinSpectator()">ကြည့်မည်</button>
+        </div>
+      </div>
+    </div>
+    <div class="tg-box">
       <a class="tg-link" href="https://t.me/Nytheris_q" target="_blank" rel="noopener">
         <span class="tg-icon">✈</span>
         <span class="tg-text">TG &nbsp;·&nbsp; <strong>@Nytheris_q</strong></span>
         <span class="tg-arrow">↗</span>
       </a>
     </div>
-    </div><!-- end lobby-main -->
-
-    <!-- Global status: always on top of any active panel -->
     <div class="lobby-status" id="lobby-st"></div>
   </div>
 </div>
@@ -3153,22 +3005,6 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
     setTimeout(startPing,1000);
   }
 })();
-
-/* ══════════════════════════════════════════════
-   LOBBY PANEL NAVIGATION
-══════════════════════════════════════════════ */
-function openLobbyPanel(id){
-  var main=document.getElementById('lobby-main');
-  var panel=document.getElementById('lobby-'+id);
-  if(main)main.classList.add('lp-hide');
-  if(panel)panel.classList.add('lp-show');
-}
-function closeLobbyPanel(){
-  var panels=document.querySelectorAll('.lobby-subpanel');
-  panels.forEach(function(p){p.classList.remove('lp-show');});
-  var main=document.getElementById('lobby-main');
-  if(main)main.classList.remove('lp-hide');
-}
 </script>
 
 <!-- AI MODAL -->
@@ -3238,4 +3074,4 @@ function closeLobbyPanel(){
 })();
 </script>
 </body>
-   </html>
+                                         </html>
