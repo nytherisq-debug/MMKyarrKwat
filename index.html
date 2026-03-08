@@ -1913,13 +1913,7 @@ function handleMsg(type,payload){
     showGame();
     addChatMsg({name:'System',text:`🔄 ပွဲ ${gameCount} စတင်သည်! ${myColor===B?'🔵 ပြာ':'🔴 နီ'} ကစားမည်`,sys:true,ts:Date.now()});
   } else if(type==='spec_join'){
-    if(!spectatorMode){
-      _specCount++;
-      const pill=$('spec-count-pill');if(pill){pill.style.display='flex';$s('spec-count-val',_specCount);}
-      toast(`👥 Spectator ${_specCount} ဦး ကြည့်ရှုနေသည်`);
-      sysChat(`👥 Spectator ${_specCount} ဦး ကြည့်ရှုနေသည်`);
-      vibrate([60,30,60]);
-    }
+    /* Presence events handle count & notifications — ignore broadcast duplicate */
   } else if(type==='leave'){
     if(!over&&!leaving){
       const oppName=$('opp-nm')?.textContent||'ပြိုင်ဘက်';
@@ -3129,4 +3123,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-           </html>
+</html>
