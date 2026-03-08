@@ -2729,7 +2729,11 @@ function clearSel(){sel=null;legals=[];chainOrigin=null;chainPaths=[];chainDone=
    SHOW GAME
 ══════════════════════════════════════════════ */
 function showGame(){
-  showScr('game');$s('top-room',roomId);
+  showScr('game');
+  /* Show room code pill only in multiplayer — hide in AI mode */
+  const rpillEl=document.querySelector('.rpill');
+  if(rpillEl){rpillEl.style.display=aiMode?'none':'flex';}
+  $s('top-room',roomId);
   const isBlk=myColor===B;
   $s('my-nm',myName);$s('my-rl',isBlk?'🔵 ပြာ':'🔴 နီ');
   $('my-av').className=`pav ${isBlk?'av-b':'av-w'}`;$s('my-av',isBlk?'⬛':'⬜');
@@ -2796,7 +2800,6 @@ window.copyRoomCode=function(){
   if(!roomId)return;
   navigator.clipboard.writeText(roomId).then(()=>{
     const t=$('copy-tip');if(t){t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1500);}
-    const t2=$('copy-tip2');if(t2){t2.classList.add('show');setTimeout(()=>t2.classList.remove('show'),1500);}
   }).catch(()=>{
     const el=$('w-code')||$('top-room');
     if(el){const r=document.createRange();r.selectNode(el);window.getSelection().removeAllRanges();window.getSelection().addRange(r);}
@@ -3176,4 +3179,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-   </html>
+         </html>
