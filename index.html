@@ -573,15 +573,15 @@ body::after{
   min-width:0;
   height:var(--topbar-h)}
 
-/* Logo - fixed width, no shrink */
+/* Logo — shrinks last, icon always visible */
 .tlogo{
-  display:flex;align-items:center;gap:9px;
-  white-space:nowrap;flex:0 0 auto;margin-right:10px;
-  padding:0;background:none;border:none;box-shadow:none}
+  display:flex;align-items:center;gap:6px;
+  white-space:nowrap;flex:0 2 auto;min-width:36px;
+  padding:0;background:none;border:none;box-shadow:none;overflow:hidden}
 .tlogo small{
   display:block;
   font-family:'Noto Sans Myanmar',sans-serif;
-  font-size:.88rem;
+  font-size:clamp(.7rem,2.2vw,.88rem);
   font-weight:700;
   letter-spacing:1.2px;
   background:linear-gradient(105deg,
@@ -601,40 +601,41 @@ body::after{
     drop-shadow(0 0 8px rgba(255,210,50,0.70))
     drop-shadow(0 0 20px rgba(200,150,10,0.35))
     drop-shadow(0 1px 2px rgba(0,0,0,1));
-  line-height:1.6;overflow:visible}
+  line-height:1.6;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;max-width:clamp(60px,28vw,140px)}
 
-
-/* Room pill - fixed, no shrink */
+/* Room pill — shrinks gracefully */
 .rpill{
-  display:flex;align-items:center;gap:5px;
+  display:flex;align-items:center;gap:4px;
   background:rgba(255,255,255,0.025);
   border:1px solid rgba(212,168,67,0.13);
-  border-radius:8px;padding:4px 10px;
-  font-size:.68rem;color:var(--text-2);font-family:'Outfit',sans-serif;
+  border-radius:8px;padding:4px 8px;
+  font-size:.65rem;color:var(--text-2);font-family:'Outfit',sans-serif;
   cursor:pointer;white-space:nowrap;
-  flex:0 0 auto}
+  flex:0 1 auto;min-width:52px;overflow:hidden}
 .rpill strong{
   color:var(--g100);font-family:'Orbitron',monospace;
-  letter-spacing:3px;font-weight:700;font-size:.72rem}
+  letter-spacing:clamp(1px,.4vw,3px);font-weight:700;
+  font-size:clamp(.6rem,1.6vw,.72rem)}
 
-/* Spacer - fills available space */
-.topbar-space{flex:1 1 0;min-width:4px}
+/* Spacer */
+.topbar-space{flex:1 1 0;min-width:2px}
 
-/* Right group - fixed, no shrink, no wrap */
+/* Right group — fixed, never shrink so ping/conn always visible */
 .topbar-right{
-  display:flex;align-items:center;gap:7px;
-  flex:0 0 auto;flex-wrap:nowrap;
-  overflow:hidden}
+  display:flex;align-items:center;gap:6px;
+  flex:0 0 auto;flex-wrap:nowrap;overflow:hidden}
 
-/* Compact topbar when spec-count-pill is visible */
-.topbar.has-spectators .tlogo small{font-size:.72rem;letter-spacing:.6px}
-.topbar.has-spectators .rpill{padding:3px 7px;font-size:.6rem}
-.topbar.has-spectators .rpill strong{font-size:.62rem;letter-spacing:2px}
+/* Compact when spectators present */
+.topbar.has-spectators .tlogo small{max-width:0;overflow:hidden;letter-spacing:0;font-size:0;margin:0}
+.topbar.has-spectators .tlogo{gap:0;margin-right:4px}
+.topbar.has-spectators .rpill{padding:3px 6px}
+.topbar.has-spectators .rpill strong{font-size:.6rem;letter-spacing:1.5px}
 .topbar.has-spectators .ping-pill{padding:3px 6px}
 .topbar.has-spectators .ping-val{font-size:.58rem;min-width:18px}
 .topbar.has-spectators .ping-unit{font-size:.46rem}
 .topbar.has-spectators #mbtn{padding:0 7px;font-size:.55rem}
-.topbar.has-spectators .topbar-right{gap:5px}
+.topbar.has-spectators .topbar-right{gap:4px}
 
 /* Ping pill */
 .ping-pill{
@@ -1326,6 +1327,34 @@ body::after{
 .ol-sub{font-size:.76rem;color:var(--text-3);margin-bottom:24px;
   font-family:'Outfit',sans-serif;line-height:1.6}
 
+/* Opponent disconnect banner — non-blocking, slides in below topbar */
+#opp-dc-banner{
+  position:fixed;top:calc(var(--topbar-h) + 10px);left:50%;
+  transform:translateX(-50%) translateY(-6px);
+  z-index:500;
+  background:rgba(245,158,11,0.10);
+  border:1px solid rgba(245,158,11,0.32);
+  border-radius:20px;padding:6px 18px;
+  display:flex;align-items:center;gap:8px;
+  font-size:.72rem;color:rgba(245,200,80,.92);font-family:'Outfit',sans-serif;
+  white-space:nowrap;letter-spacing:.3px;
+  opacity:0;pointer-events:none;visibility:hidden;
+  transition:opacity .35s,transform .35s cubic-bezier(.16,1,.3,1),visibility .35s,
+    background .4s,border-color .4s,color .4s}
+#opp-dc-banner.on{
+  opacity:1;visibility:visible;
+  transform:translateX(-50%) translateY(0)}
+#opp-dc-banner.reconnected{
+  background:rgba(16,185,129,0.10);
+  border-color:rgba(16,185,129,0.32);
+  color:rgba(80,220,160,.92)}
+.dc-spin{
+  width:12px;height:12px;border-radius:50%;
+  border:1.5px solid rgba(245,200,80,.25);
+  border-top-color:rgba(245,200,80,.85);
+  animation:spin .8s linear infinite;flex-shrink:0}
+#opp-dc-banner.reconnected .dc-spin{display:none}
+
 #mbtn{
   display:flex;align-items:center;gap:5px;
   height:30px;padding:0 10px;flex-shrink:0;
@@ -1670,6 +1699,12 @@ body::after{
 
 <div class="toast" id="toast"></div>
 
+<!-- OPPONENT DISCONNECT BANNER — non-blocking warning -->
+<div id="opp-dc-banner">
+  <div class="dc-spin"></div>
+  <span id="dc-msg">ပြိုင်ဘက် လိုင်းကြောင်း ပြတ်နေသည်...</span>
+</div>
+
 <!-- OPPONENT LEFT OVERLAY -->
 <div id="opp-left-overlay">
   <div class="ol-box">
@@ -1712,6 +1747,18 @@ let _channelOk=false;
 let _applyingRemote=false;
 let _pendingRemoteState=null;
 let _skipNextApplyRemote=false;
+let _oppDisconnected=false;
+let _dcReconnectTimer=null;
+
+function _showDcBanner(msg,reconnected){
+  const b=$('opp-dc-banner');if(!b)return;
+  $s('dc-msg',msg);
+  b.classList.toggle('reconnected',!!reconnected);
+  b.classList.add('on');
+}
+function _hideDcBanner(){
+  const b=$('opp-dc-banner');if(b)b.classList.remove('on');
+}
 
 function SB(){if(!_sb)_sb=supabase.createClient(SB_URL,SB_KEY);return _sb;}
 
@@ -1736,38 +1783,70 @@ async function push(state){
 
 function subscribeChannel(rid,onReady){
   if(sbCh){try{SB().removeChannel(sbCh);}catch(e){}}
-  sbCh=SB().channel('room:'+rid,{config:{broadcast:{self:false},presence:{key:''}}});
+  /* Use color-specific key so players can detect each other's presence */
+  const presKey=myColor===B?'player_B':'player_W';
+  sbCh=SB().channel('room:'+rid,{config:{broadcast:{self:false},presence:{key:presKey}}});
   sbCh.on('broadcast',{event:'*'},(msg)=>handleMsg(msg.event,msg.payload));
+
+  /* ── Presence: spectator join/leave ── */
   sbCh.on('presence',{event:'join'},({newPresences})=>{
     const specs=(newPresences||[]).filter(p=>p.role==='spectator');
-    if(!specs.length)return;
-    _specCount=Object.values(sbCh.presenceState()).flat().filter(p=>p.role==='spectator').length;
-    const pill=$('spec-count-pill');if(pill){pill.style.display='flex';$s('spec-count-val',_specCount);}
-    document.querySelector('.topbar')?.classList.add('has-spectators');
-    toast(`👥 Spectator ${_specCount} ဦး ကြည့်ရှုနေသည်`);
-    sysChat(`👥 Spectator ${_specCount} ဦး ကြည့်ရှုနေသည်`);
-    vibrate([60,30,60]);
+    if(specs.length){
+      _specCount=Object.values(sbCh.presenceState()).flat().filter(p=>p.role==='spectator').length;
+      const pill=$('spec-count-pill');if(pill){pill.style.display='flex';$s('spec-count-val',_specCount);}
+      document.querySelector('.topbar')?.classList.add('has-spectators');
+      toast(`👥 Spectator ${_specCount} ဦး ကြည့်ရှုနေသည်`);
+      sysChat(`👥 Spectator ${_specCount} ဦး ကြည့်ရှုနေသည်`);
+      vibrate([60,30,60]);
+    }
+    /* ── Player reconnect detection ── */
+    const oppPlayers=(newPresences||[]).filter(p=>p.role==='player'&&p.color!==myColor);
+    if(oppPlayers.length&&_oppDisconnected&&!over&&!leaving){
+      _oppDisconnected=false;
+      clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;
+      const oppName=$('opp-nm')?.textContent||'ပြိုင်ဘက်';
+      _showDcBanner('✅ '+oppName+' ပြန်လည်ချိတ်ဆက်ပြီ',true);
+      sysChat('🔄 '+oppName+' ပြန်လည်ချိတ်ဆက်ပြီ — ဂိမ်း ဆက်ကစားနိုင်သည်');
+      toast('✅ '+oppName+' ပြန်လည်ချိတ်ဆက်ပြီ');
+      vibrate([40,20,40]);
+      resyncFromDB();
+      /* Hide reconnect banner after 3s */
+      setTimeout(_hideDcBanner,3000);
+    }
   });
   sbCh.on('presence',{event:'leave'},({leftPresences})=>{
     const specs=(leftPresences||[]).filter(p=>p.role==='spectator');
-    if(!specs.length)return;
-    /* presenceState() is already updated after leave */
-    _specCount=Object.values(sbCh.presenceState()).flat().filter(p=>p.role==='spectator').length;
-    const pill=$('spec-count-pill');
-    if(_specCount>0){
-      if(pill){pill.style.display='flex';$s('spec-count-val',_specCount);}
-      sysChat(`👥 Spectator ထွက်သွားသည် — လက်ရှိ ${_specCount} ဦး ကြည့်ရှုနေသည်`);
-    } else {
-      if(pill)pill.style.display='none';
-      document.querySelector('.topbar')?.classList.remove('has-spectators');
-      sysChat(`👥 Spectator ထွက်သွားသည်`);
+    if(specs.length){
+      _specCount=Object.values(sbCh.presenceState()).flat().filter(p=>p.role==='spectator').length;
+      const pill=$('spec-count-pill');
+      if(_specCount>0){
+        if(pill){pill.style.display='flex';$s('spec-count-val',_specCount);}
+        sysChat(`👥 Spectator ထွက်သွားသည် — လက်ရှိ ${_specCount} ဦး ကြည့်ရှုနေသည်`);
+      } else {
+        if(pill)pill.style.display='none';
+        document.querySelector('.topbar')?.classList.remove('has-spectators');
+        sysChat(`👥 Spectator ထွက်သွားသည်`);
+      }
+    }
+    /* ── Player disconnect detection ── */
+    const oppPlayers=(leftPresences||[]).filter(p=>p.role==='player'&&p.color!==myColor);
+    if(oppPlayers.length&&!over&&!leaving&&!_oppDisconnected){
+      _oppDisconnected=true;
+      const oppName=$('opp-nm')?.textContent||'ပြိုင်ဘက်';
+      _showDcBanner('⚠️ '+oppName+' လိုင်းကြောင်း ပြတ်နေသည်...',false);
+      sysChat('⚠️ '+oppName+' လိုင်းကြောင်း ပြတ်နေသည် — ပြန်ဝင်လာမည်ဆိုရင် စောင့်ပါ');
+      toast('⚠️ '+oppName+' လိုင်း ပြတ်နေသည်');
+      vibrate([80,40,80]);
     }
   });
+
   let firstConnect=true;
   sbCh.subscribe(status=>{
     if(status==='SUBSCRIBED'){
       _channelOk=true;
       setConnUI(true);
+      /* Track own presence so opponent can detect connect/disconnect */
+      sbCh.track({role:'player',name:myName,color:myColor}).catch(()=>{});
       if(firstConnect){
         firstConnect=false;
         if(onReady)onReady();
@@ -1926,6 +2005,7 @@ function handleMsg(type,payload){
     applyRematchColor(payload.state);
     loadSt(payload.state);
     over=false;winShown=false;gameCount++;
+    _hideDcBanner();_oppDisconnected=false;window._lastHuffTs=0;
     $('wino').classList.remove('on');$('rematch-req').classList.remove('on');
     $s('rematch-status','');
     const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
@@ -1936,6 +2016,7 @@ function handleMsg(type,payload){
   } else if(type==='leave'){
     if(!over&&!leaving){
       const oppName=$('opp-nm')?.textContent||'ပြိုင်ဘက်';
+      _hideDcBanner();_oppDisconnected=false;
       sysChat('🚪 '+oppName+' ထွက်သွားသည် — ဂိမ်းရပ်တန့်သည်');
       toast('⚠️ '+oppName+' ထွက်သွားသည်');
       $s('ol-title', oppName+' ထွက်သွားသည်');
@@ -2052,7 +2133,7 @@ function onCell(r,c){
   if(turn!==myColor){toast('⏳ သင့်အလှည့် မဟုတ်သေးပါ');return;}
   if(sel){
     const hit=legals.find(m=>m.r===r&&m.c===c);
-    if(hit){hit.isCap?commitCapStep(hit):doNormalMove(sel.r,sel.c,hit);return;}
+    if(hit){hit.isCap?commitCapStep(hit):doNormalMove(sel.r,sel.c,hit).catch(e=>console.error('doNormalMove:',e));return;}
     if(chainDone>0){const _or=chainOrigin.r,_oc=chainOrigin.c;clearSel();pick(_or,_oc);return;}
     if(board[r][c]!==E&&isOwn(board[r][c],turn)){clearSel();pick(r,c);return;}
     clearSel();draw();
@@ -2108,7 +2189,7 @@ function commitCapStep(hit){
     clearSel();lastF={r:origin.r,c:origin.c};draw();
     _animPending={type:'cap',fr:origin.r,fc:origin.c,capPath:fullPath};
     _huffAnimPending=null;
-    applyPath(origin.r,origin.c,fullPath).then(()=>finish(false,null));
+    applyPath(origin.r,origin.c,fullPath).then(()=>finish(false,null)).catch(e=>console.error('applyPath:',e));
   }
 }
 
@@ -2334,6 +2415,7 @@ window.requestRematch=function(){
   if(aiMode){
     aiGoesFirst=!aiGoesFirst;myColor=aiGoesFirst?W:B;
     board=newBoard();turn=B;ver=0;over=false;winShown=false;
+    _aiThinking=false;
     capBy={[B]:[],[W]:[]};glog=[];sel=null;legals=[];lastF=null;lastT=null;
     huffOn=false;huffAt=null;_animPending=null;_huffAnimPending=null;_animBusy=false;
     huffPickMode=false;huffPickCands=[];huffPickResolve=null;
@@ -2361,6 +2443,7 @@ function startRematch(){
     capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',
     huffAvail:false,huffPos:null,huffFor:null,hostColor:hostIsBlack?B:W};
   applyRematchColor(newState);loadSt(newState);over=false;winShown=false;
+  _hideDcBanner();_oppDisconnected=false;window._lastHuffTs=0;
   $('wino').classList.remove('on');$('rematch-req').classList.remove('on');$s('rematch-status','');
   const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
   showGame();
@@ -2499,7 +2582,7 @@ async function applyRemote(st){
     if(st.over&&st.winner!=null)showWin(st.winner===myColor,st.winner===B?'ပြာ':'နီ');
 
     /* huffPending: Player B (us) picks which piece to huff */
-    if(!st.over&&st.huffPending&&st.huffPending.length>0&&turn===myColor){
+    if(!st.over&&st.huffPending&&st.huffPending.length>0&&turn===myColor&&!spectatorMode){
       const _chosen=await showHuffPicker(st.huffPending);
       _huffAnimPending=_chosen;
       await doHuffAnimation(_chosen,true);
@@ -2527,7 +2610,7 @@ async function applyRemote(st){
     }
 
     /* huffPending: Player A (us, the one who missed) shows victim highlights while B picks */
-    if(!st.over&&st.huffPending&&st.huffPending.length>0&&turn!==myColor){
+    if(!st.over&&st.huffPending&&st.huffPending.length>0&&turn!==myColor&&!spectatorMode){
       huffWaitMode=true;huffWaitCands=st.huffPending;
       const _wlbl=st.huffPending.map(h=>`${cl(h.victimC)}${h.victimR+1}`).join(', ');
       $s('huff-wait-msg',`ဖမ်းမစားမိကျား (${_wlbl}) `);
@@ -2594,6 +2677,8 @@ window.doLeave=async function(){
   if(isHost&&roomId){try{await SB().from('rooms').delete().eq('id',roomId);}catch(e){}}
   $('wino').classList.remove('on');$('rematch-req').classList.remove('on');
   const _olv=$('opp-left-overlay');if(_olv)_olv.classList.remove('on');
+  _hideDcBanner();_oppDisconnected=false;
+  clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;
   document.querySelector('.topbar')?.classList.remove('has-spectators');
   _specCount=0;
   aiMode=false;spectatorMode=false;showScr('lobby');
@@ -2612,6 +2697,16 @@ window.doLeave=async function(){
   _channelOk=false;setConnUI(true);
   /* Reset ping display to normal */
   const pu=$('ping-unit');if(pu)pu.textContent='ms';
+  /* Reset rpill visibility (was hidden in AI mode) */
+  const rpillEl=document.querySelector('.rpill');if(rpillEl)rpillEl.style.display='none';
+  /* Reset spectator UI overrides */
+  const badge=$('spectator-badge');if(badge)badge.style.display='';
+  const resignBtn=$('brsg');if(resignBtn)resignBtn.style.display='';
+  const chatInp=$('cinp');if(chatInp){chatInp.disabled=false;chatInp.placeholder='Message ရေးပါ...';}
+  const sendBtn=document.querySelector('.csnd');if(sendBtn)sendBtn.style.opacity='';
+  document.querySelectorAll('.eb').forEach(b=>{b.style.opacity='';b.style.pointerEvents='';});
+  /* Reset huff notification dedup timestamp */
+  window._lastHuffTs=0;
 };
 
 /* ══════════════════════════════════════════════
@@ -2826,7 +2921,7 @@ window.joinSpectator=async function(){
   spectatorMode=true;roomId=code;myName='👁 Spectator';isHost=false;
   /* Subscribe to channel (listen only) */
   const ch=SB().channel(`room:${roomId}`,{config:{broadcast:{ack:false},presence:{key:''}}});
-  ch.on('broadcast',{event:'state'},({payload})=>{if(payload&&spectatorMode)applyRemote(payload);})
+  ch.on('broadcast',{event:'state'},({payload})=>{if(payload?.state&&spectatorMode)applyRemote(payload.state);})
     .subscribe((status)=>{
       if(status==='SUBSCRIBED'&&!aiMode){
         /* Track presence as spectator — players detect via presence join event */
@@ -2834,9 +2929,8 @@ window.joinSpectator=async function(){
       }
     });
   sbCh=ch;
-  /* Load current state from DB */
   let rd=null;
-  try{rd=typeof data.state==='string'?JSON.parse(data.state):data.state;}catch(e){}
+  try{const rowData=data.data;rd=rowData?.lastState||rowData?.state||null;}catch(e){}
   if(rd){
     loadSt(rd);
     myColor=rd.turn||B;/* View from perspective of current active player */
@@ -3018,13 +3112,16 @@ async function doAiMove(){
   const _aiCol=myColor===B?W:B;
   if(!aiMode||over||_aiThinking||turn!==_aiCol)return;
   _aiThinking=true;
-  await sleep(aiDifficulty==='easy'?350:aiDifficulty==='normal'?600:900);
-  if(over){_aiThinking=false;return;}
-  const aiColor=myColor===B?W:B;const mv=pickAiMove(aiColor);
-  if(!mv){_aiThinking=false;return;}
-  if(mv.type==='cap'){lastF={r:mv.fr,c:mv.fc};await applyPath(mv.fr,mv.fc,mv.path);lastT={r:mv.path[mv.path.length-1].r,c:mv.path[mv.path.length-1].c};}
-  else{lastF={r:mv.fr,c:mv.fc};board[mv.tr][mv.tc]=board[mv.fr][mv.fc];board[mv.fr][mv.fc]=E;lastT={r:mv.tr,c:mv.tc};promote(mv.tr,mv.tc);addLog((aiColor===B?'⬛':'⬜')+' AI: '+cl(mv.fc)+(mv.fr+1)+'→'+cl(mv.tc)+(mv.tr+1));draw();}
-  _aiThinking=false;aiFinish();
+  try{
+    await sleep(aiDifficulty==='easy'?350:aiDifficulty==='normal'?600:900);
+    if(over){return;}
+    const aiColor=myColor===B?W:B;const mv=pickAiMove(aiColor);
+    if(!mv){return;}
+    if(mv.type==='cap'){lastF={r:mv.fr,c:mv.fc};await applyPath(mv.fr,mv.fc,mv.path);lastT={r:mv.path[mv.path.length-1].r,c:mv.path[mv.path.length-1].c};}
+    else{lastF={r:mv.fr,c:mv.fc};board[mv.tr][mv.tc]=board[mv.fr][mv.fc];board[mv.fr][mv.fc]=E;lastT={r:mv.tr,c:mv.tc};promote(mv.tr,mv.tc);addLog((aiColor===B?'⬛':'⬜')+' AI: '+cl(mv.fc)+(mv.fr+1)+'→'+cl(mv.tc)+(mv.tr+1));draw();}
+    aiFinish();
+  }catch(e){console.error('doAiMove error:',e);}
+  finally{_aiThinking=false;}
 }
 function aiFinish(){
   const{bc,wc}=cnt();if(!bc){aiEndGame(W);return;}if(!wc){aiEndGame(B);return;}
@@ -3179,4 +3276,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-         </html>
+   </html>
