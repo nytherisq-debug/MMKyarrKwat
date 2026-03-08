@@ -60,7 +60,15 @@ body::after{
 ═══════════════════════════════════════════ */
 .scr{position:fixed;inset:0;z-index:10;display:none}
 .scr.show{display:flex}
-#lobby{align-items:center;justify-content:center;background:transparent}
+#lobby{
+  align-items:center;justify-content:center;
+  background:url('background.png') center center / cover no-repeat;
+  isolation:isolate}
+#lobby::before{
+  content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:rgba(4,2,14,0.72);
+  backdrop-filter:blur(2px)}
+#lobby > *{position:relative;z-index:1}
 #waiting{align-items:center;justify-content:center;background:rgba(4,2,12,0.6);backdrop-filter:blur(12px)}
 #game{flex-direction:column;padding:8px 12px 8px;gap:8px;background:transparent}
 
@@ -516,7 +524,8 @@ body::after{
 
 .lobby-status{
   text-align:center;font-size:.75rem;color:var(--g100);
-  min-height:18px;margin-top:8px;transition:opacity .2s;font-family:'Outfit',sans-serif}
+  min-height:18px;margin-top:8px;transition:opacity .2s;font-family:'Outfit',sans-serif;
+  white-space:nowrap;overflow:visible;width:100%}
 
 /* ═══════════════════════════════════════════
    WAITING SCREEN
@@ -3067,4 +3076,3 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 </script>
 </body>
    </html>
-   
