@@ -1486,6 +1486,7 @@ body::after{
   <!-- Topbar — fixed overflow layout -->
   <div class="topbar">
     <div class="tlogo"><img src="logo.png" class="tlogo-img" alt="KK"><small>မြန်မာ ကျားကွက်</small></div>
+    <div class="rpill" onclick="copyRoomCode()" title="ကူးရန် နှိပ်ပါ"><strong id="top-room">------</strong></div>
     <div class="topbar-space"></div>
     <div class="topbar-right">
       <div class="spectator-badge" id="spectator-badge">👁</div>
@@ -1526,7 +1527,7 @@ body::after{
       </div>
       <div class="ic">
         <div class="hn" id="hn">💨 ပြိုင်ဘက်က ဖမ်းမစားခဲ့ပါ!<br><span id="huff-piece-lbl" style="color:var(--g100);font-weight:700"></span> ကောင်ကို ဖမ်းကောက်လိုက်သည်!</div>
-        <button class="brsg" onclick="doResign()">🏳️ ဆုံးနိုင်ခြင်း</button>
+        <button class="brsg" id="brsg" onclick="doResign()">🏳️ ဆုံးနိုင်ခြင်း</button>
       </div>
       <div class="ic">
         <div class="ich">💀 ကိုယ်ဖမ်းမိသောကျောက်</div>
@@ -2578,19 +2579,24 @@ function showWin(iWon,wn){
   if(iWon)sysChat(`🏆 ${myName} အနိုင်ရပြီ!`);
 }
 
-window.doLeave=function(){
+window.doLeave=async function(){
   if(leaving)return;leaving=true;over=true;
   stopPeriodicSync();
-  try{sbBroadcast('leave',{});}catch(e){}
-  setTimeout(async()=>{
-    if(sbCh){try{await SB().removeChannel(sbCh);}catch(e){}}sbCh=null;
-    if(isHost&&roomId){try{await SB().from('rooms').delete().eq('id',roomId);}catch(e){}}
-  },200);
+  /* Wait for leave broadcast to be delivered before closing channel */
+  try{
+    if(sbCh&&!aiMode){
+      await sbCh.send({type:'broadcast',event:'leave',payload:{}});
+    }
+  }catch(e){}
+  /* Small buffer to ensure broadcast reaches opponent */
+  await new Promise(r=>setTimeout(r,350));
+  if(sbCh){try{await SB().removeChannel(sbCh);}catch(e){}}sbCh=null;
+  if(isHost&&roomId){try{await SB().from('rooms').delete().eq('id',roomId);}catch(e){}}
   $('wino').classList.remove('on');$('rematch-req').classList.remove('on');
   const _olv=$('opp-left-overlay');if(_olv)_olv.classList.remove('on');
   document.querySelector('.topbar')?.classList.remove('has-spectators');
   _specCount=0;
-  aiMode=false;showScr('lobby');
+  aiMode=false;spectatorMode=false;showScr('lobby');
   roomId='';myColor=null;isHost=false;leaving=false;
   board=[];turn=B;sel=null;legals=[];over=false;glog=[];
   capBy={[B]:[],[W]:[]};ver=0;huffOn=false;huffAt=null;
@@ -2733,6 +2739,8 @@ function showGame(){
   $s('opp-prl',isBlk?'နီ':'ပြာ');$('opp-pc').className=`pbpc ${isBlk?'w':'b'}`;
   buildCoords();draw();uiUpdate();
   if(!aiMode)startPeriodicSync();
+  /* Push history entry so Android Back button triggers popstate */
+  if(!spectatorMode&&!aiMode)history.pushState({kkGame:true},'');
 }
 
 function buildCoords(){
@@ -2840,9 +2848,9 @@ window.joinSpectator=async function(){
   /* Disable resign & chat input for spectators */
   const resignBtn=$('brsg');if(resignBtn)resignBtn.style.display='none';
   const chatInp=$('cinp');if(chatInp){chatInp.disabled=true;chatInp.placeholder='Spectators cannot chat';}
-  const sendBtn=document.querySelector('.csend');if(sendBtn)sendBtn.style.opacity='.3';
+  const sendBtn=document.querySelector('.csnd');if(sendBtn)sendBtn.style.opacity='.3';
   /* Disable quick messages */
-  const qbtns=document.querySelectorAll('.qbtn');qbtns.forEach(b=>{b.style.opacity='.3';b.style.pointerEvents='none';});
+  const qbtns=document.querySelectorAll('.eb');qbtns.forEach(b=>{b.style.opacity='.3';b.style.pointerEvents='none';});
   /* Show spectator count pill only on player screens, not spectator */
   /* const sp=$('spec-count-pill');if(sp)sp.style.display='flex'; */
   /* Board: disable cell interactions (onCell checks turn===myColor, so it won't allow moves) */
@@ -2850,15 +2858,7 @@ window.joinSpectator=async function(){
   sysChat('👁 Spectator Mode — ကြည့်ရှုနေသည်');
 };
 
-/* Auto-flip spectator board to current turn's perspective */
-(function(){
-  const _origUIUpdate=window.uiUpdate||null;
-  // patch draw to auto-follow turn if spectator
-  const _origDraw=window.draw;
-  if(typeof _origDraw==='function'){
-    // We can't easily override draw since it's not on window, so we rely on loadSt myColor setting
-  }
-})();
+
 </script>
 
 <!-- Myanmar Cultural Live Background -->
@@ -3074,7 +3074,42 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 
-<!-- AI MODAL -->
+<script>
+/* ══════════════════════════════════════════════
+   APP CLOSE / BACK BUTTON — broadcast leave
+══════════════════════════════════════════════ */
+(function(){
+  /* Send leave broadcast synchronously — best-effort on page unload */
+  function _sendLeaveBroadcast(){
+    if(!sbCh||leaving||over||aiMode||spectatorMode)return;
+    try{sbCh.send({type:'broadcast',event:'leave',payload:{}});}catch(e){}
+  }
+
+  /* pagehide: most reliable on mobile (fires when tab hidden or closed) */
+  window.addEventListener('pagehide',()=>{_sendLeaveBroadcast();});
+
+  /* visibilitychange: fires when app is backgrounded on Android/iOS */
+  let _visLeaveTimer=null;
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden){
+      /* Short delay — if they come back within 4s, cancel */
+      _visLeaveTimer=setTimeout(()=>{
+        if(document.hidden)_sendLeaveBroadcast();
+      },4000);
+    } else {
+      clearTimeout(_visLeaveTimer);_visLeaveTimer=null;
+    }
+  });
+
+  /* popstate: Android physical Back button — history.pushState is done inside showGame() */
+  window.addEventListener('popstate',(e)=>{
+    if(e.state&&e.state.kkGame&&!leaving&&!over&&!aiMode&&!spectatorMode){
+      /* doLeave already sends broadcast internally with await */
+      doLeave();
+    }
+  });
+})();
+</script>
 <div id="ai-modal">
   <div class="ai-box">
     <div class="ai-inner">
