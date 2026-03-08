@@ -63,7 +63,7 @@ body::after{
 #lobby{
   align-items:center;justify-content:center;
   background:
-    linear-gradient(160deg,rgba(4,2,14,0.42) 0%,rgba(6,3,16,0.38) 50%,rgba(4,2,10,0.45) 100%),
+    linear-gradient(160deg,rgba(4,2,14,0.18) 0%,rgba(6,3,16,0.15) 50%,rgba(4,2,10,0.20) 100%),
     url('background.png') center center / cover no-repeat}
 #waiting{align-items:center;justify-content:center;background:rgba(4,2,12,0.6);backdrop-filter:blur(12px)}
 #game{flex-direction:column;padding:8px 12px 8px;gap:8px;background:transparent}
@@ -120,10 +120,10 @@ body::after{
   display:flex;align-items:center;justify-content:center;
   gap:12px;margin-bottom:10px;position:relative}
 .logo-cyber-wrap{
-  position:relative;width:144px;height:144px;
+  position:relative;width:150px;height:150px;
   display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .logo-img{
-  width:118px;height:118px;border-radius:50%;object-fit:cover;
+  width:124px;height:124px;border-radius:50%;object-fit:cover;
   position:relative;z-index:3;
   animation:logo-float 3.8s ease-in-out infinite;
   filter:drop-shadow(0 0 14px rgba(212,168,67,.65)) drop-shadow(0 0 28px rgba(212,168,67,.3))}
@@ -393,14 +393,17 @@ body::after{
   background:linear-gradient(165deg,rgba(14,10,7,0.99) 0%,rgba(7,5,12,0.99) 100%);
   border:1px solid rgba(212,168,67,0.22);
   border-radius:24px;
-  padding:40px 48px;width:430px;max-width:94vw;
+  padding:24px 28px;width:430px;max-width:94vw;
+  max-height:92vh;overflow-y:auto;overflow-x:hidden;
   box-shadow:
     0 0 0 1px rgba(212,168,67,0.04),
     0 0 100px rgba(212,168,67,0.07),
     0 30px 80px rgba(0,0,0,0.95),
     inset 0 1px 0 rgba(212,168,67,0.18),
     inset 0 -1px 0 rgba(0,0,0,0.5);
-  animation:fadeUp .6s cubic-bezier(.16,1,.3,1) both}
+  animation:fadeUp .6s cubic-bezier(.16,1,.3,1) both;
+  scrollbar-width:none}
+.lbox::-webkit-scrollbar{display:none}
 
 /* Decorative orb behind lobby card */
 .lbox::before{
@@ -3071,4 +3074,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-   </html>
+</html>
