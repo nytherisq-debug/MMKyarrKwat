@@ -357,7 +357,7 @@ body::after{
   border:1px solid rgba(80,200,255,.35);
   font-size:.62rem;font-weight:700;color:rgba(100,210,255,.9);
   letter-spacing:.2px;white-space:nowrap;font-family:'Orbitron',monospace;
-  animation:spec-badge-glow 2s ease-in-out infinite}
+  }
 
 /* ── SPECTATOR PANEL (lobby) ── */
 .spec-panel{
@@ -1294,7 +1294,28 @@ body::after{
 @media(max-width:780px){:root{--cell:calc((100vw - 75px) / 8)}.panel{display:none}.main{justify-content:center}}
 @media(max-width:500px){.lbox{padding:26px 22px}}
 @media(max-width:380px){:root{--cell:calc((100vw - 72px) / 8)}}
-/* ── Music Button ── */
+/* ═══════════════════════════════════════════
+   OPPONENT LEFT OVERLAY
+═══════════════════════════════════════════ */
+#opp-left-overlay{
+  position:fixed;inset:0;z-index:600;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.88);backdrop-filter:blur(14px);
+  opacity:0;pointer-events:none;visibility:hidden;transition:all .3s}
+#opp-left-overlay.on{opacity:1;pointer-events:all;visibility:visible}
+.ol-box{
+  background:linear-gradient(155deg,rgba(14,5,5,0.99),rgba(5,3,8,0.99));
+  border:1px solid rgba(239,68,68,0.38);
+  border-radius:var(--r-xl);padding:36px 44px;text-align:center;
+  transform:scale(.85);transition:transform .35s cubic-bezier(.16,1,.3,1);
+  box-shadow:0 0 60px rgba(239,68,68,0.08),var(--shadow-deep);max-width:88vw}
+#opp-left-overlay.on .ol-box{transform:scale(1)}
+.ol-icon{font-size:2.4rem;margin-bottom:12px}
+.ol-title{font-size:1rem;color:rgba(252,165,165,.92);font-weight:700;
+  font-family:'Outfit',sans-serif;margin-bottom:8px;letter-spacing:.3px}
+.ol-sub{font-size:.76rem;color:var(--text-3);margin-bottom:24px;
+  font-family:'Outfit',sans-serif;line-height:1.6}
+
 #mbtn{
   display:flex;align-items:center;gap:5px;
   height:30px;padding:0 10px;flex-shrink:0;
@@ -1458,7 +1479,7 @@ body::after{
     <div class="topbar-space"></div>
     <div class="topbar-right">
       <div class="spectator-badge" id="spectator-badge">👁 SPECTATING</div>
-      <div class="spec-count-pill" id="spec-count-pill">👁 <span id="spec-count-val">0</span></div>
+      <div class="spec-count-pill" id="spec-count-pill">👥 <span id="spec-count-val">0</span></div>
       <button id="mbtn" onclick="mToggle()" title="Music">
         <span id="mico">🎵</span>
         <span class="mbars"><i></i><i></i><i></i></span>
@@ -1638,6 +1659,16 @@ body::after{
 
 <div class="toast" id="toast"></div>
 
+<!-- OPPONENT LEFT OVERLAY -->
+<div id="opp-left-overlay">
+  <div class="ol-box">
+    <div class="ol-icon">🚪</div>
+    <div class="ol-title" id="ol-title">ပြိုင်ဘက် ထွက်သွားသည်</div>
+    <div class="ol-sub" id="ol-sub">ဂိမ်း ရပ်တန့်သွားသည်</div>
+    <button class="bgold" style="padding:12px 28px;width:auto" onclick="doLeave()">🏠 Main Menu သို့ ပြန်သွား</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 /* ══════════════════════════════════════════════
@@ -1694,8 +1725,25 @@ async function push(state){
 
 function subscribeChannel(rid,onReady){
   if(sbCh){try{SB().removeChannel(sbCh);}catch(e){}}
-  sbCh=SB().channel('room:'+rid,{config:{broadcast:{self:false}}});
+  sbCh=SB().channel('room:'+rid,{config:{broadcast:{self:false},presence:{key:''}}});
   sbCh.on('broadcast',{event:'*'},(msg)=>handleMsg(msg.event,msg.payload));
+  sbCh.on('presence',{event:'join'},({newPresences})=>{
+    const specs=(newPresences||[]).filter(p=>p.role==='spectator');
+    if(!specs.length)return;
+    _specCount=Object.values(sbCh.presenceState()).flat().filter(p=>p.role==='spectator').length;
+    const pill=$('spec-count-pill');if(pill){pill.style.display='flex';$s('spec-count-val',_specCount);}
+    toast(`👥 Spectator ${_specCount} ဦး ကြည့်ရှုနေသည်`);
+    sysChat(`👥 Spectator ဝင်ရောက်လာသည် — လက်ရှိ ${_specCount} ဦး ကြည့်ရှုနေသည်`);
+  });
+  sbCh.on('presence',{event:'leave'},({leftPresences})=>{
+    const specs=(leftPresences||[]).filter(p=>p.role==='spectator');
+    if(!specs.length)return;
+    _specCount=Math.max(0,Object.values(sbCh.presenceState()).flat().filter(p=>p.role==='spectator').length);
+    const pill=$('spec-count-pill');
+    if(_specCount>0){if(pill){pill.style.display='flex';$s('spec-count-val',_specCount);}}
+    else{if(pill)pill.style.display='none';}
+    sysChat(`👥 Spectator ထွက်သွားသည် — လက်ရှိ ${_specCount} ဦး ကြည့်ရှုနေသည်`);
+  });
   let firstConnect=true;
   sbCh.subscribe(status=>{
     if(status==='SUBSCRIBED'){
@@ -1864,8 +1912,24 @@ function handleMsg(type,payload){
     const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
     showGame();
     addChatMsg({name:'System',text:`🔄 ပွဲ ${gameCount} စတင်သည်! ${myColor===B?'🔵 ပြာ':'🔴 နီ'} ကစားမည်`,sys:true,ts:Date.now()});
+  } else if(type==='spec_join'){
+    if(!spectatorMode){
+      _specCount++;
+      const pill=$('spec-count-pill');if(pill){pill.style.display='flex';$s('spec-count-val',_specCount);}
+      toast(`👥 Spectator ${_specCount} ဦး ကြည့်ရှုနေသည်`);
+      sysChat(`👥 Spectator ${_specCount} ဦး ကြည့်ရှုနေသည်`);
+      vibrate([60,30,60]);
+    }
   } else if(type==='leave'){
-    if(!over&&!leaving){toast('⚠️ ပြိုင်ဘက် ထွက်သွားသည်');doLeave();}
+    if(!over&&!leaving){
+      const oppName=$('opp-nm')?.textContent||'ပြိုင်ဘက်';
+      sysChat('🚪 '+oppName+' ထွက်သွားသည် — ဂိမ်းရပ်တန့်သည်');
+      toast('⚠️ '+oppName+' ထွက်သွားသည်');
+      $s('ol-title', oppName+' ထွက်သွားသည်');
+      $s('ol-sub', 'ဂိမ်း ရပ်တန့်သွားသည်။ Main Menu သို့ ပြန်သွားနိုင်သည်။');
+      $('opp-left-overlay').classList.add('on');
+      over=true;
+    }
   }
 }
 
@@ -2511,6 +2575,7 @@ window.doLeave=function(){
     if(isHost&&roomId){try{await SB().from('rooms').delete().eq('id',roomId);}catch(e){}}
   },200);
   $('wino').classList.remove('on');$('rematch-req').classList.remove('on');
+  const _olv=$('opp-left-overlay');if(_olv)_olv.classList.remove('on');
   aiMode=false;showScr('lobby');
   roomId='';myColor=null;isHost=false;leaving=false;
   board=[];turn=B;sel=null;legals=[];over=false;glog=[];
@@ -2724,6 +2789,7 @@ $('inp-code').addEventListener('input',e=>{e.target.value=e.target.value.toUpper
    SPECTATOR MODE
 ══════════════════════════════════════════════ */
 let spectatorMode=false;
+let _specCount=0;
 
 window.joinSpectator=async function(){
   const code=($('inp-code').value||'').trim().toUpperCase();
@@ -2734,12 +2800,13 @@ window.joinSpectator=async function(){
   if(error||!data){$s('lobby-st','❌ Room မတွေ့ပါ — Code စစ်ကြည့်ပါ');return;}
   spectatorMode=true;roomId=code;myName='👁 Spectator';isHost=false;
   /* Subscribe to channel (listen only) */
-  const ch=SB().channel(`room:${roomId}`,{config:{broadcast:{ack:false}}});
+  const ch=SB().channel(`room:${roomId}`,{config:{broadcast:{ack:false},presence:{key:''}}});
   ch.on('broadcast',{event:'state'},({payload})=>{if(payload&&spectatorMode)applyRemote(payload);})
     .on('broadcast',{event:'spec_count'},({payload})=>{if(payload&&payload.n!=null){const p=$('spec-count-val');if(p)p.textContent=payload.n;}})
     .subscribe((status)=>{
       if(status==='SUBSCRIBED'&&!aiMode){
-        /* Announce presence as spectator */
+        /* Announce presence as spectator — players will detect via presence events */
+        ch.track({role:'spectator',ts:Date.now()}).catch(()=>{});
         ch.send({type:'broadcast',event:'spec_join',payload:{ts:Date.now()}}).catch(()=>{});
       }
     });
@@ -3062,4 +3129,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-</html>
+           </html>
