@@ -2414,7 +2414,7 @@ async function applyRemote(st){
       window._lastHuffTs=st.huffNotif.ts;
       $s('huff-piece-lbl',st.huffNotif.at);
       $('hn').classList.add('on');vibrate([200,80,200,80,200]);
-      sysChat(`မစားမိသောကြောင့် ${st.huffNotif.at} ဖမ်းကောက်ခံလိုက်ရသည်`);
+      sysChat(`မစားမိသောကြောင့် ${st.huffNotif.at} ဖမ်းကောက် ခံလိုက်ရသည်`);
       setTimeout(()=>$('hn').classList.remove('on'),4000);
     }
     draw();uiUpdate();
@@ -3062,4 +3062,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-</html>
+   </html>
