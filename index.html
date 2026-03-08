@@ -62,8 +62,9 @@ body::after{
 .scr.show{display:flex}
 #lobby{
   align-items:center;justify-content:center;
+  overflow-y:auto;
   background:
-    linear-gradient(160deg,rgba(4,2,14,0.18) 0%,rgba(6,3,16,0.15) 50%,rgba(4,2,10,0.20) 100%),
+    linear-gradient(160deg,rgba(4,2,14,0.30) 0%,rgba(6,3,16,0.28) 50%,rgba(4,2,10,0.32) 100%),
     url('background.png') center center / cover no-repeat}
 #waiting{align-items:center;justify-content:center;background:rgba(4,2,12,0.6);backdrop-filter:blur(12px)}
 #game{flex-direction:column;padding:8px 12px 8px;gap:8px;background:transparent}
@@ -524,7 +525,7 @@ body::after{
 .lobby-status{
   text-align:center;font-size:.75rem;color:var(--g100);
   min-height:18px;margin-top:8px;transition:opacity .2s;font-family:'Outfit',sans-serif;
-  white-space:nowrap;overflow:visible;width:100%}
+  white-space:normal;overflow:visible;width:100%;word-break:keep-all}
 
 /* ═══════════════════════════════════════════
    WAITING SCREEN
