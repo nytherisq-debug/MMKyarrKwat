@@ -556,32 +556,20 @@ body::after{
 
 /* Logo — shrinks last, icon always visible */
 .tlogo{
-  display:flex;align-items:center;gap:5px;
+  display:flex;align-items:center;gap:4px;
   white-space:nowrap;flex:0 2 auto;min-width:36px;
   padding:0;background:none;border:none;box-shadow:none;overflow:hidden}
 .tlogo small{
-  display:block;
+  display:inline;
   font-family:'Noto Sans Myanmar',sans-serif;
   font-size:clamp(.7rem,2.2vw,.88rem);
   font-weight:700;
   letter-spacing:1.2px;
-  background:linear-gradient(105deg,
-    #FFF8DC 0%,
-    #FFE566 10%,
-    #C8860A 28%,
-    #7A4E00 44%,
-    #B87A08 54%,
-    #FFD84A 66%,
-    #FFF8DC 76%,
-    #D4A020 88%,
-    #FFE566 100%);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-  background-clip:text;
-  filter:
-    drop-shadow(0 0 8px rgba(255,210,50,0.70))
-    drop-shadow(0 0 20px rgba(200,150,10,0.35))
-    drop-shadow(0 1px 2px rgba(0,0,0,1));
+  color:#F0CC72;
+  background:none;
+  border:none;
+  box-shadow:none;
+  text-shadow:0 0 8px rgba(255,210,50,.70),0 0 20px rgba(200,150,10,.35),0 1px 2px rgba(0,0,0,1);
   line-height:1.6;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;max-width:clamp(60px,28vw,140px)}
 .tlogo-sep{
@@ -620,6 +608,14 @@ body::after{
 .topbar.has-spectators .ping-unit{font-size:.46rem}
 .topbar.has-spectators #mbtn{padding:0 7px;font-size:.55rem}
 .topbar.has-spectators .topbar-right{gap:4px}
+
+/* Compact when YOU are spectating */
+.topbar.is-spectator .tlogo small{max-width:clamp(40px,20vw,110px)}
+.topbar.is-spectator .ping-pill{padding:3px 6px}
+.topbar.is-spectator .ping-val{font-size:.58rem;min-width:18px}
+.topbar.is-spectator .ping-unit{font-size:.46rem}
+.topbar.is-spectator #mbtn{padding:0 7px;font-size:.55rem}
+.topbar.is-spectator .topbar-right{gap:4px}
 
 /* Ping pill */
 .ping-pill{
@@ -1812,29 +1808,38 @@ function _hideOppLeft(){
 function SB(){if(!_sb)_sb=supabase.createClient(SB_URL,SB_KEY);return _sb;}
 
 /* ══════════════════════════════════════════════
-   SESSION PERSISTENCE (sessionStorage)
-   Cleared only on intentional doLeave or app close.
-   Survives: back button, navigate away, page reload.
+   SESSION PERSISTENCE (localStorage)
+   Cleared only on intentional doLeave or dismissRejoin.
+   Survives: back button, navigate away, page reload, app kill.
 ══════════════════════════════════════════════ */
 const _SK='kkSession';
 function _saveSession(){
   try{
-    sessionStorage.setItem(_SK,JSON.stringify({
+    /* Embed tokens in session so they survive complete app kill (localStorage persists) */
+    const _ht=(()=>{try{return localStorage.getItem('kkHostToken');}catch(e){return null;}})();
+    const _gt=(()=>{try{return localStorage.getItem('kkGuestToken');}catch(e){return null;}})();
+    localStorage.setItem(_SK,JSON.stringify({
       roomId,myName,myColor,isHost,
       oppName:$('opp-nm')?.textContent||'ပြိုင်ဘက်',
+      hostToken:isHost?_ht:null,
+      guestToken:!isHost?_gt:null,
       savedAt:Date.now()}));
   }catch(e){}
 }
-function _clearSession(){try{sessionStorage.removeItem(_SK);}catch(e){}}
+function _clearSession(){
+  try{localStorage.removeItem(_SK);}catch(e){}
+  try{localStorage.removeItem('kkHostToken');}catch(e){}
+  try{localStorage.removeItem('kkGuestToken');}catch(e){}
+}
 function _loadSession(){
-  try{const s=sessionStorage.getItem(_SK);return s?JSON.parse(s):null;}catch(e){return null;}
+  try{const s=localStorage.getItem(_SK);return s?JSON.parse(s):null;}catch(e){return null;}
 }
 
 function _checkRejoinBanner(){
   const s=_loadSession();
   if(!s||!s.roomId)return;
-  /* Session stale > 3 hours → discard */
-  if(Date.now()-s.savedAt>3*60*60*1000){_clearSession();return;}
+  /* Session stale > 12 hours → discard (localStorage persists across app restarts) */
+  if(Date.now()-s.savedAt>12*60*60*1000){_clearSession();return;}
   const banner=$('rejoin-banner');
   if(banner){
     $s('rjb-sub',s.isHost?'Room '+s.roomId+' (Host)':
@@ -1849,11 +1854,13 @@ window.autoRejoin=async function(){
   const s=_loadSession();if(!s||!s.roomId)return;
   $s('lobby-st','⏳ ပြန်ဝင်နေသည်...');
   const banner=$('rejoin-banner');if(banner)banner.classList.remove('on');
-  /* Restore identity */
   myName=s.myName||'ကစားသမား';
   myColor=s.myColor;
   isHost=s.isHost;
   roomId=s.roomId;
+  /* Restore tokens from embedded session — survives app kill where localStorage may be partially cleared */
+  if(isHost&&s.hostToken){try{localStorage.setItem('kkHostToken',s.hostToken);}catch(e){}}
+  if(!isHost&&s.guestToken){try{localStorage.setItem('kkGuestToken',s.guestToken);}catch(e){}}
   const ni=$('inp-name');if(ni)ni.value=myName;
   try{
     const{data,error}=await SB().from('rooms').select('data').eq('id',roomId).single();
@@ -1863,8 +1870,8 @@ window.autoRejoin=async function(){
     if(rd.status==='locked'){$s('lobby-st','❌ Room ပိတ်သွားပြီ');_clearSession();roomId='';myColor=null;_checkRejoinBanner();return;}
     $s('opp-nm',s.oppName);$s('opp-pnm',s.oppName);
     if(isHost){
-      /* Host rejoin — verify hostToken */
-      const myHostToken=(()=>{try{return sessionStorage.getItem('kkHostToken');}catch(e){return null;}})();
+      /* Host rejoin — token check */
+      const myHostToken=(()=>{try{return localStorage.getItem('kkHostToken');}catch(e){return null;}})();
       if(rd.hostToken&&myHostToken&&myHostToken!==rd.hostToken){
         $s('lobby-st','❌ စစ်ဆေးမှု မအောင်မြင်ပါ');_clearSession();roomId='';myColor=null;_checkRejoinBanner();return;
       }
@@ -1875,9 +1882,9 @@ window.autoRejoin=async function(){
       if(st){loadSt(st);}
       showGame();$s('lobby-st','');
       sysChat('🔄 Room ပြန်ဝင်လာပြီ — ပြိုင်ဘက် ဝင်လာမည်ကို စောင့်နေသည်');
-    } else {
-      /* Guest rejoin — verify guestToken */
-      const myGuestToken=(()=>{try{return sessionStorage.getItem('kkGuestToken');}catch(e){return null;}})();
+    }else{
+      /* Guest rejoin — token check */
+      const myGuestToken=(()=>{try{return localStorage.getItem('kkGuestToken');}catch(e){return null;}})();
       const dbToken=rd.guestToken||null;
       if(!myGuestToken||!dbToken||myGuestToken!==dbToken){
         $s('lobby-st','❌ စစ်ဆေးမှု မအောင်မြင်ပါ');_clearSession();roomId='';myColor=null;_checkRejoinBanner();return;
@@ -1894,7 +1901,7 @@ window.autoRejoin=async function(){
         $s('lobby-st','❌ ချိတ်ဆက်မရ: '+errStatus);roomId='';myColor=null;isHost=false;_checkRejoinBanner();
       });
     }
-  }catch(e){$s('lobby-st','❌ ချိတ်ဆက်မရပါ: '+e.message);roomId='';myColor=null;_checkRejoinBanner();}
+  }catch(e){$s('lobby-st','❌ ချိတ်ဆက်မရပါ: '+e.message);roomId='';myColor=null;isHost=false;_checkRejoinBanner();}
 };
 
 window.dismissRejoin=function(){
@@ -1917,7 +1924,8 @@ async function _softLeave(){
   clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;clearTimeout(window._pendingDcTimer);window._pendingDcTimer=null;
   _hideOppLeft();
   document.querySelector('.topbar')?.classList.remove('has-spectators');
-  _specCount=0;
+  document.querySelector('.topbar')?.classList.remove('is-spectator');
+  _specCount=0;_specBlueName='';_specRedName='';
   aiMode=false;spectatorMode=false;_aiThinking=false;showScr('lobby');
   /* Save name back into input so rejoin works */
   const ni=$('inp-name');if(ni&&myName)ni.value=myName;
@@ -1932,7 +1940,7 @@ async function _softLeave(){
   const hpb=$('huff-pick-bar');if(hpb)hpb.classList.remove('on');
   const hwb=$('huff-wait-bar');if(hwb)hwb.classList.remove('on');
   $s('rematch-status','');
-  const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
+  const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';btn.style.display='';}
   _channelOk=false;setConnUI(true);
   const pu=$('ping-unit');if(pu)pu.textContent='ms';
   const boardEl=$('board');if(boardEl)boardEl.style.pointerEvents='';
@@ -1940,7 +1948,7 @@ async function _softLeave(){
   const badge=$('spectator-badge');if(badge)badge.style.display='';
   const resignBtn=$('brsg');if(resignBtn)resignBtn.style.display='';
   const chatInp=$('cinp');if(chatInp){chatInp.disabled=false;chatInp.placeholder='Message ရေးပါ...';}
-  const sendBtn=document.querySelector('.csnd');if(sendBtn)sendBtn.style.opacity='';
+  const sendBtn=document.querySelector('.csnd');if(sendBtn){sendBtn.style.opacity='';sendBtn.style.pointerEvents='';}
   document.querySelectorAll('.eb').forEach(b=>{b.style.opacity='';b.style.pointerEvents='';});
   window._lastHuffTs=0;
   window._lastLeaveTs=0;
@@ -2096,7 +2104,8 @@ function startPeriodicSync(){
   stopPeriodicSync();
   _syncInterval=setInterval(async()=>{
     if(aiMode||over||leaving||!roomId)return;
-    if(turn!==myColor){
+    /* Spectator: always sync (not waiting for "opponent's turn") */
+    if(spectatorMode||turn!==myColor){
       await resyncFromDB();
     }
   },8000);
@@ -2244,7 +2253,7 @@ function handleMsg(type,payload){
     if(isHost)startRematch();
   } else if(type==='rematch_decline'){
     $('rematch-req').classList.remove('on');
-    const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
+    const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';btn.style.display='';}
     $s('rematch-status','');
     setTimeout(()=>doLeave(),400);
   } else if(type==='rematch_start'){
@@ -2255,7 +2264,7 @@ function handleMsg(type,payload){
     _hideDcBanner();_oppDisconnected=false;_hideOppLeft();window._lastHuffTs=0;
     $('wino').classList.remove('on');$('rematch-req').classList.remove('on');
     $s('rematch-status','');
-    const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
+    const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';btn.style.display='';}
     showGame();
     addChatMsg({name:'System',text:`🔄 ပွဲ ${gameCount} စတင်သည်! ${myColor===B?'🔵 ပြာ':'🔴 နီ'} ကစားမည်`,sys:true,ts:Date.now()});
   } else if(type==='spec_join'){
@@ -2664,6 +2673,7 @@ window.doResign=function(){
    REMATCH
 ══════════════════════════════════════════════ */
 window.requestRematch=function(){
+  if(spectatorMode)return;/* Spectators cannot request rematch */
   if(aiMode){
     aiGoesFirst=!aiGoesFirst;myColor=aiGoesFirst?W:B;
     board=newBoard();turn=B;ver=0;over=false;winShown=false;
@@ -2697,7 +2707,7 @@ function startRematch(){
   applyRematchColor(newState);loadSt(newState);over=false;winShown=false;
   _hideDcBanner();_oppDisconnected=false;window._lastHuffTs=0;
   $('wino').classList.remove('on');$('rematch-req').classList.remove('on');$s('rematch-status','');
-  const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
+  const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';btn.style.display='';}
   showGame();
   addChatMsg({name:'System',text:`🔄 ပွဲ ${gameCount} စတင်သည်! ${myColor===B?'🔵 ပြာ':'🔴 နီ'} ကစားမည်`,sys:true,ts:Date.now()});
   sbBroadcast('rematch_start',{state:newState});
@@ -2725,8 +2735,8 @@ window.createRoom=async function(){
     const{error}=await SB().from('rooms').upsert({id:roomId,
       data:{hostName:myName,status:'waiting',hostToken,state:initState,lastState:initState,lastStateAt:Date.now()}});
     if(error){$s('lobby-st','❌ Room ဖန်တီး မရပါ: '+error.message);isHost=false;roomId='';myColor=null;return;}
-    /* Save host token to session for rejoin verification */
-    try{sessionStorage.setItem('kkHostToken',hostToken);}catch(e){}
+    /* Save host token to localStorage — survives app close, needed for rejoin */
+    try{localStorage.setItem('kkHostToken',hostToken);}catch(e){}
     subscribeChannel(roomId,null);
     $s('w-code',roomId);showScr('waiting');$s('lobby-st','');
   }catch(e){$s('lobby-st','❌ Room ဖန်တီး မရပါ: '+e.message);isHost=false;roomId='';myColor=null;}
@@ -2751,12 +2761,16 @@ window.joinRoom=async function(){
 
     /* ── SECURITY 2: game in progress — only original guest (token match) can rejoin ── */
     if(rd.status==='playing'){
-      const myToken=(()=>{try{return sessionStorage.getItem('kkGuestToken');}catch(e){return null;}})();
+      /* Check localStorage first; fall back to embedded session token for app-kill scenario */
+      const myToken=(()=>{try{return localStorage.getItem('kkGuestToken');}catch(e){return null;}})();
+      const sessBak=(()=>{try{const _s=_loadSession();return(_s&&!_s.isHost)?_s.guestToken:null;}catch(e){return null;}})();
+      const effectiveToken=myToken||sessBak;
       const dbToken=rd.guestToken||null;
-      if(!myToken||!dbToken||myToken!==dbToken){
+      if(!effectiveToken||!dbToken||effectiveToken!==dbToken){
         $s('lobby-st','❌ ဤ Room မှာ ကစားနေပြီ — ဝင်ခွင့်မရပါ');roomId='';myColor=null;return;
       }
-      /* Token verified — legitimate guest rejoin */
+      /* Token verified — restore to localStorage if needed */
+      if(!myToken&&sessBak){try{localStorage.setItem('kkGuestToken',sessBak);}catch(e){}}
       $s('opp-nm',rd.hostName);$s('opp-pnm',rd.hostName);
       subscribeChannel(roomId,()=>{
         const st=rd.lastState||rd.state||{board:newBoard(),turn:B,ver:0,over:false,winner:null,capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',huffAvail:false,huffPos:null,huffFor:null};
@@ -2780,7 +2794,7 @@ window.joinRoom=async function(){
 
     /* Fresh join — generate guestToken, bind this device to this room */
     const guestToken=Math.random().toString(36).slice(2,14);
-    try{sessionStorage.setItem('kkGuestToken',guestToken);}catch(e){}
+    try{localStorage.setItem('kkGuestToken',guestToken);}catch(e){}
 
     $s('opp-nm',rd.hostName);$s('opp-pnm',rd.hostName);
     try{await SB().from('rooms').update({data:{...rd,status:'playing',guestName:myName,guestToken}}).eq('id',roomId);}
@@ -2883,7 +2897,7 @@ async function applyRemote(st){
       sysChat(`💨 မစားမိသောကြောင့် ${st.huffNotif.at} ဖမ်းကောက်ခံလိုက်ရသည်`);
     }
     draw();uiUpdate();
-    if(remoteVer>prevVer&&turn===myColor&&!st.over)vibrate([0,60,120,60,200,60,120]);
+    if(remoteVer>prevVer&&turn===myColor&&!st.over&&!spectatorMode)vibrate([0,60,120,60,200,60,120]);
     if(st.over&&st.winner!=null)showWin(st.winner===myColor,st.winner===B?'ပြာ':'နီ');
 
     /* huffPending: Player B (us) picks which piece to huff */
@@ -2951,7 +2965,7 @@ function loadSt(st){
   _pendingRemoteState=null;_skipNextApplyRemote=false;
   const hpb=$('huff-pick-bar');if(hpb)hpb.classList.remove('on');
   const hwb=$('huff-wait-bar');if(hwb)hwb.classList.remove('on');
-  const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
+  const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';btn.style.display='';}
   $s('rematch-status','');
 }
 
@@ -2960,6 +2974,16 @@ function loadSt(st){
 ══════════════════════════════════════════════ */
 function showWin(iWon,wn){
   if(winShown)return;winShown=true;stopPeriodicSync();
+  /* Spectator: show neutral result — who won, not "Spectator wins" */
+  if(spectatorMode){
+    $s('wi','🏆');$s('wt','ဂိမ်း ပြီးဆုံးပြီ');
+    const winnerNm=iWon?($('my-pnm')?.textContent||'Blue'):($('opp-nm')?.textContent||'Red');
+    $s('wm',`${winnerNm} (${wn}) အနိုင်ရသည်`);
+    $('wino').classList.add('on');
+    const rBtn=$('btn-rematch');if(rBtn)rBtn.style.display='none';
+    sysChat(`🏆 ${winnerNm} (${wn}) အနိုင်ရပြီ!`);
+    return;
+  }
   $s('wi',iWon?'🏆':'😔');$s('wt',iWon?'အနိုင်ရပြီ! 🎉':'ရှုံးနိမ့်သွားသည်');
   const on=$('opp-nm').textContent||'ပြိုင်ဘက်';
   $s('wm',iWon?`ကောင်းမွန်သောဂိမ်း! ${myName} အနိုင်ရ!`:`${on} (${wn}) အနိုင်ရသည်`);
@@ -2988,7 +3012,8 @@ window.doLeave=async function(){
   clearTimeout(_reconnectDeadTimer);_reconnectDeadTimer=null;
   _hideOppLeft();
   document.querySelector('.topbar')?.classList.remove('has-spectators');
-  _specCount=0;
+  document.querySelector('.topbar')?.classList.remove('is-spectator');
+  _specCount=0;_specBlueName='';_specRedName='';
   aiMode=false;spectatorMode=false;_aiThinking=false;showScr('lobby');
   /* No session was saved (we cleared it above) — banner stays hidden */
   roomId='';myColor=null;isHost=false;leaving=false;
@@ -3002,7 +3027,7 @@ window.doLeave=async function(){
   const hpb2=$('huff-pick-bar');if(hpb2)hpb2.classList.remove('on');
   const hwb2=$('huff-wait-bar');if(hwb2)hwb2.classList.remove('on');
   $s('rematch-status','');
-  const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';}
+  const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';btn.style.display='';}
   _channelOk=false;setConnUI(true);
   /* Reset ping display to normal */
   const pu=$('ping-unit');if(pu)pu.textContent='ms';
@@ -3014,7 +3039,7 @@ window.doLeave=async function(){
   const badge=$('spectator-badge');if(badge)badge.style.display='';
   const resignBtn=$('brsg');if(resignBtn)resignBtn.style.display='';
   const chatInp=$('cinp');if(chatInp){chatInp.disabled=false;chatInp.placeholder='Message ရေးပါ...';}
-  const sendBtn=document.querySelector('.csnd');if(sendBtn)sendBtn.style.opacity='';
+  const sendBtn=document.querySelector('.csnd');if(sendBtn){sendBtn.style.opacity='';sendBtn.style.pointerEvents='';}
   document.querySelectorAll('.eb').forEach(b=>{b.style.opacity='';b.style.pointerEvents='';});
   /* Reset huff notification dedup timestamp */
   window._lastHuffTs=0;
@@ -3025,11 +3050,13 @@ window.doLeave=async function(){
    CHAT
 ══════════════════════════════════════════════ */
 window.sendChat=function(){
+  if(spectatorMode)return;/* Spectators cannot chat */
   const e=$('cinp'),t=e.value.trim();if(!t)return;e.value='';
   const msg={name:myName,text:t,sys:false,ts:Date.now()};
   addChatMsg(msg);if(!aiMode)sbBroadcast('chat',msg);
 };
 window.qmsg=function(t){
+  if(spectatorMode)return;/* Spectators cannot send quick messages */
   const msg={name:myName,text:t,sys:false,ts:Date.now()};
   addChatMsg(msg);if(!aiMode)sbBroadcast('chat',msg);
 };
@@ -3105,16 +3132,29 @@ function draw(){
 function uiUpdate(){
   if(!myColor)return;
   const{bc,wc}=cnt();
-  const myT=myColor===B?bc:wc,oppT=myColor===B?wc:bc,oppC=myColor===B?W:B;
-  buildDots('my-dots',myColor===B?'b':'w',myT);
-  buildDots('opp-dots',oppC===B?'b':'w',oppT);
-  const mine=turn===myColor;
-  $s('tlbl',mine?'သင့်အလှည့်':'ပြိုင်ဘက် အလှည့်');
-  $s('twho',mine?myName:($('opp-nm').textContent||'ပြိုင်ဘက်'));
-  $('my-card').classList.toggle('act',mine);$('opp-card').classList.toggle('act',!mine);
-  $('my-bar').classList.toggle('act',mine);$('my-bar').classList.toggle('my-turn',mine&&!over);
-  $('opp-bar').classList.toggle('act',!mine);
-  buildCap('my-cap',capBy[myColor]);buildCap('opp-cap',capBy[oppC]);
+  if(spectatorMode){
+    /* Spectator: Blue always "my" side, Red always "opp" side — use turn directly */
+    const blueActive=(turn===B);
+    buildDots('my-dots','b',bc);
+    buildDots('opp-dots','w',wc);
+    $s('tlbl',blueActive?'ပြာ အလှည့်':'နီ အလှည့်');
+    $s('twho',blueActive?(_specBlueName||'ပြာ ကစားသမား'):(_specRedName||'နီ ကစားသမား'));
+    $('my-card').classList.toggle('act',blueActive);$('opp-card').classList.toggle('act',!blueActive);
+    $('my-bar').classList.toggle('act',blueActive);$('my-bar').classList.remove('my-turn');
+    $('opp-bar').classList.toggle('act',!blueActive);
+    buildCap('my-cap',capBy[B]);buildCap('opp-cap',capBy[W]);
+  }else{
+    const myT=myColor===B?bc:wc,oppT=myColor===B?wc:bc,oppC=myColor===B?W:B;
+    buildDots('my-dots',myColor===B?'b':'w',myT);
+    buildDots('opp-dots',oppC===B?'b':'w',oppT);
+    const mine=turn===myColor;
+    $s('tlbl',mine?'သင့်အလှည့်':'ပြိုင်ဘက် အလှည့်');
+    $s('twho',mine?myName:($('opp-nm').textContent||'ပြိုင်ဘက်'));
+    $('my-card').classList.toggle('act',mine);$('opp-card').classList.toggle('act',!mine);
+    $('my-bar').classList.toggle('act',mine);$('my-bar').classList.toggle('my-turn',mine&&!over);
+    $('opp-bar').classList.toggle('act',!mine);
+    buildCap('my-cap',capBy[myColor]);buildCap('opp-cap',capBy[oppC]);
+  }
 }
 function buildDots(id,cls,n){
   const el=$(id);if(!el)return;el.innerHTML='';
@@ -3137,24 +3177,34 @@ function clearSel(){sel=null;legals=[];chainOrigin=null;chainPaths=[];chainDone=
 ══════════════════════════════════════════════ */
 function showGame(){
   showScr('game');
-  /* Show room code in title group only in multiplayer — hide in AI mode */
+  /* Show room code only in normal multiplayer */
   const tlogoRoom=$('top-room');
   const tlogoSep=document.querySelector('.tlogo-sep');
-  if(tlogoRoom){tlogoRoom.style.display=aiMode?'none':'';}
-  if(tlogoSep){tlogoSep.style.display=aiMode?'none':'';}
+  if(tlogoRoom){tlogoRoom.style.display=(aiMode||spectatorMode)?'none':'';}
+  if(tlogoSep){tlogoSep.style.display=(aiMode||spectatorMode)?'none':'';}
   $s('top-room',roomId);
   const isBlk=myColor===B;
-  $s('my-nm',myName);$s('my-rl',isBlk?'🔵 ပြာ':'🔴 နီ');
-  $('my-av').className=`pav ${isBlk?'av-b':'av-w'}`;$s('my-av',isBlk?'⬛':'⬜');
-  $('opp-av').className=`pav ${isBlk?'av-w':'av-b'}`;$s('opp-av',isBlk?'⬜':'⬛');
-  $s('opp-rl',isBlk?'🔴 နီ':'🔵 ပြာ');
-  $s('my-pnm',myName);$s('my-prl',isBlk?'ပြာ':'နီ');$('my-pc').className=`pbpc ${isBlk?'b':'w'}`;
-  $s('opp-prl',isBlk?'နီ':'ပြာ');$('opp-pc').className=`pbpc ${isBlk?'w':'b'}`;
+  if(spectatorMode){
+    /* Spectator: always show Blue (host) on "my" side, Red (guest) on "opp" side */
+    const blueN=_specBlueName||'ပြာ ကစားသမား';
+    const redN=_specRedName||'နီ ကစားသမား';
+    $s('my-nm',blueN);$s('my-rl','🔵 ပြာ');
+    $('my-av').className='pav av-b';$s('my-av','⬛');
+    $('opp-av').className='pav av-w';$s('opp-av','⬜');
+    $s('opp-nm',redN);$s('opp-rl','🔴 နီ');
+    $s('my-pnm',blueN);$s('my-prl','ပြာ');$('my-pc').className='pbpc b';
+    $s('opp-pnm',redN);$s('opp-prl','နီ');$('opp-pc').className='pbpc w';
+  }else{
+    $s('my-nm',myName);$s('my-rl',isBlk?'🔵 ပြာ':'🔴 နီ');
+    $('my-av').className=`pav ${isBlk?'av-b':'av-w'}`;$s('my-av',isBlk?'⬛':'⬜');
+    $('opp-av').className=`pav ${isBlk?'av-w':'av-b'}`;$s('opp-av',isBlk?'⬜':'⬛');
+    $s('opp-rl',isBlk?'🔴 နီ':'🔵 ပြာ');
+    $s('my-pnm',myName);$s('my-prl',isBlk?'ပြာ':'နီ');$('my-pc').className=`pbpc ${isBlk?'b':'w'}`;
+    $s('opp-prl',isBlk?'နီ':'ပြာ');$('opp-pc').className=`pbpc ${isBlk?'w':'b'}`;
+  }
   buildCoords();draw();uiUpdate();
   if(!aiMode)startPeriodicSync();
-  /* Save session for auto-rejoin (not for AI/spectator) */
   if(!aiMode&&!spectatorMode)_saveSession();
-  /* Push history entry so Android Back button triggers popstate */
   if(!spectatorMode&&!aiMode)history.pushState({kkGame:true},'');
 }
 
@@ -3234,6 +3284,8 @@ _checkRejoinBanner();
 ══════════════════════════════════════════════ */
 let spectatorMode=false;
 let _specCount=0;
+/* Spectator player names — set before showGame so uiUpdate uses correct values */
+let _specBlueName='', _specRedName='';
 
 window.joinSpectator=async function(){
   const code=($('inp-code').value||'').trim().toUpperCase();
@@ -3243,41 +3295,73 @@ window.joinSpectator=async function(){
   try{const res=await SB().from('rooms').select('*').eq('id',code).single();data=res.data;error=res.error;}catch(e){error=e;}
   if(error||!data){$s('lobby-st','❌ Room မတွေ့ပါ — Code စစ်ကြည့်ပါ');return;}
   spectatorMode=true;roomId=code;myName='👁 Spectator';isHost=false;
+
+  /* ── Resolve actual player names BEFORE showGame ── */
+  let _roomData=null;let rd=null;
+  try{_roomData=data.data;}catch(e){}
+  try{rd=_roomData?.lastState||_roomData?.state||null;}catch(e){}
+  _specBlueName=_roomData?.hostName||'ပြာ ကစားသမား';
+  _specRedName=_roomData?.guestName||'နီ ကစားသမား';
+
   /* Subscribe to channel (listen only) */
   const ch=SB().channel(`room:${roomId}`,{config:{broadcast:{ack:false},presence:{key:''}}});
   ch.on('broadcast',{event:'state'},({payload})=>{if(payload?.state&&spectatorMode)applyRemote(payload.state);})
+    .on('broadcast',{event:'chat'},({payload})=>{if(payload&&spectatorMode)addChatMsg(payload);})
+    .on('broadcast',{event:'join'},({payload})=>{
+      /* Guest joined or rejoined — update Red player name */
+      if(!payload||!spectatorMode)return;
+      _specRedName=payload.guestName||_specRedName;
+      $s('opp-nm',_specRedName);$s('opp-pnm',_specRedName);
+      const msg=payload.rejoin?`🔄 ${_specRedName} ပြန်ဝင်လာပြီ`:`🎮 ${_specRedName} ဝင်ရောက်လာပြီ! ဂိမ်းစပါသည်!`;
+      sysChat(msg);
+    })
+    .on('broadcast',{event:'leave'},({payload})=>{
+      if(!spectatorMode)return;
+      const leaverColor=payload?.senderColor;
+      const leaverName=leaverColor===B?(_specBlueName||'ပြာ ကစားသမား'):(_specRedName||'နီ ကစားသမား');
+      sysChat(`🚪 ${leaverName} ထွက်သွားသည်`);
+    })
+    .on('presence',{event:'join'},({newPresences})=>{
+      /* Player reconnect via presence — sync names from presence payload */
+      if(!spectatorMode)return;
+      for(const p of (newPresences||[])){
+        if(p.role==='player'&&p.name){
+          if(p.color===B){_specBlueName=p.name;$s('my-nm',_specBlueName);$s('my-pnm',_specBlueName);}
+          else if(p.color===W){_specRedName=p.name;$s('opp-nm',_specRedName);$s('opp-pnm',_specRedName);}
+        }
+      }
+    })
     .subscribe((status)=>{
       if(status==='SUBSCRIBED'&&!aiMode){
-        /* Track presence as spectator — players detect via presence join event */
         ch.track({role:'spectator',ts:Date.now()}).catch(()=>{});
       }
     });
   sbCh=ch;
-  let rd=null;
-  try{const rowData=data.data;rd=rowData?.lastState||rowData?.state||null;}catch(e){}
+
   if(rd){
     loadSt(rd);
-    myColor=rd.turn||B;/* View from perspective of current active player */
+    myColor=B;/* Spectator always views from Blue's perspective */
+    /* If game is already over, show win overlay immediately */
+    if(rd.over&&rd.winner!=null){
+      over=true;winShown=false;/* allow showWin to run */
+    }
   }else{
     myColor=B;board=newBoard();turn=B;ver=0;over=false;capBy={[B]:[],[W]:[]};
     glog=[];sel=null;legals=[];lastF=null;lastT=null;
   }
   showGame();$s('lobby-st','');
-  /* Activate spectator UI */
+  /* Show win overlay after showGame if game was already over */
+  if(over&&rd?.winner!=null)showWin(rd.winner===myColor,rd.winner===B?'ပြာ':'နီ');
+
+  /* ── Spectator-specific UI overrides ── */
+  document.querySelector('.topbar')?.classList.add('is-spectator');
   const badge=$('spectator-badge');if(badge)badge.style.display='flex';
   setConnUI(true);
-  /* Disable board clicks at CSS level — belt-and-suspenders with JS guard in onCell */
   const boardEl=$('board');if(boardEl)boardEl.style.pointerEvents='none';
-  /* Disable resign & chat input for spectators */
   const resignBtn=$('brsg');if(resignBtn)resignBtn.style.display='none';
   const chatInp=$('cinp');if(chatInp){chatInp.disabled=true;chatInp.placeholder='Spectators cannot chat';}
-  const sendBtn=document.querySelector('.csnd');if(sendBtn)sendBtn.style.opacity='.3';
-  /* Disable quick messages */
-  const qbtns=document.querySelectorAll('.eb');qbtns.forEach(b=>{b.style.opacity='.3';b.style.pointerEvents='none';});
-  /* Show spectator count pill only on player screens, not spectator */
-  /* const sp=$('spec-count-pill');if(sp)sp.style.display='flex'; */
-  /* Board: disable cell interactions (onCell checks turn===myColor, so it won't allow moves) */
-  /* myColor cycles with perspective — spectator auto-follows current turn */
+  const sendBtn=document.querySelector('.csnd');if(sendBtn){sendBtn.style.opacity='.3';sendBtn.style.pointerEvents='none';}
+  document.querySelectorAll('.eb').forEach(b=>{b.style.opacity='.3';b.style.pointerEvents='none';});
   sysChat('👁 Spectator Mode — ကြည့်ရှုနေသည်');
 };
 
@@ -3607,4 +3691,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-   </html>
+</html>
