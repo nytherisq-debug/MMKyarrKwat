@@ -1763,6 +1763,7 @@ function _showDcBanner(msg,reconnected){
   b.classList.add('on');
 }
 function _hideDcBanner(){
+  clearTimeout(window._pendingDcTimer);window._pendingDcTimer=null;
   const b=$('opp-dc-banner');if(b)b.classList.remove('on');
 }
 
@@ -1862,7 +1863,11 @@ window.autoRejoin=async function(){
     if(rd.status==='locked'){$s('lobby-st','❌ Room ပိတ်သွားပြီ');_clearSession();roomId='';myColor=null;_checkRejoinBanner();return;}
     $s('opp-nm',s.oppName);$s('opp-pnm',s.oppName);
     if(isHost){
-      /* Host rejoining: re-subscribe, DB still has state */
+      /* Host rejoin — verify hostToken */
+      const myHostToken=(()=>{try{return sessionStorage.getItem('kkHostToken');}catch(e){return null;}})();
+      if(rd.hostToken&&myHostToken&&myHostToken!==rd.hostToken){
+        $s('lobby-st','❌ စစ်ဆေးမှု မအောင်မြင်ပါ');_clearSession();roomId='';myColor=null;_checkRejoinBanner();return;
+      }
       subscribeChannel(roomId,null,(errStatus)=>{
         $s('lobby-st','❌ ချိတ်ဆက်မရ: '+errStatus);roomId='';myColor=null;isHost=false;_checkRejoinBanner();
       });
@@ -1871,7 +1876,12 @@ window.autoRejoin=async function(){
       showGame();$s('lobby-st','');
       sysChat('🔄 Room ပြန်ဝင်လာပြီ — ပြိုင်ဘက် ဝင်လာမည်ကို စောင့်နေသည်');
     } else {
-      /* Guest rejoining */
+      /* Guest rejoin — verify guestToken */
+      const myGuestToken=(()=>{try{return sessionStorage.getItem('kkGuestToken');}catch(e){return null;}})();
+      const dbToken=rd.guestToken||null;
+      if(!myGuestToken||!dbToken||myGuestToken!==dbToken){
+        $s('lobby-st','❌ စစ်ဆေးမှု မအောင်မြင်ပါ');_clearSession();roomId='';myColor=null;_checkRejoinBanner();return;
+      }
       try{await SB().from('rooms').update({data:{...rd,status:'playing',guestName:myName}}).eq('id',roomId);}
       catch(ue){console.warn('Room update non-fatal:',ue);}
       subscribeChannel(roomId,()=>{
@@ -1904,7 +1914,7 @@ async function _softLeave(){
   $('wino').classList.remove('on');$('rematch-req').classList.remove('on');
   const _olv=$('opp-left-overlay');if(_olv)_olv.classList.remove('on');
   _hideDcBanner();_oppDisconnected=false;
-  clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;
+  clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;clearTimeout(window._pendingDcTimer);window._pendingDcTimer=null;
   _hideOppLeft();
   document.querySelector('.topbar')?.classList.remove('has-spectators');
   _specCount=0;
@@ -1979,7 +1989,7 @@ function subscribeChannel(rid,onReady,onError){
     const oppPlayers=(newPresences||[]).filter(p=>p.role==='player'&&p.color!==myColor);
     if(oppPlayers.length&&(_oppDisconnected||_oppLeft)&&!leaving){
       _oppDisconnected=false;_oppLeft=false;
-      clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;
+      clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;clearTimeout(window._pendingDcTimer);window._pendingDcTimer=null;
       _hideDcBanner();_hideOppLeft();
       over=false;winShown=false;
       const oppName=$('opp-nm')?.textContent||'ပြိုင်ဘက်';
@@ -2005,18 +2015,26 @@ function subscribeChannel(rid,onReady,onError){
         sysChat(`👥 Spectator ထွက်သွားသည်`);
       }
     }
-    /* ── Player disconnect detection ── */
+    /* ── Player disconnect detection ──
+       Race condition: presence leave fires BEFORE the leave broadcast arrives
+       (especially on fast app-kill or home-press). We delay 600ms to let any
+       incoming leave broadcast settle. If _oppLeft becomes true within that
+       window, the broadcast already handled it → skip DC banner. */
     const oppPlayers=(leftPresences||[]).filter(p=>p.role==='player'&&p.color!==myColor);
-    /* Skip dc banner if opponent already intentionally left (_oppLeft=true) —
-       presence disconnect fires after the leave broadcast and would show a
-       second notification on top of the opp-left-overlay, which is wrong. */
     if(oppPlayers.length&&!over&&!leaving&&!_oppDisconnected&&!_oppLeft){
-      _oppDisconnected=true;
-      const oppName=$('opp-nm')?.textContent||'ပြိုင်ဘက်';
-      _showDcBanner('⚠️ '+oppName+' လိုင်းကြောင်း ပြတ်နေသည်...',false);
-      sysChat('⚠️ '+oppName+' လိုင်းကြောင်း ပြတ်နေသည် — ပြန်ဝင်လာမည်ဆိုရင် စောင့်ပါ');
-      toast('⚠️ '+oppName+' လိုင်း ပြတ်နေသည်');
-      vibrate([80,40,80]);
+      clearTimeout(window._pendingDcTimer);
+      window._pendingDcTimer=setTimeout(()=>{
+        window._pendingDcTimer=null;
+        /* Re-check flags after delay — _oppLeft may have been set by leave broadcast */
+        if(!over&&!leaving&&!_oppDisconnected&&!_oppLeft){
+          _oppDisconnected=true;
+          const oppName=$('opp-nm')?.textContent||'ပြိုင်ဘက်';
+          _showDcBanner('⚠️ '+oppName+' လိုင်းကြောင်း ပြတ်နေသည်...',false);
+          sysChat('⚠️ '+oppName+' လိုင်းကြောင်း ပြတ်နေသည် — ပြန်ဝင်လာမည်ဆိုရင် စောင့်ပါ');
+          toast('⚠️ '+oppName+' လိုင်း ပြတ်နေသည်');
+          vibrate([80,40,80]);
+        }
+      },600);
     }
   });
 
@@ -2177,7 +2195,7 @@ function handleMsg(type,payload){
   /* Any message from opponent means they're still alive — clear leave overlay */
   if(_oppLeft&&!leaving){
     _hideDcBanner();_oppDisconnected=false;
-    clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;
+    clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;clearTimeout(window._pendingDcTimer);window._pendingDcTimer=null;
     _hideOppLeft();
     if(type!=='leave'){
       const oppName=$('opp-nm')?.textContent||'ပြိုင်ဘက်';
@@ -2195,7 +2213,7 @@ function handleMsg(type,payload){
     if(_oppLeft||_oppDisconnected||payload.rejoin){
       _hideOppLeft();
       _hideDcBanner();_oppDisconnected=false;
-      clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;
+      clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;clearTimeout(window._pendingDcTimer);window._pendingDcTimer=null;
       over=false;winShown=false;
       sysChat('🔄 '+payload.guestName+' ပြန်ဝင်လာပြီ — ဂိမ်း ဆက်ကစားနိုင်သည်');
       toast('✅ '+payload.guestName+' ပြန်ဝင်လာပြီ');
@@ -2248,9 +2266,11 @@ function handleMsg(type,payload){
     if(_lts&&window._lastLeaveTs&&_lts<=window._lastLeaveTs)return;
     if(_lts)window._lastLeaveTs=_lts;
     if(!leaving){
+      /* Cancel any pending DC timer — this is intentional leave, not a line drop */
+      clearTimeout(window._pendingDcTimer);window._pendingDcTimer=null;
       const oppName=$('opp-nm')?.textContent||'ပြိုင်ဘက်';
       _hideDcBanner();_oppDisconnected=false;
-      clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;
+      clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;clearTimeout(window._pendingDcTimer);window._pendingDcTimer=null;
       sysChat('🚪 '+oppName+' ထွက်သွားသည် — ပြန်လာနိုင်သည် (60s)');
       toast('🚪 '+oppName+' ထွက်သွားသည် — စောင့်နေသည်');
       vibrate([80,40,80]);
@@ -2700,9 +2720,13 @@ window.createRoom=async function(){
     const initState={board:newBoard(),turn:B,ver:0,over:false,winner:null,
       capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',
       huffAvail:false,huffPos:null,huffFor:null};
+    /* hostToken: only stored host-side to verify host identity on rejoin */
+    const hostToken=Math.random().toString(36).slice(2,14);
     const{error}=await SB().from('rooms').upsert({id:roomId,
-      data:{hostName:myName,status:'waiting',state:initState,lastState:initState,lastStateAt:Date.now()}});
+      data:{hostName:myName,status:'waiting',hostToken,state:initState,lastState:initState,lastStateAt:Date.now()}});
     if(error){$s('lobby-st','❌ Room ဖန်တီး မရပါ: '+error.message);isHost=false;roomId='';myColor=null;return;}
+    /* Save host token to session for rejoin verification */
+    try{sessionStorage.setItem('kkHostToken',hostToken);}catch(e){}
     subscribeChannel(roomId,null);
     $s('w-code',roomId);showScr('waiting');$s('lobby-st','');
   }catch(e){$s('lobby-st','❌ Room ဖန်တီး မရပါ: '+e.message);isHost=false;roomId='';myColor=null;}
@@ -2719,34 +2743,57 @@ window.joinRoom=async function(){
     if(error||!data){$s('lobby-st','❌ Room မတွေ့ပါ — Code စစ်ကြည့်ပါ');roomId='';myColor=null;return;}
     const rd=data.data;
     if(!rd){$s('lobby-st','❌ Room မတွေ့ပါ');roomId='';myColor=null;return;}
-    /* Reject if room is locked (opponent permanently left after 60s) */
+
+    /* ── SECURITY 1: locked room ── */
     if(rd.status==='locked'){
       $s('lobby-st','❌ Room ပိတ်သွားပြီ — ပြိုင်ဘက် ထွက်သွားပြီ');roomId='';myColor=null;return;
     }
-    /* Allow rejoin if room is playing (opponent left or disconnected) */
-    const isRejoin=(rd.status==='playing');
-    if(rd.status!=='waiting'&&rd.status!=='playing'){
-      $s('lobby-st','❌ Room ပြည့်နေသည် သို့မဟုတ် မတွေ့ပါ');roomId='';myColor=null;return;
-    }
-    $s('opp-nm',rd.hostName);$s('opp-pnm',rd.hostName);
-    try{await SB().from('rooms').update({data:{...rd,status:'playing',guestName:myName}}).eq('id',roomId);}
-    catch(ue){console.warn('Room update failed (non-fatal):',ue);}
-    subscribeChannel(roomId,()=>{
-      /* On rejoin: load latest state from DB then announce presence */
-      const st=rd.lastState||rd.state||{board:newBoard(),turn:B,ver:0,over:false,winner:null,capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',huffAvail:false,huffPos:null,huffFor:null};
-      loadSt(st);showGame();
-      if(isRejoin){
+
+    /* ── SECURITY 2: game in progress — only original guest (token match) can rejoin ── */
+    if(rd.status==='playing'){
+      const myToken=(()=>{try{return sessionStorage.getItem('kkGuestToken');}catch(e){return null;}})();
+      const dbToken=rd.guestToken||null;
+      if(!myToken||!dbToken||myToken!==dbToken){
+        $s('lobby-st','❌ ဤ Room မှာ ကစားနေပြီ — ဝင်ခွင့်မရပါ');roomId='';myColor=null;return;
+      }
+      /* Token verified — legitimate guest rejoin */
+      $s('opp-nm',rd.hostName);$s('opp-pnm',rd.hostName);
+      subscribeChannel(roomId,()=>{
+        const st=rd.lastState||rd.state||{board:newBoard(),turn:B,ver:0,over:false,winner:null,capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',huffAvail:false,huffPos:null,huffFor:null};
+        loadSt(st);showGame();
         sbBroadcast('join',{guestName:myName,rejoin:true});
         addChatMsg({name:'System',text:`🔄 ${myName} ပြန်ဝင်လာပြီ! ဂိမ်း ဆက်ကစားသည်!`,sys:true,ts:Date.now()});
         sysChat('🔄 ပြန်ဝင်လာပြီ — ဆက်ကစားနိုင်သည်');
-      } else {
-        sbBroadcast('join',{guestName:myName});
-        addChatMsg({name:'System',text:`🎮 ${myName} ဝင်ရောက်လာပြီ! ဂိမ်းစပါသည်!`,sys:true,ts:Date.now()});
-      }
+        startPeriodicSync();
+      },(errStatus)=>{
+        $s('lobby-st',`❌ ချိတ်ဆက်မရပါ (${errStatus})`);
+        if(sbCh){try{SB().removeChannel(sbCh);}catch(e){}}
+        sbCh=null;roomId='';myColor=null;isHost=false;
+      });
+      return;
+    }
+
+    /* ── SECURITY 3: only 'waiting' allows fresh join ── */
+    if(rd.status!=='waiting'){
+      $s('lobby-st','❌ Room ပြည့်နေသည် သို့မဟုတ် မတွေ့ပါ');roomId='';myColor=null;return;
+    }
+
+    /* Fresh join — generate guestToken, bind this device to this room */
+    const guestToken=Math.random().toString(36).slice(2,14);
+    try{sessionStorage.setItem('kkGuestToken',guestToken);}catch(e){}
+
+    $s('opp-nm',rd.hostName);$s('opp-pnm',rd.hostName);
+    try{await SB().from('rooms').update({data:{...rd,status:'playing',guestName:myName,guestToken}}).eq('id',roomId);}
+    catch(ue){console.warn('Room update failed (non-fatal):',ue);}
+    subscribeChannel(roomId,()=>{
+      const st=rd.lastState||rd.state||{board:newBoard(),turn:B,ver:0,over:false,winner:null,capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',huffAvail:false,huffPos:null,huffFor:null};
+      loadSt(st);showGame();
+      sbBroadcast('join',{guestName:myName});
+      addChatMsg({name:'System',text:`🎮 ${myName} ဝင်ရောက်လာပြီ! ဂိမ်းစပါသည်!`,sys:true,ts:Date.now()});
       startPeriodicSync();
     },(errStatus)=>{
       $s('lobby-st',`❌ ချိတ်ဆက်မရပါ (${errStatus}) — ထပ်ကြိုးစားပါ`);
-      try{SB().from('rooms').update({data:{...rd,status:'waiting',guestName:null}}).eq('id',roomId).then(()=>{}).catch(()=>{});}catch(e){}
+      try{SB().from('rooms').update({data:{...rd,status:'waiting',guestName:null,guestToken:null}}).eq('id',roomId).then(()=>{}).catch(()=>{});}catch(e){}
       if(sbCh){try{SB().removeChannel(sbCh);}catch(e){}}
       sbCh=null;roomId='';myColor=null;isHost=false;
     });
@@ -2937,7 +2984,7 @@ window.doLeave=async function(){
   $('wino').classList.remove('on');$('rematch-req').classList.remove('on');
   const _olv=$('opp-left-overlay');if(_olv)_olv.classList.remove('on');
   _hideDcBanner();_oppDisconnected=false;
-  clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;
+  clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;clearTimeout(window._pendingDcTimer);window._pendingDcTimer=null;
   clearTimeout(_reconnectDeadTimer);_reconnectDeadTimer=null;
   _hideOppLeft();
   document.querySelector('.topbar')?.classList.remove('has-spectators');
@@ -3284,7 +3331,6 @@ window.joinSpectator=async function(){
     draw(){const a=this.alpha*(0.6+0.4*Math.sin(this.phase));const g=cx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.r);g.addColorStop(0,`rgba(${this.color},${a})`);g.addColorStop(1,`rgba(${this.color},0)`);cx.fillStyle=g;cx.beginPath();cx.arc(this.x,this.y,this.r,0,Math.PI*2);cx.fill();}
   }
   function drawCornerMandala(cx,x,y,r,t){cx.save();cx.translate(x,y);for(let l=0;l<4;l++){const lr=r*(1-l*.2),petals=8+l*4;cx.globalAlpha=0.09-l*.015;cx.strokeStyle=`rgba(212,168,67,1)`;cx.lineWidth=0.6;for(let i=0;i<petals;i++){cx.save();cx.rotate(i*Math.PI*2/petals+t*(.2+l*.1));cx.beginPath();cx.ellipse(0,-lr*.55,lr*.14,lr*.42,0,0,Math.PI*2);cx.stroke();cx.restore();}cx.beginPath();cx.arc(0,0,lr*.15,0,Math.PI*2);cx.strokeStyle=`rgba(212,168,67,.06)`;cx.stroke();}cx.restore();}
-  function drawTopBand(t){const bh=52;const g=cx.createLinearGradient(0,0,0,bh);g.addColorStop(0,'rgba(20,8,35,.55)');g.addColorStop(1,'rgba(20,8,35,0)');cx.fillStyle=g;cx.fillRect(0,0,W,bh);cx.save();cx.globalAlpha=0.07;cx.strokeStyle='#D4A843';cx.lineWidth=.8;const unit=44,offset=(t*12)%unit;for(let x=-unit+offset;x<W+unit;x+=unit){cx.beginPath();cx.moveTo(x,8);cx.lineTo(x+unit*.25,22);cx.lineTo(x+unit*.5,8);cx.lineTo(x+unit*.75,22);cx.lineTo(x+unit,8);cx.moveTo(x+unit*.25,22);cx.lineTo(x+unit*.5,36);cx.lineTo(x+unit*.75,22);cx.stroke();cx.beginPath();cx.arc(x+unit*.5,22,2,0,Math.PI*2);cx.stroke();}cx.restore();const lg=cx.createLinearGradient(0,0,W,0);lg.addColorStop(0,'rgba(212,168,67,0)');lg.addColorStop(.2,'rgba(212,168,67,.25)');lg.addColorStop(.5,'rgba(212,168,67,.45)');lg.addColorStop(.8,'rgba(212,168,67,.25)');lg.addColorStop(1,'rgba(212,168,67,0)');cx.fillStyle=lg;cx.fillRect(0,bh-1,W,1);}
   function drawBottomBand(t){const bh=48;const g=cx.createLinearGradient(0,H-bh,0,H);g.addColorStop(0,'rgba(20,8,35,0)');g.addColorStop(1,'rgba(10,4,20,.5)');cx.fillStyle=g;cx.fillRect(0,H-bh,W,bh);const lg=cx.createLinearGradient(0,0,W,0);lg.addColorStop(0,'rgba(212,168,67,0)');lg.addColorStop(.3,'rgba(212,168,67,.2)');lg.addColorStop(.7,'rgba(212,168,67,.2)');lg.addColorStop(1,'rgba(212,168,67,0)');cx.fillStyle=lg;cx.fillRect(0,H-bh,W,1);}
   const particles=Array.from({length:38},()=>new Particle());
   const orbs=Array.from({length:9},()=>new Orb());
@@ -3296,7 +3342,7 @@ window.joinSpectator=async function(){
     const v2=cx.createRadialGradient(0,H,0,0,H,W*.8);v2.addColorStop(0,'rgba(30,8,0,.5)');v2.addColorStop(1,'rgba(6,2,10,0)');cx.fillStyle=v2;cx.fillRect(0,0,W,H);
     const v3=cx.createRadialGradient(W,H*.6,0,W,H*.6,W*.7);v3.addColorStop(0,'rgba(12,5,30,.45)');v3.addColorStop(1,'rgba(6,2,10,0)');cx.fillStyle=v3;cx.fillRect(0,0,W,H);
     for(const o of orbs){o.update();o.draw();}
-    drawTopBand(frame*.001);drawBottomBand(frame*.001);
+    drawBottomBand(frame*.001);
     const cr=Math.min(W,H)*.18,t=frame*.0008;
     drawCornerMandala(cx,0,0,cr,t);drawCornerMandala(cx,W,0,cr,-t);drawCornerMandala(cx,0,H,cr,-t);drawCornerMandala(cx,W,H,cr,t);
     for(const p of particles){p.update();p.draw();}
