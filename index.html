@@ -584,12 +584,13 @@ body::after{
   display:flex;align-items:center;
   padding:7px 14px;flex-shrink:0;
   gap:0;
-  background:rgba(5,4,10,0.97);
-  border:1px solid rgba(212,168,67,0.18);
+  background:rgba(6,4,16,0.38);
+  border:1px solid rgba(212,168,67,0.22);
   border-radius:var(--r-md);
-  box-shadow:0 2px 28px rgba(0,0,0,.8),inset 0 1px 0 rgba(212,168,67,0.1);
-  backdrop-filter:blur(24px);
-  overflow:hidden;    /* CRITICAL: prevent overflow */
+  box-shadow:0 2px 16px rgba(0,0,0,.4),inset 0 1px 0 rgba(212,168,67,0.12);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  overflow:hidden;
   min-width:0;
   height:var(--topbar-h)}
 
@@ -2033,7 +2034,10 @@ function subscribeChannel(rid,onReady,onError){
     }
     /* ── Player disconnect detection ── */
     const oppPlayers=(leftPresences||[]).filter(p=>p.role==='player'&&p.color!==myColor);
-    if(oppPlayers.length&&!over&&!leaving&&!_oppDisconnected){
+    /* Skip dc banner if opponent already intentionally left (_oppLeft=true) —
+       presence disconnect fires after the leave broadcast and would show a
+       second notification on top of the opp-left-overlay, which is wrong. */
+    if(oppPlayers.length&&!over&&!leaving&&!_oppDisconnected&&!_oppLeft){
       _oppDisconnected=true;
       const oppName=$('opp-nm')?.textContent||'ပြိုင်ဘက်';
       _showDcBanner('⚠️ '+oppName+' လိုင်းကြောင်း ပြတ်နေသည်...',false);
@@ -2208,8 +2212,10 @@ function handleMsg(type,payload){
   if(type==='rejoin_ack'){return;}/* handled above */
   if(type==='join'){
     $s('opp-nm',payload.guestName);$s('opp-pnm',payload.guestName);
-    /* Rejoin detection: if opponent left/disconnected and comes back */
-    if(_oppLeft||_oppDisconnected){
+    /* Rejoin detection: check flags OR payload.rejoin flag directly.
+       The top block of handleMsg may have already cleared _oppLeft before
+       we reach here, so payload.rejoin is the authoritative fallback. */
+    if(_oppLeft||_oppDisconnected||payload.rejoin){
       _hideOppLeft();
       _hideDcBanner();_oppDisconnected=false;
       clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;
@@ -2839,10 +2845,10 @@ async function applyRemote(st){
     if(!st.huffPending){huffWaitMode=false;huffWaitCands=[];$('huff-wait-bar').classList.remove('on');}
     if(st.huffNotif&&st.huffNotif.ts&&(!window._lastHuffTs||st.huffNotif.ts>window._lastHuffTs)){
       window._lastHuffTs=st.huffNotif.ts;
-      $s('huff-piece-lbl',st.huffNotif.at);
-      $('hn').classList.add('on');vibrate([200,80,200,80,200]);
+      /* hn notification is for Player B only (shown locally after they pick).
+         Player A receives info via sysChat only — do NOT show hn here. */
+      vibrate([200,80,200,80,200]);
       sysChat(`💨 မစားမိသောကြောင့် ${st.huffNotif.at} ဖမ်းကောက်ခံလိုက်ရသည်`);
-      setTimeout(()=>$('hn').classList.remove('on'),4000);
     }
     draw();uiUpdate();
     if(remoteVer>prevVer&&turn===myColor&&!st.over)vibrate([0,60,120,60,200,60,120]);
@@ -2854,7 +2860,7 @@ async function applyRemote(st){
       _huffAnimPending=_chosen;
       await doHuffAnimation(_chosen,true);
       const _hpVl=`${cl(_chosen.victimC)}${_chosen.victimR+1}`;
-      /* FIX: Show hn notification on Player B's side (same as Player A via huffNotif) */
+      /* hn notification: Player B only sees this — they are the ones gaining the huff piece */
       $s('huff-piece-lbl',_hpVl);
       $('hn').classList.add('on');
       setTimeout(()=>$('hn').classList.remove('on'),4000);
@@ -3561,4 +3567,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-   </html>
+</html>
