@@ -12,11 +12,10 @@
    DESIGN TOKENS
 ═══════════════════════════════════════════ */
 :root{
-  --g50:#FFF8E8;--g100:#F0CC72;--g200:#D4A843;--g300:#B8882A;--g400:#8A6410;--g500:#5A400A;
-  --glass-white:rgba(255,255,255,0.04);--glass-white-hi:rgba(255,255,255,0.08);
+  --g100:#F0CC72;--g200:#D4A843;--g400:#8A6410;
   --glass-gold:rgba(212,168,67,0.08);--glass-gold-hi:rgba(212,168,67,0.18);
-  --glass-gold-border:rgba(212,168,67,0.20);--glass-gold-strong:rgba(212,168,67,0.45);
-  --surface-1:#06050E;--surface-2:rgba(255,255,255,0.03);--surface-3:rgba(255,255,255,0.05);
+  --glass-gold-border:rgba(212,168,67,0.20);
+  --surface-1:#06050E;
   --text-1:#F0E8D8;--text-2:#C8B888;--text-3:#806840;--text-4:#504028;
   --blue-glass-bg:rgba(40,100,255,0.22);--blue-glass-border:rgba(80,150,255,0.50);
   --blue-glass-glow:rgba(60,120,255,0.35);
@@ -24,10 +23,9 @@
   --red-glass-glow:rgba(200,50,50,0.35);
   --ok:#10B981;--warn:#F59E0B;--danger:#EF4444;
   --cell:50px;--side:176px;
-  --r-sm:10px;--r-md:14px;--r-lg:18px;--r-xl:22px;
+  --r-sm:10px;--r-md:14px;--r-xl:22px;
   --shadow-card:0 2px 30px rgba(0,0,0,0.7),0 0 0 1px rgba(212,168,67,0.08);
   --shadow-deep:0 8px 60px rgba(0,0,0,0.9),0 0 0 1px rgba(212,168,67,0.06);
-  --glow-gold:0 0 40px rgba(212,168,67,0.18);
   --topbar-h:52px;
 }
 
@@ -159,6 +157,7 @@ body::after{
 
 @keyframes o-draw{from{stroke-dashoffset:var(--dl,900)}to{stroke-dashoffset:0}}
 @keyframes o-shimmer{0%,100%{opacity:.7}50%{opacity:1}}
+@keyframes o-flower-beat{0%,100%{transform:scale(1);opacity:.75}50%{transform:scale(1.10);opacity:1}}
 
 /* Base stroke style */
 .os{fill:none;stroke:#C8A040;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.5}
@@ -553,24 +552,28 @@ body::after{
   min-width:0;
   height:var(--topbar-h)}
 
-/* Logo — shrinks last, icon always visible */
+/* Logo — shrinks when needed so right features always visible */
 .tlogo{
   display:flex;align-items:center;gap:6px;
-  white-space:nowrap;flex:0 2 auto;min-width:36px;
+  white-space:nowrap;flex:1 1 auto;min-width:0;
   padding:0;background:none;border:none;box-shadow:none;overflow:hidden}
 .tlogo small{
   display:inline;
   font-family:'Noto Sans Myanmar',sans-serif;
-  font-size:clamp(.72rem,2.3vw,.92rem);
-  font-weight:700;
-  letter-spacing:1.2px;
-  color:#F0CC72;
+  font-size:clamp(.85rem,3vw,1.15rem);
+  font-weight:800;
+  letter-spacing:1px;
+  color:#F0C840;
   background:none;
   border:none;
   box-shadow:none;
-  text-shadow:none;
-  line-height:1.6;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;max-width:clamp(60px,30vw,160px)}
+  text-shadow:
+    0 0 10px rgba(255,196,40,.90),
+    0 0 28px rgba(220,150,10,.55),
+    0 0 55px rgba(180,110,0,.25),
+    0 2px 3px rgba(0,0,0,.95);
+  line-height:1.5;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;max-width:clamp(80px,38vw,200px)}
 .tlogo-sep{
   color:rgba(212,168,67,0.30);font-size:.72rem;flex-shrink:0;line-height:1}
 .tlogo-room{
@@ -594,12 +597,12 @@ body::after{
 
 
 /* Spacer */
-.topbar-space{flex:1 1 0;min-width:2px}
+.topbar-space{flex:0 0 8px;min-width:8px}
 
 /* Right group — fixed, never shrink so ping/conn always visible */
 .topbar-right{
-  display:flex;align-items:center;gap:6px;
-  flex:0 0 auto;flex-wrap:nowrap;overflow:hidden}
+  display:flex;align-items:center;gap:5px;
+  flex:0 0 auto;flex-wrap:nowrap;overflow:visible}
 
 /* Compact when spectators present */
 .topbar.has-spectators .tlogo small{max-width:0;overflow:hidden;letter-spacing:0;font-size:0;margin:0}
@@ -2140,7 +2143,7 @@ function setAiConnUI(){
 
 
 /* ── Sound Engine ── */
-var _SAC = null;
+let _SAC = null;
 function _sac() {
   if (!_SAC) try { _SAC = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
   if (_SAC && _SAC.state === 'suspended') try { _SAC.resume(); } catch(e) {}
@@ -2151,17 +2154,17 @@ document.addEventListener('touchstart', function(){ _sac(); }, { once: true, pas
 document.addEventListener('click',      function(){ _sac(); }, { once: true, passive: true });
 
 function sfxMove() {
-  var ac = _sac(); if (!ac) return;
+  const ac = _sac(); if (!ac) return;
   try {
-    var o = ac.createOscillator(), g = ac.createGain();
+    const o = ac.createOscillator(), g = ac.createGain();
     o.connect(g); g.connect(ac.destination);
     o.type = 'sine'; o.frequency.value = 660;
-    var t = ac.currentTime;
+    const t = ac.currentTime;
     g.gain.setValueAtTime(0.0001, t);
     g.gain.linearRampToValueAtTime(0.22, t + 0.006);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
     o.start(t); o.stop(t + 0.10);
-    var o2 = ac.createOscillator(), g2 = ac.createGain();
+    const o2 = ac.createOscillator(), g2 = ac.createGain();
     o2.connect(g2); g2.connect(ac.destination);
     o2.type = 'sine'; o2.frequency.value = 990;
     g2.gain.setValueAtTime(0.0001, t + 0.012);
@@ -2172,10 +2175,10 @@ function sfxMove() {
 }
 
 function sfxCapture() {
-  var ac = _sac(); if (!ac) return;
+  const ac = _sac(); if (!ac) return;
   try {
     /* Bass thud */
-    var o1 = ac.createOscillator(), g1 = ac.createGain();
+    const o1 = ac.createOscillator(), g1 = ac.createGain();
     o1.connect(g1); g1.connect(ac.destination);
     o1.type = 'sine';
     o1.frequency.setValueAtTime(180, ac.currentTime);
@@ -2185,7 +2188,7 @@ function sfxCapture() {
     g1.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.20);
     o1.start(ac.currentTime); o1.stop(ac.currentTime + 0.22);
     /* Mid crack */
-    var o2 = ac.createOscillator(), g2 = ac.createGain();
+    const o2 = ac.createOscillator(), g2 = ac.createGain();
     o2.connect(g2); g2.connect(ac.destination);
     o2.type = 'triangle'; o2.frequency.value = 420;
     g2.gain.setValueAtTime(0.0001, ac.currentTime + 0.008);
@@ -3653,13 +3656,13 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 <div id="yt-wrap" style="position:fixed;left:-9999px;top:0;width:480px;height:270px;pointer-events:none;z-index:-1;overflow:hidden;"></div>
 <script>
 (function(){
-  var SRC = 'https://www.youtube.com/embed/3N04vXMzXtM?autoplay=1&mute=0&loop=1&playlist=3N04vXMzXtM&playsinline=1&controls=0&rel=0';
-  var isOn = false;
-  var wrap = document.getElementById('yt-wrap');
+  const SRC = 'https://www.youtube.com/embed/3N04vXMzXtM?autoplay=1&mute=0&loop=1&playlist=3N04vXMzXtM&playsinline=1&controls=0&rel=0';
+  let isOn = false;
+  const wrap = document.getElementById('yt-wrap');
 
   function startMusic(){
     wrap.innerHTML = '';
-    var f = document.createElement('iframe');
+    const f = document.createElement('iframe');
     f.width  = '480';
     f.height = '270';
     f.src    = SRC;
@@ -3674,8 +3677,8 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
   }
 
   window.mToggle = function(){
-    var btn = document.getElementById('mbtn');
-    var ico = document.getElementById('mico');
+    const btn = document.getElementById('mbtn');
+    const ico = document.getElementById('mico');
     if(!isOn){
       startMusic();   /* iframe created inside click → Chrome allows audio */
       isOn = true;
