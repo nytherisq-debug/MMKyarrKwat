@@ -2124,7 +2124,7 @@ let huffWaitMode=false, huffWaitCands=[];  /* Player A: victim highlights while 
 let _animPending=null, _huffAnimPending=null, _animBusy=false;
 
 function onCell(r,c){
-  if(over)return;
+  if(over||spectatorMode)return;
   if(huffPickMode){
     const hit=huffPickCands.find(h=>h.victimR===r&&h.victimC===c);
     if(hit&&huffPickResolve)huffPickResolve(hit);
@@ -2403,7 +2403,7 @@ function endGame(winner,wn){
 function clearHuff(){huffOn=false;huffAt=null;$('hn').classList.remove('on');}
 
 window.doResign=function(){
-  if(over)return;
+  if(over||spectatorMode)return;
   if(!confirm('ဆုံးနိုင်ကြောင်း သေချာပါသလား?'))return;
   endGame(myColor===B?W:B,myColor===B?'နီ':'ပြာ');
 };
@@ -2464,14 +2464,16 @@ window.createRoom=async function(){
   myColor=B;isHost=true;
   roomId=Math.random().toString(36).slice(2,8).toUpperCase();
   $s('lobby-st','⏳ Room ဖန်တီးနေသည်...');
-  const initState={board:newBoard(),turn:B,ver:0,over:false,winner:null,
-    capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',
-    huffAvail:false,huffPos:null,huffFor:null};
-  const{error}=await SB().from('rooms').upsert({id:roomId,
-    data:{hostName:myName,status:'waiting',state:initState,lastState:initState,lastStateAt:Date.now()}});
-  if(error){$s('lobby-st','❌ Room ဖန်တီး မရပါ: '+error.message);return;}
-  subscribeChannel(roomId,null);
-  $s('w-code',roomId);showScr('waiting');$s('lobby-st','');
+  try{
+    const initState={board:newBoard(),turn:B,ver:0,over:false,winner:null,
+      capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',
+      huffAvail:false,huffPos:null,huffFor:null};
+    const{error}=await SB().from('rooms').upsert({id:roomId,
+      data:{hostName:myName,status:'waiting',state:initState,lastState:initState,lastStateAt:Date.now()}});
+    if(error){$s('lobby-st','❌ Room ဖန်တီး မရပါ: '+error.message);isHost=false;roomId='';myColor=null;return;}
+    subscribeChannel(roomId,null);
+    $s('w-code',roomId);showScr('waiting');$s('lobby-st','');
+  }catch(e){$s('lobby-st','❌ Room ဖန်တီး မရပါ: '+e.message);isHost=false;roomId='';myColor=null;}
 };
 
 window.joinRoom=async function(){
@@ -2480,19 +2482,22 @@ window.joinRoom=async function(){
   if(code.length<4){$s('lobby-st','⚠️ Room Code ထည့်ပါ');return;}
   roomId=code;myColor=W;isHost=false;
   $s('lobby-st','⏳ Room ရှာနေသည်...');
-  const{data,error}=await SB().from('rooms').select('data').eq('id',roomId).single();
-  if(error||!data){$s('lobby-st','❌ Room မတွေ့ပါ — Code စစ်ကြည့်ပါ');return;}
-  const rd=data.data;
-  if(rd.status!=='waiting'){$s('lobby-st','❌ Room ပြည့်နေသည်');return;}
-  $s('opp-nm',rd.hostName);$s('opp-pnm',rd.hostName);
-  await SB().from('rooms').update({data:{...rd,status:'playing',guestName:myName}}).eq('id',roomId);
-  subscribeChannel(roomId,()=>{
-    const st=rd.lastState||rd.state;
-    loadSt(st);showGame();
-    sbBroadcast('join',{guestName:myName});
-    addChatMsg({name:'System',text:`🎮 ${myName} ဝင်ရောက်လာပြီ! ဂိမ်းစပါသည်!`,sys:true,ts:Date.now()});
-    startPeriodicSync();
-  });
+  try{
+    const{data,error}=await SB().from('rooms').select('data').eq('id',roomId).single();
+    if(error||!data){$s('lobby-st','❌ Room မတွေ့ပါ — Code စစ်ကြည့်ပါ');roomId='';myColor=null;return;}
+    const rd=data.data;
+    if(!rd||rd.status!=='waiting'){$s('lobby-st','❌ Room ပြည့်နေသည် သို့မဟုတ် မတွေ့ပါ');roomId='';myColor=null;return;}
+    $s('opp-nm',rd.hostName);$s('opp-pnm',rd.hostName);
+    try{await SB().from('rooms').update({data:{...rd,status:'playing',guestName:myName}}).eq('id',roomId);}
+    catch(ue){console.warn('Room update failed (non-fatal):',ue);}
+    subscribeChannel(roomId,()=>{
+      const st=rd.lastState||rd.state||{board:newBoard(),turn:B,ver:0,over:false,winner:null,capBy:{[B]:[],[W]:[]},lastF:null,lastT:null,lastLog:'',huffAvail:false,huffPos:null,huffFor:null};
+      loadSt(st);showGame();
+      sbBroadcast('join',{guestName:myName});
+      addChatMsg({name:'System',text:`🎮 ${myName} ဝင်ရောက်လာပြီ! ဂိမ်းစပါသည်!`,sys:true,ts:Date.now()});
+      startPeriodicSync();
+    });
+  }catch(e){$s('lobby-st','❌ ချိတ်ဆက်မရပါ: '+e.message);roomId='';myColor=null;}
 };
 
 window.cancelRoom=async function(){
@@ -2681,7 +2686,7 @@ window.doLeave=async function(){
   clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;
   document.querySelector('.topbar')?.classList.remove('has-spectators');
   _specCount=0;
-  aiMode=false;spectatorMode=false;showScr('lobby');
+  aiMode=false;spectatorMode=false;_aiThinking=false;showScr('lobby');
   roomId='';myColor=null;isHost=false;leaving=false;
   board=[];turn=B;sel=null;legals=[];over=false;glog=[];
   capBy={[B]:[],[W]:[]};ver=0;huffOn=false;huffAt=null;
@@ -3062,7 +3067,7 @@ window.startAiGame=function(){
   capBy={[B]:[],[W]:[]};glog=[];sel=null;legals=[];lastF=null;lastT=null;
   huffOn=false;huffAt=null;leaving=false;huffPickMode=false;huffPickCands=[];huffPickResolve=null;
   huffWaitMode=false;huffWaitCands=[];
-  _animPending=null;_huffAnimPending=null;_animBusy=false;
+  _animPending=null;_huffAnimPending=null;_animBusy=false;_aiThinking=false;
   showGame();
   const dl={easy:'😊 Easy AI',normal:'🎯 Normal AI',hard:'🔥 Hard AI'}[aiDifficulty];
   $s('opp-nm',dl);$s('opp-pnm',dl);
@@ -3276,4 +3281,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-   </html>
+</html>
