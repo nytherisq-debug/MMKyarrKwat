@@ -596,7 +596,7 @@ body::after{
 
 /* Logo — shrinks last, icon always visible */
 .tlogo{
-  display:flex;align-items:center;gap:6px;
+  display:flex;align-items:center;gap:5px;
   white-space:nowrap;flex:0 2 auto;min-width:36px;
   padding:0;background:none;border:none;box-shadow:none;overflow:hidden}
 .tlogo small{
@@ -624,20 +624,18 @@ body::after{
     drop-shadow(0 1px 2px rgba(0,0,0,1));
   line-height:1.6;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;max-width:clamp(60px,28vw,140px)}
+.tlogo-sep{
+  color:rgba(212,168,67,0.35);font-size:.7rem;flex-shrink:0;line-height:1}
+.tlogo-room{
+  font-family:'Orbitron',monospace;
+  font-size:clamp(.58rem,1.5vw,.7rem);
+  font-weight:700;
+  color:var(--g100);
+  letter-spacing:clamp(1px,.4vw,3px);
+  opacity:.85;
+  cursor:pointer;
+  flex-shrink:0}
 
-/* Room pill — shrinks gracefully */
-.rpill{
-  display:flex;align-items:center;gap:4px;
-  background:rgba(255,255,255,0.025);
-  border:1px solid rgba(212,168,67,0.13);
-  border-radius:8px;padding:4px 8px;
-  font-size:.65rem;color:var(--text-2);font-family:'Outfit',sans-serif;
-  cursor:pointer;white-space:nowrap;
-  flex:0 1 auto;min-width:52px;overflow:hidden}
-.rpill strong{
-  color:var(--g100);font-family:'Orbitron',monospace;
-  letter-spacing:clamp(1px,.4vw,3px);font-weight:700;
-  font-size:clamp(.6rem,1.6vw,.72rem)}
 
 /* Spacer */
 .topbar-space{flex:1 1 0;min-width:2px}
@@ -650,8 +648,6 @@ body::after{
 /* Compact when spectators present */
 .topbar.has-spectators .tlogo small{max-width:0;overflow:hidden;letter-spacing:0;font-size:0;margin:0}
 .topbar.has-spectators .tlogo{gap:0;margin-right:4px}
-.topbar.has-spectators .rpill{padding:3px 6px}
-.topbar.has-spectators .rpill strong{font-size:.6rem;letter-spacing:1.5px}
 .topbar.has-spectators .ping-pill{padding:3px 6px}
 .topbar.has-spectators .ping-val{font-size:.58rem;min-width:18px}
 .topbar.has-spectators .ping-unit{font-size:.46rem}
@@ -1549,8 +1545,7 @@ body::after{
 
   <!-- Topbar — fixed overflow layout -->
   <div class="topbar">
-    <div class="tlogo"><small>မြန်မာ ကျားကွက်</small></div>
-    <div class="rpill" onclick="copyRoomCode()" title="ကူးရန် နှိပ်ပါ"><strong id="top-room">------</strong></div>
+    <div class="tlogo"><small>မြန်မာ ကျားကွက်</small><span class="tlogo-sep">·</span><strong class="tlogo-room" id="top-room" onclick="copyRoomCode()" title="ကူးရန် နှိပ်ပါ">------</strong></div>
     <div class="topbar-space"></div>
     <div class="topbar-right">
       <div class="spectator-badge" id="spectator-badge">👁</div>
@@ -1927,7 +1922,7 @@ async function _softLeave(){
   stopPeriodicSync();
   clearTimeout(_reconnectDeadTimer);_reconnectDeadTimer=null;
   /* Don't await broadcast — channel is already dead */
-  try{if(sbCh&&!aiMode)sbCh.send({type:'broadcast',event:'leave',payload:{}});}catch(e){}
+  try{if(sbCh&&!aiMode)sbCh.send({type:'broadcast',event:'leave',payload:{senderColor:myColor,ts:Date.now()}});}catch(e){}
   if(sbCh){try{await SB().removeChannel(sbCh);}catch(e){}}sbCh=null;
   $('wino').classList.remove('on');$('rematch-req').classList.remove('on');
   const _olv=$('opp-left-overlay');if(_olv)_olv.classList.remove('on');
@@ -1954,7 +1949,7 @@ async function _softLeave(){
   _channelOk=false;setConnUI(true);
   const pu=$('ping-unit');if(pu)pu.textContent='ms';
   const boardEl=$('board');if(boardEl)boardEl.style.pointerEvents='';
-  const rpillEl=document.querySelector('.rpill');if(rpillEl)rpillEl.style.display='none';
+  const _trEl=$('top-room');if(_trEl)_trEl.style.display='none';const _tsEl=document.querySelector('.tlogo-sep');if(_tsEl)_tsEl.style.display='none';
   const badge=$('spectator-badge');if(badge)badge.style.display='';
   const resignBtn=$('brsg');if(resignBtn)resignBtn.style.display='';
   const chatInp=$('cinp');if(chatInp){chatInp.disabled=false;chatInp.placeholder='Message ရေးပါ...';}
@@ -2197,6 +2192,10 @@ function sfxCapture() {
 }
 
 function handleMsg(type,payload){
+  /* ── Self-message guard: Supabase may replay own broadcasts on reconnect ──
+     If senderColor matches ours, this message originated from us — ignore it. */
+  if(payload&&payload.senderColor!==undefined&&payload.senderColor===myColor)return;
+
   /* Any message from opponent means they're still alive — clear leave overlay */
   if(_oppLeft&&!leaving){
     _hideDcBanner();_oppDisconnected=false;
@@ -2266,6 +2265,10 @@ function handleMsg(type,payload){
   } else if(type==='spec_join'){
     /* Presence events handle count & notifications — ignore broadcast duplicate */
   } else if(type==='leave'){
+    /* Dedupe: ignore leave events with same timestamp we already processed */
+    const _lts=payload?.ts||0;
+    if(_lts&&window._lastLeaveTs&&_lts<=window._lastLeaveTs)return;
+    if(_lts)window._lastLeaveTs=_lts;
     if(!leaving){
       const oppName=$('opp-nm')?.textContent||'ပြိုင်ဘက်';
       _hideDcBanner();_oppDisconnected=false;
@@ -2942,7 +2945,7 @@ window.doLeave=async function(){
   /* Wait for leave broadcast to be delivered before closing channel */
   try{
     if(sbCh&&!aiMode){
-      await sbCh.send({type:'broadcast',event:'leave',payload:{}});
+      await sbCh.send({type:'broadcast',event:'leave',payload:{senderColor:myColor,ts:Date.now()}});
     }
   }catch(e){}
   /* Small buffer to ensure broadcast reaches opponent */
@@ -2977,7 +2980,7 @@ window.doLeave=async function(){
   /* Reset board pointer-events (was none in spectator mode) */
   const boardEl2=$('board');if(boardEl2)boardEl2.style.pointerEvents='';
   /* Reset rpill visibility (was hidden in AI mode) */
-  const rpillEl=document.querySelector('.rpill');if(rpillEl)rpillEl.style.display='none';
+  const _trEl=$('top-room');if(_trEl)_trEl.style.display='none';const _tsEl=document.querySelector('.tlogo-sep');if(_tsEl)_tsEl.style.display='none';
   /* Reset spectator UI overrides */
   const badge=$('spectator-badge');if(badge)badge.style.display='';
   const resignBtn=$('brsg');if(resignBtn)resignBtn.style.display='';
@@ -2986,6 +2989,7 @@ window.doLeave=async function(){
   document.querySelectorAll('.eb').forEach(b=>{b.style.opacity='';b.style.pointerEvents='';});
   /* Reset huff notification dedup timestamp */
   window._lastHuffTs=0;
+  window._lastLeaveTs=0;
 };
 
 /* ══════════════════════════════════════════════
@@ -3104,9 +3108,11 @@ function clearSel(){sel=null;legals=[];chainOrigin=null;chainPaths=[];chainDone=
 ══════════════════════════════════════════════ */
 function showGame(){
   showScr('game');
-  /* Show room code pill only in multiplayer — hide in AI mode */
-  const rpillEl=document.querySelector('.rpill');
-  if(rpillEl){rpillEl.style.display=aiMode?'none':'flex';}
+  /* Show room code in title group only in multiplayer — hide in AI mode */
+  const tlogoRoom=$('top-room');
+  const tlogoSep=document.querySelector('.tlogo-sep');
+  if(tlogoRoom){tlogoRoom.style.display=aiMode?'none':'';}
+  if(tlogoSep){tlogoSep.style.display=aiMode?'none':'';}
   $s('top-room',roomId);
   const isBlk=myColor===B;
   $s('my-nm',myName);$s('my-rl',isBlk?'🔵 ပြာ':'🔴 နီ');
@@ -3467,7 +3473,7 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
   /* Send leave broadcast synchronously — best-effort on page unload */
   function _sendLeaveBroadcast(){
     if(!sbCh||leaving||aiMode||spectatorMode)return;
-    try{sbCh.send({type:'broadcast',event:'leave',payload:{}});}catch(e){}
+    try{sbCh.send({type:'broadcast',event:'leave',payload:{senderColor:myColor,ts:Date.now()}});}catch(e){}
   }
 
   /* pagehide: most reliable on mobile (fires when tab hidden or closed) */
@@ -3488,7 +3494,7 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
         _checkRejoinBanner();
       } else if(roomId&&!leaving&&!aiMode&&!spectatorMode&&sbCh){
         /* Came back to game via Home button — signal opponent we're here */
-        try{sbCh.send({type:'broadcast',event:'rejoin_ack',payload:{}});}catch(e){}
+        try{sbCh.send({type:'broadcast',event:'rejoin_ack',payload:{senderColor:myColor}});}catch(e){}
       }
     }
   });
@@ -3567,4 +3573,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-</html>
+   </html>
