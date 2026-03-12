@@ -1362,6 +1362,177 @@ body::after{
 @keyframes _mb1{from{height:3px}to{height:12px}}
 @keyframes _mb2{from{height:8px}to{height:3px}}
 @keyframes _mb3{from{height:2px}to{height:10px}}
+/* =========================================================
+   ðŸ‘‘ GOD LEVEL UI (ESPORTS PREMIUM STANDARD) ðŸ‘‘
+   ========================================================= */
+:root {
+    --bg-dark: #020617; /* Very deep slate */
+    --surface-glass: rgba(15, 23, 42, 0.7);
+    --border-glass: rgba(255, 255, 255, 0.06);
+    --border-highlight: rgba(255, 255, 255, 0.15);
+    
+    /* God Tier Colors */
+    --cyan-core: #2dd4bf;
+    --cyan-glow: rgba(45, 212, 191, 0.5);
+    --amber-core: #fbbf24;
+    --amber-glow: rgba(251, 191, 36, 0.5);
+    --crimson-alert: #e11d48;
+    
+    /* Tailwind-style God Shadows */
+    --shadow-god: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+    --shadow-inner: inset 0 2px 4px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* 1. Immersive Background (No cheap images, just deep pure gradients) */
+body {
+    background: radial-gradient(ellipse at top, #0f172a, var(--bg-dark)), var(--bg-dark) !important;
+    color: #f8fafc !important;
+    font-family: 'Outfit', sans-serif !important;
+}
+body::before, body::after, #mm-bg, .mg-scene, .lbox::before, .lbox::after { display: none !important; }
+
+/* 2. Masterpiece Glass Panels (Ultra-smooth cards) */
+.lbox, .pc, .ic, .pbar, .chat, .wb, .rr-box, .ai-inner, .ol-box, .huff-pick-bar, .huff-wait-bar, #rejoin-banner, .toast {
+    background: var(--surface-glass) !important;
+    backdrop-filter: blur(24px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(150%) !important;
+    border: 1px solid var(--border-glass) !important;
+    border-top: 1px solid var(--border-highlight) !important; /* Premium light reflection */
+    border-radius: 24px !important;
+    box-shadow: var(--shadow-god), var(--shadow-inner) !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.pc:hover, .ic:hover, .chat:hover { transform: translateY(-2px) !important; box-shadow: 0 30px 60px -15px rgba(0,0,0,0.8), var(--shadow-inner) !important; }
+
+/* 3. The Arena (Game Board) */
+.bframe {
+    background: rgba(2, 6, 23, 0.85) !important;
+    backdrop-filter: blur(30px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 28px !important;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.02), 0 35px 60px -15px rgba(0, 0, 0, 0.8), inset 0 0 40px rgba(0,0,0,0.9) !important;
+    padding: 16px !important;
+}
+#board { border: none !important; box-shadow: none !important; gap: 2px !important; background: rgba(255,255,255,0.02) !important; padding: 2px; border-radius: 12px; }
+.cell { border-radius: 8px !important; transition: all 0.2s ease !important; }
+.cell.dark { background: rgba(15, 23, 42, 0.4) !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+.cell.light { background: transparent !important; }
+.cell.dark:hover:not(.nc) { background: rgba(45, 212, 191, 0.15) !important; transform: scale(0.95); }
+.cell.sel { background: rgba(251, 191, 36, 0.2) !important; border: 1px solid var(--amber-core) !important; box-shadow: 0 0 20px var(--amber-glow) !important; transform: scale(0.95); }
+.bcols span, .brows span, .bfc { color: #64748b !important; font-weight: 700; font-size: 0.55rem !important; }
+
+/* 4. ðŸ’Ž GOD TIER PIECES (3D Gemstones / Marbles) ðŸ’Ž */
+.piece { 
+    border-radius: 50% !important; 
+    background-image: none !important; 
+    position: relative !important;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important; /* Springy bounce */
+}
+
+/* ðŸ”µ Blue Piece (Sapphire/Teal) */
+.piece.bp, .ghost-piece.bp {
+    background: radial-gradient(circle at 35% 25%, #ccfbf1 0%, #14b8a6 40%, #0f766e 80%, #042f2e 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 8px 12px -2px rgba(0,0,0,0.8), inset 0 -4px 8px rgba(0,0,0,0.6), inset 0 4px 6px rgba(255,255,255,0.4) !important;
+}
+
+/* ðŸ”´ Red Piece (Amber/Gold) */
+.piece.wp, .ghost-piece.wp {
+    background: radial-gradient(circle at 35% 25%, #fef08a 0%, #f59e0b 40%, #b45309 80%, #451a03 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 8px 12px -2px rgba(0,0,0,0.8), inset 0 -4px 8px rgba(0,0,0,0.6), inset 0 4px 6px rgba(255,255,255,0.4) !important;
+}
+
+/* âœ¨ Ultra-Realistic Specular Highlight */
+.piece::before, .ghost-piece::before {
+    content: '' !important; position: absolute !important; top: 8% !important; left: 15% !important;
+    width: 45% !important; height: 30% !important; border-radius: 50% !important;
+    background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 100%) !important;
+    transform: rotate(-30deg) !important; pointer-events: none !important; mix-blend-mode: overlay !important;
+}
+
+/* 5. ðŸ”¥ Tailwind-Inspired Animations (Huff & Cap) ðŸ”¥ */
+.piece.huff-cand {
+    animation: god-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite !important;
+    outline: none !important;
+}
+@keyframes god-ping {
+    0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.7), 0 8px 12px -2px rgba(0,0,0,0.8) !important; transform: scale(1); }
+    70% { box-shadow: 0 0 0 15px rgba(225, 29, 72, 0), 0 8px 12px -2px rgba(0,0,0,0.8) !important; transform: scale(1.1); }
+    100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0), 0 8px 12px -2px rgba(0,0,0,0.8) !important; transform: scale(1); }
+}
+
+.cell.huff-victim {
+    background: rgba(225, 29, 72, 0.15) !important;
+    border: 1px solid var(--crimson-alert) !important;
+    border-radius: 8px !important;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite !important;
+}
+
+.cap-flash {
+    background: radial-gradient(circle, #f8fafc 0%, var(--cyan-core) 40%, transparent 80%) !important;
+    box-shadow: 0 0 60px var(--cyan-core) !important;
+    mix-blend-mode: plus-lighter !important;
+}
+
+/* 6. Elite Inputs & Forms */
+.linp, .cinp, input {
+    background: rgba(2, 6, 23, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding: 16px 20px !important; border-radius: 16px !important;
+    color: #f8fafc !important; font-size: 15px !important; font-weight: 500 !important;
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.5) !important; transition: all 0.3s ease !important;
+}
+.linp:focus, .cinp:focus {
+    background: rgba(15, 23, 42, 0.8) !important; border-color: var(--cyan-core) !important;
+    box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15), inset 0 2px 4px 0 rgba(0, 0, 0, 0.5) !important; outline: none !important;
+}
+
+/* 7. Premium Action Buttons */
+.bgold, .bai, .brematch, .ai-start, .rr-accept {
+    background: linear-gradient(to bottom right, #14b8a6, #0d9488) !important;
+    color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.4) !important;
+    border-radius: 16px !important; font-weight: 700 !important; font-size: 15px !important; padding: 16px 28px !important;
+    box-shadow: 0 10px 15px -3px rgba(13, 148, 136, 0.4), 0 4px 6px -2px rgba(13, 148, 136, 0.2) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important; letter-spacing: 0.5px !important; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.bgold::before, .bai::before { display: none !important; }
+.bgold:hover, .bai:hover, .brematch:hover, .ai-start:hover {
+    background: linear-gradient(to bottom right, #2dd4bf, #0f766e) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 20px 25px -5px rgba(13, 148, 136, 0.5), 0 10px 10px -5px rgba(13, 148, 136, 0.3) !important;
+}
+.bgold:active, .bai:active, .brematch:active, .ai-start:active { transform: translateY(0) scale(0.98) !important; }
+
+/* Secondary Actions */
+.bout, .bcanc, .bspec, .rr-decline, .ai-cancel, .rjb-no, .rjb-yes, .eb, .brsg, .csnd {
+    background: rgba(30, 41, 59, 0.5) !important; color: #cbd5e1 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 12px !important;
+    font-weight: 600 !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1) !important; transition: all 0.2s ease !important;
+}
+.bout:hover, .bcanc:hover, .bspec:hover, .csnd:hover { 
+    background: rgba(51, 65, 85, 0.8) !important; color: #fff !important;
+    border-color: rgba(255, 255, 255, 0.2) !important; transform: translateY(-1px) !important; 
+}
+
+/* 8. Topbar Modernization */
+.topbar { 
+    background: rgba(2, 6, 23, 0.8) !important; backdrop-filter: blur(24px) !important; 
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important; 
+}
+.tlogo small { color: #f8fafc !important; text-shadow: none !important; font-weight: 800 !important; letter-spacing: 0.5px !important; }
+.tlogo-room { background: rgba(15, 23, 42, 0.6) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: var(--cyan-core) !important; border-radius: 8px !important;}
+
+/* Typography & Badges */
+.llbl, .ich, .chtit, .lsub, .whint, .prl, .pbrl, .ai-lbl, .twho { color: #94a3b8 !important; }
+.wt, .ai-title, .title-container h1 { color: #f8fafc !important; text-shadow: none !important; font-weight: 900 !important;}
+.pav { background: #0f172a !important; border: 2px solid rgba(255,255,255,0.1) !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5) !important; }
+
+/* Move & Capture Dots */
+.dotmv { background: var(--cyan-core) !important; border: none !important; box-shadow: 0 0 15px var(--cyan-glow) !important; width: 14px !important; height: 14px !important; }
+.dotcp { background: var(--amber-core) !important; border: none !important; box-shadow: 0 0 15px var(--amber-glow) !important; width: 14px !important; height: 14px !important;}
+.dotskip { background: #64748b !important; border: none !important; opacity: 0.5 !important; }
 </style>
 </head>
 <body>
@@ -3694,4 +3865,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-   </html>
+</html>
