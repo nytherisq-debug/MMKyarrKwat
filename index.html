@@ -2,7 +2,10 @@
 <html lang="my">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>မြန်မာ ကျားကွက် | Multiplayer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,10 +20,10 @@
   --glass-gold-border:rgba(212,168,67,0.20);
   --surface-1:#06050E;
   --text-1:#F0E8D8;--text-2:#C8B888;--text-3:#806840;--text-4:#504028;
-  --blue-glass-bg:rgba(40,100,255,0.22);--blue-glass-border:rgba(80,150,255,0.50);
-  --blue-glass-glow:rgba(60,120,255,0.35);
-  --red-glass-bg:rgba(220,40,40,0.22);--red-glass-border:rgba(255,80,80,0.50);
-  --red-glass-glow:rgba(200,50,50,0.35);
+  --blue-glass-bg:rgba(20,184,166,0.22);--blue-glass-border:rgba(45,212,191,0.55);
+  --blue-glass-glow:rgba(20,184,166,0.40);
+  --red-glass-bg:rgba(180,105,0,0.22);--red-glass-border:rgba(245,158,11,0.55);
+  --red-glass-glow:rgba(200,120,0,0.40);
   --ok:#10B981;--warn:#F59E0B;--danger:#EF4444;
   --cell:50px;--side:176px;
   --r-sm:10px;--r-md:14px;--r-xl:22px;
@@ -64,7 +67,20 @@ body::after{
     linear-gradient(160deg,rgba(4,2,14,0.10) 0%,rgba(6,3,16,0.08) 50%,rgba(4,2,10,0.12) 100%),
     url('background.png') center center / cover no-repeat}
 #waiting{align-items:center;justify-content:center;background:rgba(4,2,12,0.6);backdrop-filter:blur(12px)}
-#game{flex-direction:column;padding:8px 12px 8px;gap:8px;background:transparent}
+#game{
+  flex-direction:column;padding:8px 12px 8px;gap:8px;
+  background:transparent;
+  position:relative;
+}
+/* Premium ambient orbs behind the game board */
+#game::before{
+  content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 55% 40% at 15% 10%, rgba(30,15,80,0.22) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 35% at 85% 90%, rgba(60,15,15,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 35% 30% at 50% 50%, rgba(20,10,50,0.12) 0%, transparent 70%);
+}
+#game>*{position:relative;z-index:1}
 
 /* ═══════════════════════════════════════════
    ANIMATIONS
@@ -80,8 +96,8 @@ body::after{
 @keyframes piece-jump{0%{transform:scale(1)}40%{transform:scale(1.3) translateY(-6px)}100%{transform:scale(1)}}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @keyframes huff-pulse{0%,100%{outline-color:rgba(255,140,0,.6)}50%{outline-color:rgba(255,190,60,1)}}
-@keyframes glow-blue{0%,100%{box-shadow:0 0 0 0 rgba(60,120,255,.5),0 4px 16px rgba(0,0,0,.7)}50%{box-shadow:0 0 14px 4px rgba(60,120,255,.35),0 4px 16px rgba(0,0,0,.7)}}
-@keyframes glow-red{0%,100%{box-shadow:0 0 0 0 rgba(220,50,50,.5),0 4px 16px rgba(0,0,0,.7)}50%{box-shadow:0 0 14px 4px rgba(220,50,50,.35),0 4px 16px rgba(0,0,0,.7)}}
+@keyframes glow-blue{0%,100%{box-shadow:0 0 0 0 rgba(20,184,166,.55),0 4px 16px rgba(0,0,0,.7)}50%{box-shadow:0 0 16px 4px rgba(20,184,166,.38),0 4px 16px rgba(0,0,0,.7)}}
+@keyframes glow-red{0%,100%{box-shadow:0 0 0 0 rgba(200,130,0,.55),0 4px 16px rgba(0,0,0,.7)}50%{box-shadow:0 0 16px 4px rgba(200,130,0,.38),0 4px 16px rgba(0,0,0,.7)}}
 @keyframes ghost-in{from{opacity:0;transform:scale(.4)}to{opacity:.9;transform:scale(1)}}
 @keyframes dot-pulse{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.2)}}
 @keyframes dot-cap-pulse{0%,100%{opacity:.8;transform:scale(1)}50%{opacity:1;transform:scale(1.25)}}
@@ -560,20 +576,25 @@ body::after{
 .tlogo small{
   display:inline;
   font-family:'Noto Sans Myanmar',sans-serif;
-  font-size:clamp(.85rem,3vw,1.15rem);
+  font-size:clamp(.90rem,3vw,1.18rem);
   font-weight:800;
-  letter-spacing:1px;
+  letter-spacing:.5px;
+  background:linear-gradient(135deg,#F0CC72 0%,#FFE8A0 40%,#D4A843 65%,#F0CC72 100%);
+  background-clip:text;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
   color:#F0C840;
-  background:none;
   border:none;
   box-shadow:none;
-  text-shadow:
-    0 0 10px rgba(255,196,40,.90),
-    0 0 28px rgba(220,150,10,.55),
-    0 0 55px rgba(180,110,0,.25),
-    0 2px 3px rgba(0,0,0,.95);
+  filter:drop-shadow(0 0 12px rgba(212,168,67,0.50)) drop-shadow(0 0 28px rgba(180,120,0,0.22));
   line-height:1.5;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;max-width:clamp(80px,38vw,200px)}
+  white-space:nowrap;max-width:clamp(80px,38vw,220px);
+  animation:logo-title-shimmer 4s ease-in-out infinite;
+}
+@keyframes logo-title-shimmer{
+  0%,100%{filter:drop-shadow(0 0 10px rgba(212,168,67,0.45)) drop-shadow(0 0 24px rgba(180,120,0,0.18))}
+  50%{filter:drop-shadow(0 0 18px rgba(240,200,80,0.70)) drop-shadow(0 0 40px rgba(212,168,67,0.30))}
+}
 .tlogo-sep{
   color:rgba(212,168,67,0.30);font-size:.72rem;flex-shrink:0;line-height:1}
 .tlogo-room{
@@ -687,21 +708,21 @@ body::after{
   border:1.5px solid rgba(255,255,255,0.1);
   display:flex;align-items:center;justify-content:center;font-size:.95rem;margin-bottom:7px;
   box-shadow:0 2px 10px rgba(0,0,0,.5)}
-.av-b{background:linear-gradient(135deg,rgba(40,80,220,0.7),rgba(20,50,180,0.9));border-color:rgba(80,140,255,0.4)}
-.av-w{background:linear-gradient(135deg,rgba(220,50,50,0.7),rgba(180,20,20,0.9));border-color:rgba(255,100,80,0.4)}
+.av-b{background:linear-gradient(135deg,rgba(20,120,110,0.7),rgba(15,100,92,0.9));border-color:rgba(45,212,191,0.45)}
+.av-w{background:linear-gradient(135deg,rgba(200,120,0,0.7),rgba(170,90,0,0.9));border-color:rgba(245,158,11,0.45)}
 .pnm{font-size:.76rem;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Outfit',sans-serif}
 .prl{font-size:.58rem;color:var(--text-3);margin:2px 0 8px;letter-spacing:.5px;font-family:'Outfit',sans-serif}
 
 .drow{display:flex;flex-wrap:wrap;gap:3px;min-height:14px}
 .mdot{width:10px;height:10px;border-radius:50%;transition:all .3s}
 .mdot.b{
-  background:radial-gradient(circle at 35% 32%,rgba(140,190,255,0.7),rgba(40,100,240,0.5) 45%,rgba(10,40,180,0.85));
-  border:1px solid rgba(80,150,255,0.5);
-  box-shadow:0 0 5px rgba(60,120,255,0.3)}
+  background:radial-gradient(circle at 35% 32%,rgba(180,250,240,0.7),rgba(45,212,191,0.5) 45%,rgba(15,118,110,0.88));
+  border:1px solid rgba(45,212,191,0.55);
+  box-shadow:0 0 5px rgba(20,184,166,0.35)}
 .mdot.w{
-  background:radial-gradient(circle at 35% 32%,rgba(255,160,140,0.7),rgba(220,60,40,0.5) 45%,rgba(140,10,10,0.85));
-  border:1px solid rgba(255,100,80,0.5);
-  box-shadow:0 0 5px rgba(200,40,20,0.3)}
+  background:radial-gradient(circle at 35% 32%,rgba(255,240,150,0.7),rgba(245,158,11,0.5) 45%,rgba(180,100,0,0.88));
+  border:1px solid rgba(245,158,11,0.55);
+  box-shadow:0 0 5px rgba(200,120,0,0.35)}
 .mdot.dead{opacity:.15;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.06);box-shadow:none}
 
 /* Info card */
@@ -952,13 +973,13 @@ body::after{
   transition:left .32s cubic-bezier(.4,0,.2,1),top .32s cubic-bezier(.4,0,.2,1);
   opacity:.9;animation:ghost-in .25s ease forwards}
 .ghost-piece.bp{
-  background:radial-gradient(circle at 32% 26%,rgba(160,200,255,0.6),rgba(60,120,255,0.45) 35%,rgba(10,40,180,0.8));
-  border:2px solid rgba(100,160,255,0.7);
-  box-shadow:0 0 22px rgba(40,100,255,0.55)}
+  background:radial-gradient(circle at 32% 26%,rgba(180,250,240,0.6),rgba(45,212,191,0.45) 35%,rgba(15,118,110,0.82));
+  border:2px solid rgba(45,212,191,0.72);
+  box-shadow:0 0 22px rgba(20,184,166,0.55)}
 .ghost-piece.wp{
-  background:radial-gradient(circle at 32% 26%,rgba(255,180,160,0.6),rgba(220,60,40,0.45) 35%,rgba(140,10,10,0.8));
-  border:2px solid rgba(255,100,80,0.7);
-  box-shadow:0 0 22px rgba(200,40,20,0.55)}
+  background:radial-gradient(circle at 32% 26%,rgba(255,240,150,0.6),rgba(245,158,11,0.45) 35%,rgba(180,100,0,0.82));
+  border:2px solid rgba(245,158,11,0.72);
+  box-shadow:0 0 22px rgba(200,120,0,0.55)}
 .ghost-piece.kp::after{
   content:'♛';position:absolute;top:50%;left:50%;
   transform:translate(-50%,-53%);font-size:40%;
@@ -1101,9 +1122,9 @@ body::after{
   position:fixed;inset:0;z-index:500;
   display:flex;align-items:center;justify-content:center;
   background:rgba(0,0,0,0);backdrop-filter:blur(0);
-  transition:all .45s;pointer-events:none;visibility:hidden}
+  transition:background .5s ease,backdrop-filter .5s ease;
+  pointer-events:none;visibility:hidden}
 #wino.on{
-  background:rgba(0,0,0,0.94);backdrop-filter:blur(16px);
   pointer-events:all;visibility:visible}
 .wb{
   background:linear-gradient(155deg,rgba(12,8,4,0.99),rgba(5,3,8,0.99));
@@ -1137,6 +1158,281 @@ body::after{
 .rematch-status{
   font-size:.7rem;color:rgba(212,168,67,0.52);
   margin-top:10px;min-height:18px;font-family:'Outfit',sans-serif}
+
+/* ════════════════════════════════════════════════════════════════
+   ██╗    ██╗██╗███╗   ██╗    ██╗      ██████╗ ███████╗███████╗
+   ██║    ██║██║████╗  ██║    ██║     ██╔═══██╗██╔════╝██╔════╝
+   ██║ █╗ ██║██║██╔██╗ ██║    ██║     ██║   ██║███████╗███████╗
+   ██║███╗██║██║██║╚██╗██║    ██║     ██║   ██║╚════██║╚════██║
+   ╚███╔███╔╝██║██║ ╚████║    ███████╗╚██████╔╝███████║███████║
+    ╚══╝╚══╝ ╚═╝╚═╝  ╚═══╝    ╚══════╝ ╚═════╝ ╚══════╝╚══════╝
+   LIQUID GLASS WIN / LOSE VIBE ANIMATIONS
+════════════════════════════════════════════════════════════════ */
+
+/* ── WIN KEYFRAMES — Golden triumph, warmth, rise ─────────── */
+@keyframes win-bg-reveal{
+  0%  { background:rgba(0,0,0,0); backdrop-filter:blur(0) }
+  100%{ background:rgba(2,8,0,0.93); backdrop-filter:blur(var(--blur-2xl)) saturate(1.8) }
+}
+@keyframes win-card-in{
+  0%  { transform:scale(.55) translateY(50px); opacity:0; filter:blur(12px) }
+  60% { filter:blur(0) }
+  100%{ transform:scale(1) translateY(0); opacity:1; filter:blur(0) }
+}
+@keyframes win-glow-pulse{
+  0%,100%{
+    box-shadow:
+      0 0 0 1px rgba(212,168,67,.10),
+      0 0 60px rgba(212,168,67,.22),
+      0 0 120px rgba(212,168,67,.10),
+      0 25px 50px -12px rgba(0,0,0,.70),
+      inset 0 1px 1px rgba(255,255,255,.18)
+  }
+  50%{
+    box-shadow:
+      0 0 0 1px rgba(240,200,80,.22),
+      0 0 90px rgba(212,168,67,.45),
+      0 0 200px rgba(180,120,0,.18),
+      0 25px 50px -12px rgba(0,0,0,.70),
+      inset 0 1px 1px rgba(255,220,100,.25)
+  }
+}
+@keyframes win-border-rotate{
+  to{ --win-border-angle:360deg }
+}
+@property --win-border-angle{syntax:'<angle>';initial-value:0deg;inherits:false}
+
+@keyframes win-icon-bounce{
+  0%  { transform:scale(0) rotate(-20deg); opacity:0 }
+  50% { transform:scale(1.35) rotate(8deg); opacity:1 }
+  70% { transform:scale(.92) rotate(-4deg) }
+  85% { transform:scale(1.08) rotate(2deg) }
+  100%{ transform:scale(1) rotate(0deg); opacity:1 }
+}
+@keyframes win-title-rise{
+  0%  { opacity:0; transform:translateY(18px); filter:blur(6px) }
+  100%{ opacity:1; transform:translateY(0);   filter:blur(0) }
+}
+@keyframes win-particle{
+  0%  { transform:translate(0,0) scale(1); opacity:.9 }
+  100%{ transform:translate(var(--px),var(--py)) scale(0); opacity:0 }
+}
+@keyframes win-shimmer-sweep{
+  0%  { transform:translateX(-160%) skewX(-22deg); opacity:0 }
+  25% { opacity:.7 }
+  75% { opacity:.7 }
+  100%{ transform:translateX(220%)  skewX(-22deg); opacity:0 }
+}
+@keyframes win-crown-float{
+  0%,100%{ transform:translateY(0) scale(1);
+           filter:drop-shadow(0 0 26px rgba(212,168,67,.55)) drop-shadow(0 0 50px rgba(212,168,67,.22)) }
+  50%    { transform:translateY(-8px) scale(1.06);
+           filter:drop-shadow(0 0 40px rgba(255,210,60,.80)) drop-shadow(0 0 80px rgba(212,168,67,.38)) }
+}
+@keyframes win-bg-orb-expand{
+  0%  { transform:scale(0); opacity:0 }
+  60% { opacity:.65 }
+  100%{ transform:scale(2.8); opacity:0 }
+}
+
+/* ── LOSE KEYFRAMES — Cool blue, fade, heavy descent ──────── */
+@keyframes lose-bg-reveal{
+  0%  { background:rgba(0,0,0,0); backdrop-filter:blur(0) }
+  100%{ background:rgba(0,2,10,0.95); backdrop-filter:blur(var(--blur-2xl)) saturate(1.2) }
+}
+@keyframes lose-card-in{
+  0%  { transform:scale(.80) translateY(-30px); opacity:0; filter:blur(8px) }
+  40% { filter:blur(0) }
+  65% { transform:scale(1.04) translateY(5px) }
+  80% { transform:scale(.98) translateY(-2px) }
+  100%{ transform:scale(1) translateY(0); opacity:1; filter:blur(0) }
+}
+@keyframes lose-glow-pulse{
+  0%,100%{
+    box-shadow:
+      0 0 0 1px rgba(40,80,180,.18),
+      0 0 40px rgba(20,50,160,.28),
+      0 0 100px rgba(10,20,100,.12),
+      0 25px 50px -12px rgba(0,0,0,.80),
+      inset 0 1px 1px rgba(100,150,255,.08)
+  }
+  50%{
+    box-shadow:
+      0 0 0 1px rgba(60,100,220,.28),
+      0 0 60px rgba(40,80,200,.42),
+      0 0 140px rgba(20,40,150,.18),
+      0 25px 50px -12px rgba(0,0,0,.80),
+      inset 0 1px 1px rgba(120,170,255,.12)
+  }
+}
+@keyframes lose-icon-drop{
+  0%  { transform:scale(0) translateY(-30px); opacity:0; filter:blur(8px) }
+  55% { transform:scale(1.15) translateY(6px); filter:blur(0) }
+  75% { transform:scale(.94) translateY(-2px) }
+  100%{ transform:scale(1) translateY(0); opacity:1 }
+}
+@keyframes lose-title-fade{
+  0%  { opacity:0; transform:translateY(-12px); filter:blur(4px) }
+  100%{ opacity:1; transform:translateY(0);     filter:blur(0) }
+}
+@keyframes lose-vignette-pulse{
+  0%,100%{ opacity:.4 }
+  50%    { opacity:.70 }
+}
+@keyframes lose-rain-drop{
+  0%  { transform:translateY(-20px) scaleY(.6); opacity:0 }
+  20% { opacity:.6 }
+  100%{ transform:translateY(100px)  scaleY(1);  opacity:0 }
+}
+@keyframes lose-desaturate{
+  0%  { filter:saturate(1)   brightness(1) }
+  100%{ filter:saturate(.35) brightness(.72) }
+}
+
+/* ────────────────────────────────────────────
+   WIN STATE — #wino.win
+──────────────────────────────────────────── */
+#wino.win{
+  animation: win-bg-reveal .55s var(--ease-out) forwards;
+}
+#wino.win .wb{
+  background: rgba(6,10,2,.96) !important;
+  border: 1.5px solid transparent !important;
+  /* Rotating gold-to-amber conic border */
+  background-clip: padding-box !important;
+  outline: 1.5px solid rgba(212,168,67,.55) !important;
+  animation:
+    win-card-in .65s var(--ease-out) forwards,
+    win-glow-pulse 3s ease-in-out 1s infinite !important;
+  transform-origin: center bottom;
+  position:relative;overflow:hidden;
+}
+/* Spinning conic border wrapper */
+#wino.win .wb::before{
+  content:'';position:absolute;inset:-2px;border-radius:inherit;z-index:-1;
+  background:conic-gradient(from var(--win-border-angle),
+    rgba(212,168,67,.0),  rgba(212,168,67,.55), rgba(255,220,80,.90),
+    rgba(212,168,67,.55), rgba(212,168,67,.0));
+  animation:win-border-rotate 4s linear .6s infinite;
+  border-radius:calc(var(--r-xl) + 2px);
+}
+/* Shimmer sweep */
+#wino.win .wb::after{
+  content:'';position:absolute;top:0;left:0;width:38%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,220,80,.12),transparent);
+  animation: win-shimmer-sweep 3.5s ease-in-out 1.2s infinite;
+  pointer-events:none;z-index:2;border-radius:inherit;
+}
+/* Expanding orb flash on open */
+#wino.win .wb .win-orb{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;z-index:0;
+}
+#wino.win .wb .win-orb::after{
+  content:'';
+  width:120px;height:120px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,220,60,.60) 0%,rgba(212,168,67,.20) 40%,transparent 70%);
+  filter:blur(var(--blur-lg));
+  animation:win-bg-orb-expand .9s var(--ease-out) .3s forwards;
+}
+/* Win icon */
+#wino.win .wi{
+  animation: win-crown-float 2.8s ease-in-out 1.0s infinite !important;
+  position:relative;z-index:3;
+}
+#wino.win .wt{
+  background:linear-gradient(135deg,#F0CC72,#FFE896,#D4A843,#F0CC72);
+  background-size:200% auto;
+  background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation: shimmer-line 2.5s linear 1s infinite, win-title-rise .5s var(--ease-out) .7s both !important;
+  text-shadow:none !important;
+}
+#wino.win .wm{ animation: win-title-rise .45s var(--ease-out) .9s both }
+#wino.win .wbtn-row{ animation: win-title-rise .45s var(--ease-out) 1.1s both }
+/* Particle field */
+#wino.win .win-particles{
+  position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden;border-radius:inherit;
+}
+#wino.win .win-particles span{
+  position:absolute;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,220,80,.9),transparent 70%);
+  animation: win-particle 1.8s var(--ease-out) forwards;
+}
+
+/* ────────────────────────────────────────────
+   LOSE STATE — #wino.lose
+──────────────────────────────────────────── */
+#wino.lose{
+  animation: lose-bg-reveal .6s var(--ease-out) forwards;
+}
+#wino.lose .wb{
+  background: rgba(2,4,16,.97) !important;
+  border: 1px solid rgba(40,70,200,.30) !important;
+  border-top: 1px solid rgba(80,120,255,.22) !important;
+  animation:
+    lose-card-in .70s var(--ease-out) forwards,
+    lose-glow-pulse 4s ease-in-out 1.2s infinite !important;
+  position:relative;overflow:hidden;
+}
+/* Blue shimmer wave */
+#wino.lose .wb::before{
+  content:'';position:absolute;inset:0;border-radius:inherit;
+  background:linear-gradient(180deg,
+    rgba(40,80,220,.06) 0%,
+    transparent 40%,
+    rgba(20,40,180,.04) 100%);
+  pointer-events:none;z-index:0;
+}
+/* Rain drops overlay */
+#wino.lose .wb::after{
+  content:'';position:absolute;top:0;left:0;width:22%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(60,100,255,.06),transparent);
+  animation: gl-shimmer 5s ease-in-out 1.5s infinite;
+  pointer-events:none;z-index:1;
+}
+/* Vignette */
+#wino.lose .lose-vignette{
+  position:absolute;inset:0;pointer-events:none;z-index:1;border-radius:inherit;
+  background:radial-gradient(ellipse 80% 80% at 50% 50%,transparent 50%,rgba(0,5,30,.55) 100%);
+  animation: lose-vignette-pulse 3s ease-in-out 1s infinite;
+}
+/* Rain drops */
+#wino.lose .lose-rain{
+  position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden;border-radius:inherit;
+}
+#wino.lose .lose-rain span{
+  position:absolute;
+  width:1px;border-radius:1px;
+  background:linear-gradient(to bottom,transparent,rgba(80,140,255,.45),transparent);
+  animation: lose-rain-drop var(--rd,1.6s) linear var(--dd,0s) infinite;
+}
+/* Lose icon */
+#wino.lose .wi{
+  animation: lose-icon-drop .75s var(--ease-out) .2s both,
+             gl-float 3.5s ease-in-out 1.5s infinite !important;
+  filter: drop-shadow(0 0 22px rgba(60,100,255,.45))
+          drop-shadow(0 0 50px rgba(20,50,200,.20)) !important;
+}
+#wino.lose .wt{
+  color: rgba(180,200,255,.88) !important;
+  text-shadow: 0 0 24px rgba(60,100,255,.35),
+               0 0 60px rgba(30,60,200,.18) !important;
+  animation: lose-title-fade .5s var(--ease-out) .65s both,
+             lose-desaturate .8s var(--ease-out) .5s forwards !important;
+  -webkit-text-fill-color: unset !important;
+  background: none !important;
+}
+#wino.lose .wm{
+  color: rgba(140,160,220,.70) !important;
+  animation: lose-title-fade .45s var(--ease-out) .85s both;
+}
+#wino.lose .wbtn-row{
+  animation: lose-title-fade .45s var(--ease-out) 1.05s both;
+}
+
+/* ── WIN/LOSE: extra board desaturate effect ── */
+#game.game-won  .bframe{ filter:brightness(1.08) saturate(1.2); transition:filter .6s }
+#game.game-lost .bframe{ filter:brightness(.72) saturate(.30) grayscale(.5); transition:filter .8s }
 
 /* ═══════════════════════════════════════════
    REMATCH REQUEST
@@ -1276,10 +1572,27 @@ body::after{
 .ai-start:hover{transform:translateY(-2px);box-shadow:0 8px 34px rgba(200,150,42,0.42);filter:brightness(1.08)}
 .ai-start:active{transform:none}
 .ai-cancel{
-  background:none;border:none;color:rgba(212,168,67,0.22);
-  font-size:.7rem;cursor:pointer;font-family:'Outfit',sans-serif;
-  transition:color .18s;letter-spacing:.5px}
-.ai-cancel:hover{color:rgba(212,168,67,0.52)}
+  display:block;width:100%;
+  padding:11px 16px;margin-top:2px;
+  background:rgba(255,255,255,0.04) !important;
+  border:1px solid rgba(255,255,255,0.10) !important;
+  border-top:1px solid rgba(255,255,255,0.18) !important;
+  border-radius:14px !important;
+  color:rgba(200,180,255,0.70) !important;
+  font-size:.80rem;font-weight:600;
+  cursor:pointer;font-family:'Outfit',sans-serif;
+  letter-spacing:.5px;text-align:center;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  transition:all .22s cubic-bezier(.16,1,.3,1) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.ai-cancel:hover{
+  background:rgba(255,255,255,0.08) !important;
+  border-color:rgba(212,168,67,0.35) !important;
+  color:rgba(212,168,67,0.85) !important;
+  transform:translateY(-1px);
+}
 
 /* ═══════════════════════════════════════════
    RESPONSIVE
@@ -1288,6 +1601,658 @@ body::after{
 @media(max-width:780px){:root{--cell:calc((100vw - 75px) / 8)}.panel{display:none}.main{justify-content:center}}
 @media(max-width:500px){.lbox{padding:26px 22px}}
 @media(max-width:380px){:root{--cell:calc((100vw - 72px) / 8)}}
+
+/* ═══════════════════════════════════════════
+   LIQUID GLASS — CSS VARIABLES (from 0eb7fa540bde1768.css)
+═══════════════════════════════════════════ */
+:root{
+  --glass-bg:#ffffff14;
+  --glass-border:#ffffff26;
+  --glass-bg-rich:rgba(255,255,255,0.10);
+  --glass-bg-deep:rgba(10,8,22,0.72);
+  --glass-blur:20px;
+  --glass-blur-heavy:32px;
+  --glass-radius:20px;
+  --glass-shimmer-1:rgba(255,255,255,0.18);
+  --glass-shimmer-2:rgba(255,220,100,0.12);
+  --glass-shimmer-3:rgba(160,100,255,0.10);
+  --rainbow-1:#ff0080;--rainbow-2:#ff4000;--rainbow-3:#ffcc00;
+  --rainbow-4:#00ff80;--rainbow-5:#0080ff;--rainbow-6:#8000ff;
+  --liquid-dur:8s;
+}
+
+/* ─── KEYFRAMES ─────────────────────────────── */
+@keyframes liquid-bg-shift{
+  0%  {background-position:0% 50%}
+  50% {background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+@keyframes rainbow-border-rotate{
+  to{--rb-angle:360deg}
+}
+@property --rb-angle{syntax:'<angle>';initial-value:0deg;inherits:false}
+
+@keyframes glass-shimmer-flow{
+  0%  {transform:translateX(-120%) skewX(-18deg);opacity:0}
+  30% {opacity:1}
+  70% {opacity:1}
+  100%{transform:translateX(220%) skewX(-18deg);opacity:0}
+}
+@keyframes liquid-float{
+  0%,100%{transform:translateY(0) scale(1)}
+  33%    {transform:translateY(-6px) scale(1.01)}
+  66%    {transform:translateY(3px) scale(0.99)}
+}
+@keyframes iridescent-pulse{
+  0%,100%{filter:hue-rotate(0deg) brightness(1)}
+  25%    {filter:hue-rotate(30deg) brightness(1.06)}
+  50%    {filter:hue-rotate(60deg) brightness(1.10)}
+  75%    {filter:hue-rotate(20deg) brightness(1.04)}
+}
+@keyframes rainbow-ai-bg{
+  0%  {background-position:0% 0%}
+  25% {background-position:100% 0%}
+  50% {background-position:100% 100%}
+  75% {background-position:0% 100%}
+  100%{background-position:0% 0%}
+}
+@keyframes glass-border-glow{
+  0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,0.14),0 8px 40px rgba(0,0,0,0.6),0 0 60px rgba(160,80,255,0.08)}
+  50%    {box-shadow:0 0 0 1px rgba(255,255,255,0.28),0 8px 40px rgba(0,0,0,0.6),0 0 80px rgba(160,80,255,0.18)}
+}
+@keyframes liquid-orb-drift{
+  0%  {transform:translate(0,0) scale(1);opacity:.55}
+  33% {transform:translate(40px,-30px) scale(1.15);opacity:.8}
+  66% {transform:translate(-30px,20px) scale(0.88);opacity:.5}
+  100%{transform:translate(0,0) scale(1);opacity:.55}
+}
+@keyframes rainbow-text{
+  0%  {background-position:0% 50%}
+  100%{background-position:300% 50%}
+}
+@keyframes topbar-shimmer{
+  0%  {opacity:0;transform:translateX(-100%)}
+  40% {opacity:.4}
+  60% {opacity:.4}
+  100%{opacity:0;transform:translateX(100%)}
+}
+@keyframes ai-rainbow-pulse{
+  0%,100%{filter:hue-rotate(0deg)}
+  50%    {filter:hue-rotate(180deg)}
+}
+
+/* ─── GLOBAL BODY LIQUID BG ─────────────────── */
+body{
+  background:
+    radial-gradient(ellipse 120% 80% at 20% 10%,rgba(80,40,160,0.12) 0%,transparent 60%),
+    radial-gradient(ellipse 100% 70% at 80% 90%,rgba(0,80,200,0.10) 0%,transparent 55%),
+    radial-gradient(ellipse 80% 60% at 50% 50%,rgba(160,0,80,0.06) 0%,transparent 65%),
+    #06050E !important;
+}
+
+/* ─── LOBBY BOX — LIQUID GLASS ───────────────── */
+.lbox{
+  background:rgba(10,7,20,0.82) !important;
+  backdrop-filter:blur(var(--glass-blur-heavy)) saturate(160%) !important;
+  -webkit-backdrop-filter:blur(var(--glass-blur-heavy)) saturate(160%) !important;
+  border:1px solid rgba(255,255,255,0.12) !important;
+  border-top:1px solid rgba(255,255,255,0.22) !important;
+  border-radius:28px !important;
+  box-shadow:
+    0 0 0 1px rgba(212,168,67,0.08),
+    0 2px 80px rgba(0,0,0,0.85),
+    0 0 0 0.5px rgba(255,255,255,0.06) inset,
+    inset 0 1px 0 rgba(255,255,255,0.15),
+    inset 0 -1px 0 rgba(0,0,0,0.4) !important;
+  animation:fadeUp .6s cubic-bezier(.16,1,.3,1) both, glass-border-glow 4s ease-in-out infinite !important;
+  position:relative;overflow:visible;
+}
+/* Liquid shimmer layer on lbox */
+.lbox::before{
+  content:'';position:absolute;inset:0;border-radius:28px;
+  background:linear-gradient(135deg,
+    rgba(255,255,255,0.04) 0%,
+    rgba(255,200,100,0.04) 25%,
+    rgba(160,80,255,0.03) 50%,
+    rgba(0,150,255,0.03) 75%,
+    rgba(255,255,255,0.02) 100%);
+  pointer-events:none;z-index:0}
+.lbox::after{
+  content:'';position:absolute;top:0;left:10%;right:10%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.45),rgba(212,168,67,0.6),rgba(255,255,255,0.45),transparent);
+  pointer-events:none}
+
+/* ─── LOBBY ORB COLORS → LIQUID ─────────────── */
+.lobby-orb-1{
+  background:radial-gradient(circle,rgba(160,80,255,0.20),rgba(80,40,200,0.12) 40%,transparent 70%) !important;
+  animation:liquid-orb-drift 9s ease-in-out infinite !important;
+}
+.lobby-orb-2{
+  background:radial-gradient(circle,rgba(0,150,255,0.18),rgba(0,80,200,0.10) 40%,transparent 70%) !important;
+  animation:liquid-orb-drift 11s ease-in-out infinite reverse !important;
+}
+
+/* ─── AI MODAL — PURE LIQUID GLASS (no rainbow bg) ── */
+#ai-modal{
+  position:fixed;inset:0;z-index:950;display:none;
+  align-items:center;justify-content:center;
+  overflow:hidden;
+  background:rgba(2,1,10,0.88) !important;
+  backdrop-filter:blur(28px) saturate(140%) !important;
+  -webkit-backdrop-filter:blur(28px) saturate(140%) !important;
+}
+/* Subtle deep ambient orbs — NOT rainbow */
+#ai-modal::before{
+  content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 60% 50% at 25% 20%, rgba(80,40,160,0.18) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 40% at 75% 80%, rgba(20,50,180,0.14) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 35% at 50% 50%, rgba(100,50,200,0.08) 0%, transparent 70%);
+}
+#ai-modal::after{content:none}
+#ai-modal.show{display:flex}
+
+/* AI Box — elegant gold conic border, no rainbow */
+.ai-box{
+  position:relative;z-index:2;border-radius:28px;
+  padding:2px;width:370px;max-width:94vw;
+  animation:ai-border 5s linear infinite, fadeUp .5s cubic-bezier(.16,1,.3,1) both;
+  background:conic-gradient(from var(--ai-angle),
+    rgba(212,168,67,0.15),rgba(180,120,255,0.35),rgba(212,168,67,0.60),
+    rgba(180,120,255,0.35),rgba(212,168,67,0.15));
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.06),
+    0 12px 80px rgba(0,0,0,0.85),
+    0 0 60px rgba(100,60,200,0.18);
+}
+.ai-inner{
+  background:rgba(7,4,18,0.97) !important;
+  backdrop-filter:blur(24px) saturate(160%) !important;
+  -webkit-backdrop-filter:blur(24px) saturate(160%) !important;
+  border-radius:26px !important;
+  padding:32px 28px !important;
+  position:relative;overflow:hidden;
+}
+.ai-inner::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(120,60,220,0.05) 0%,transparent 50%,rgba(212,168,67,0.03) 100%);
+  pointer-events:none}
+.ai-inner::after{
+  content:'';position:absolute;top:0;left:12%;right:12%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(212,168,67,0.55),rgba(180,120,255,0.40),rgba(212,168,67,0.55),transparent)}
+
+/* Liquid shimmer sweep */
+.ai-inner .glass-sweep{
+  position:absolute;top:0;left:0;width:40%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent);
+  animation:glass-shimmer-flow 6s ease-in-out infinite;pointer-events:none;z-index:0}
+
+/* ─── AI DIFF BUTTONS — LIQUID GLASS ─────────── */
+.ai-diff-btn{
+  background:rgba(255,255,255,0.04) !important;
+  border:1px solid rgba(255,255,255,0.10) !important;
+  border-top:1px solid rgba(255,255,255,0.20) !important;
+  backdrop-filter:blur(10px) !important;
+  -webkit-backdrop-filter:blur(10px) !important;
+  border-radius:14px !important;
+  transition:all .25s cubic-bezier(.16,1,.3,1) !important;
+}
+.ai-diff-btn:hover{
+  background:rgba(255,255,255,0.09) !important;
+  border-color:rgba(255,255,255,0.25) !important;
+  transform:translateY(-3px) scale(1.03) !important;
+  box-shadow:0 8px 24px rgba(0,0,0,0.4),0 0 20px rgba(212,168,67,0.12) !important;
+}
+.ai-diff-btn.sel{
+  background:rgba(212,168,67,0.12) !important;
+  border-color:rgba(212,168,67,0.55) !important;
+  box-shadow:0 0 20px rgba(212,168,67,0.15),0 4px 16px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.12) !important;
+}
+.ai-color-btn{
+  background:rgba(255,255,255,0.04) !important;
+  border:1px solid rgba(255,255,255,0.10) !important;
+  border-top:1px solid rgba(255,255,255,0.18) !important;
+  backdrop-filter:blur(10px) !important;
+  border-radius:14px !important;
+  transition:all .25s cubic-bezier(.16,1,.3,1) !important;
+}
+.ai-color-btn.sel{
+  background:rgba(212,168,67,0.12) !important;
+  border-color:rgba(212,168,67,0.55) !important;
+  box-shadow:0 0 18px rgba(212,168,67,0.15),inset 0 1px 0 rgba(255,255,255,0.10) !important;
+}
+
+/* ─── AI START BUTTON — RAINBOW LIQUID ───────── */
+.ai-start{
+  background:linear-gradient(135deg,#5A3A08,#C8962A 35%,#E8C050 50%,#C89030 65%,#7A5012) !important;
+  border:1px solid rgba(255,255,255,0.20) !important;
+  border-top:1px solid rgba(255,255,255,0.35) !important;
+  border-radius:16px !important;
+  box-shadow:0 6px 30px rgba(200,150,42,0.30),inset 0 1px 0 rgba(255,255,255,0.20) !important;
+  position:relative;overflow:hidden;
+}
+.ai-start::after{
+  content:'';position:absolute;top:-50%;left:-60%;width:40%;height:200%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
+  transform:skewX(-20deg);
+  animation:glass-shimmer-flow 3.5s ease-in-out infinite;pointer-events:none;
+}
+
+/* ─── TOPBAR — LIQUID GLASS ─────────────────── */
+.topbar{
+  background:rgba(4,2,14,0.82) !important;
+  backdrop-filter:blur(24px) saturate(160%) !important;
+  -webkit-backdrop-filter:blur(24px) saturate(160%) !important;
+  border-bottom:1px solid rgba(255,255,255,0.08) !important;
+  box-shadow:0 1px 0 rgba(212,168,67,0.08),0 4px 30px rgba(0,0,0,0.6) !important;
+  position:relative;overflow:hidden;
+}
+.topbar::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),rgba(212,168,67,0.20),rgba(255,255,255,0.08),transparent);
+  pointer-events:none}
+
+/* ─── PLAYER PROGRESS BARS — LIQUID GLASS ───── */
+.pbar{
+  backdrop-filter:blur(12px) saturate(140%) !important;
+  -webkit-backdrop-filter:blur(12px) saturate(140%) !important;
+  background:rgba(255,255,255,0.03) !important;
+  border:1px solid rgba(255,255,255,0.07) !important;
+  border-top:1px solid rgba(255,255,255,0.12) !important;
+  border-radius:var(--r-md) !important;
+  transition:all .3s cubic-bezier(.16,1,.3,1) !important;
+}
+.pbar.act{
+  background:rgba(255,255,255,0.05) !important;
+  border-color:rgba(212,168,67,0.20) !important;
+  box-shadow:0 0 20px rgba(212,168,67,0.06),inset 0 1px 0 rgba(255,255,255,0.08) !important;
+}
+.pbar.my-turn{
+  background:rgba(255,255,255,0.055) !important;
+  border-color:rgba(212,168,67,0.35) !important;
+  box-shadow:0 0 0 1px rgba(212,168,67,0.15) inset !important;
+}
+
+/* ─── INFO CARDS — LIQUID GLASS ─────────────── */
+.ic{
+  background:rgba(255,255,255,0.026) !important;
+  backdrop-filter:blur(14px) !important;
+  -webkit-backdrop-filter:blur(14px) !important;
+  border:1px solid rgba(255,255,255,0.07) !important;
+  border-top:1px solid rgba(255,255,255,0.13) !important;
+  border-radius:var(--r-md) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),0 4px 20px rgba(0,0,0,0.35) !important;
+  transition:all .2s !important;
+}
+
+/* ─── PLAYER CARDS — LIQUID GLASS ───────────── */
+.pc{
+  background:rgba(255,255,255,0.025) !important;
+  backdrop-filter:blur(14px) !important;
+  -webkit-backdrop-filter:blur(14px) !important;
+  border:1px solid rgba(255,255,255,0.07) !important;
+  border-top:1px solid rgba(255,255,255,0.14) !important;
+  border-radius:var(--r-md) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),0 4px 24px rgba(0,0,0,0.4) !important;
+}
+
+/* ─── CHAT — LIQUID GLASS ────────────────────── */
+.chat{
+  background:rgba(255,255,255,0.022) !important;
+  backdrop-filter:blur(14px) !important;
+  -webkit-backdrop-filter:blur(14px) !important;
+  border:1px solid rgba(255,255,255,0.07) !important;
+  border-top:1px solid rgba(255,255,255,0.13) !important;
+  border-radius:var(--r-md) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),0 4px 20px rgba(0,0,0,0.35) !important;
+}
+
+/* ─── BOARD FRAME — ENHANCED LIQUID ─────────── */
+.bframe{
+  background:linear-gradient(145deg,rgba(28,14,2,0.98),rgba(16,8,0,0.99),rgba(24,12,2,0.98)) !important;
+  border:1.5px solid rgba(212,168,67,0.60) !important;
+  box-shadow:
+    0 0 0 1px rgba(212,168,67,0.10),
+    0 0 0 4px rgba(0,0,0,0.7),
+    0 0 80px rgba(212,168,67,0.10),
+    0 30px 80px rgba(0,0,0,0.98),
+    inset 0 0 50px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(212,168,67,0.28) !important;
+}
+
+/* ─── WIN OVERLAY — LIQUID GLASS ────────────── */
+#wino.on{
+  background:rgba(0,0,0,0.92) !important;
+  backdrop-filter:blur(24px) saturate(140%) !important;
+  -webkit-backdrop-filter:blur(24px) saturate(140%) !important;
+}
+.wb{
+  background:rgba(8,5,18,0.94) !important;
+  backdrop-filter:blur(24px) saturate(160%) !important;
+  -webkit-backdrop-filter:blur(24px) saturate(160%) !important;
+  border:1px solid rgba(255,255,255,0.12) !important;
+  border-top:1px solid rgba(255,255,255,0.22) !important;
+  border-radius:28px !important;
+  box-shadow:
+    0 0 0 1px rgba(212,168,67,0.08),
+    0 0 0 0.5px rgba(255,255,255,0.05) inset,
+    0 0 100px rgba(212,168,67,0.15),
+    0 40px 80px rgba(0,0,0,0.95),
+    inset 0 1px 0 rgba(255,255,255,0.12) !important;
+  animation:glass-border-glow 3s ease-in-out infinite !important;
+}
+
+/* ─── REMATCH BOX — LIQUID GLASS ────────────── */
+.rr-box{
+  background:rgba(8,5,18,0.94) !important;
+  backdrop-filter:blur(22px) saturate(150%) !important;
+  -webkit-backdrop-filter:blur(22px) saturate(150%) !important;
+  border:1px solid rgba(255,255,255,0.10) !important;
+  border-top:1px solid rgba(255,255,255,0.20) !important;
+  border-radius:28px !important;
+  box-shadow:0 0 60px rgba(212,168,67,0.10),inset 0 1px 0 rgba(255,255,255,0.10) !important;
+}
+#rematch-req.on{
+  background:rgba(0,0,0,0.88) !important;
+  backdrop-filter:blur(20px) !important;
+  -webkit-backdrop-filter:blur(20px) !important;
+}
+
+/* ─── OPPONENT LEFT BOX — LIQUID GLASS ──────── */
+.ol-box{
+  background:rgba(8,5,18,0.93) !important;
+  backdrop-filter:blur(22px) !important;
+  -webkit-backdrop-filter:blur(22px) !important;
+  border:1px solid rgba(255,100,100,0.22) !important;
+  border-top:1px solid rgba(255,150,150,0.30) !important;
+  border-radius:28px !important;
+  box-shadow:0 0 60px rgba(239,68,68,0.08),inset 0 1px 0 rgba(255,255,255,0.08) !important;
+}
+#opp-left-overlay.on{
+  background:rgba(0,0,0,0.88) !important;
+  backdrop-filter:blur(20px) !important;
+  -webkit-backdrop-filter:blur(20px) !important;
+}
+
+/* ─── TOAST — LIQUID GLASS ───────────────────── */
+.toast{
+  background:rgba(8,5,20,0.96) !important;
+  backdrop-filter:blur(18px) saturate(140%) !important;
+  -webkit-backdrop-filter:blur(18px) saturate(140%) !important;
+  border:1px solid rgba(255,255,255,0.12) !important;
+  border-top:1px solid rgba(255,255,255,0.22) !important;
+  border-radius:14px !important;
+  box-shadow:0 8px 32px rgba(0,0,0,0.6),0 0 0 1px rgba(212,168,67,0.08) !important;
+}
+
+/* ─── GOLD BUTTON — LIQUID GLASS PREMIUM ─────── */
+.bgold{
+  background:linear-gradient(135deg,#4A2A04,#C0902A 35%,#E0B848 50%,#C08828 65%,#6A4008) !important;
+  border:1px solid rgba(255,255,255,0.18) !important;
+  border-top:1px solid rgba(255,255,255,0.32) !important;
+  border-radius:14px !important;
+  box-shadow:0 4px 20px rgba(200,150,42,0.25),inset 0 1px 0 rgba(255,255,255,0.18) !important;
+  position:relative;overflow:hidden;
+  transition:all .25s cubic-bezier(.16,1,.3,1) !important;
+}
+.bgold::after{
+  content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);
+  transition:left .4s;pointer-events:none;
+}
+.bgold:hover::after{left:140%}
+.bgold:hover{
+  transform:translateY(-2px) !important;
+  box-shadow:0 8px 32px rgba(200,150,42,0.38),inset 0 1px 0 rgba(255,255,255,0.22) !important;
+}
+
+/* ─── AI BUTTON — PURPLE LIQUID GLASS ────────── */
+.bai{
+  background:linear-gradient(135deg,#1a0840,#4a1598 40%,#7020d0 60%,#4010a0) !important;
+  border:1px solid rgba(180,100,255,0.28) !important;
+  border-top:1px solid rgba(200,140,255,0.45) !important;
+  border-radius:14px !important;
+  box-shadow:0 4px 22px rgba(100,40,200,0.28),inset 0 1px 0 rgba(255,255,255,0.14) !important;
+  position:relative;overflow:hidden;
+}
+
+/* ─── HUFF BARS — LIQUID GLASS ───────────────── */
+.huff-pick-bar,.huff-wait-bar{
+  background:rgba(10,6,20,0.90) !important;
+  backdrop-filter:blur(14px) !important;
+  -webkit-backdrop-filter:blur(14px) !important;
+  border-radius:var(--r-md) !important;
+  box-shadow:0 4px 20px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.06) !important;
+}
+
+/* ─── PING PILL — LIQUID GLASS ───────────────── */
+.ping-pill{
+  backdrop-filter:blur(10px) !important;
+  -webkit-backdrop-filter:blur(10px) !important;
+  border-radius:10px !important;
+}
+
+/* ─── INPUT FIELDS — LIQUID GLASS ───────────── */
+.linp{
+  background:rgba(255,255,255,0.04) !important;
+  border:1px solid rgba(255,255,255,0.08) !important;
+  border-top:1px solid rgba(255,255,255,0.15) !important;
+  border-radius:12px !important;
+  backdrop-filter:blur(8px) !important;
+  -webkit-backdrop-filter:blur(8px) !important;
+  transition:all .2s !important;
+}
+.linp:focus{
+  background:rgba(255,255,255,0.07) !important;
+  border-color:rgba(212,168,67,0.45) !important;
+  box-shadow:0 0 0 3px rgba(212,168,67,0.08),inset 0 1px 0 rgba(255,255,255,0.06) !important;
+}
+.cinp{
+  background:rgba(255,255,255,0.04) !important;
+  border:1px solid rgba(255,255,255,0.07) !important;
+  border-radius:10px !important;
+  backdrop-filter:blur(8px) !important;
+  -webkit-backdrop-filter:blur(8px) !important;
+}
+.cinp:focus{
+  border-color:rgba(212,168,67,0.38) !important;
+  box-shadow:0 0 0 2px rgba(212,168,67,0.07) !important;
+}
+
+/* ─── WAITING SPINNER — LIQUID GLASS ─────────── */
+#waiting{
+  backdrop-filter:blur(20px) saturate(140%) !important;
+  -webkit-backdrop-filter:blur(20px) saturate(140%) !important;
+}
+.wbox{
+  background:rgba(10,6,20,0.90) !important;
+  backdrop-filter:blur(20px) !important;
+  -webkit-backdrop-filter:blur(20px) !important;
+  border:1px solid rgba(255,255,255,0.10) !important;
+  border-top:1px solid rgba(255,255,255,0.20) !important;
+  border-radius:24px !important;
+  padding:40px 36px !important;
+  box-shadow:0 20px 60px rgba(0,0,0,0.8),inset 0 1px 0 rgba(255,255,255,0.10) !important;
+}
+
+/* ─── DC BANNER — LIQUID GLASS ──────────────── */
+#opp-dc-banner{
+  background:rgba(12,8,0,0.90) !important;
+  backdrop-filter:blur(14px) !important;
+  -webkit-backdrop-filter:blur(14px) !important;
+  border-radius:20px !important;
+  border:1px solid rgba(245,158,11,0.28) !important;
+  box-shadow:0 4px 24px rgba(0,0,0,0.5) !important;
+}
+
+/* ─── SPECTATOR BADGE — LIQUID GLASS ─────────── */
+.spectator-badge{
+  backdrop-filter:blur(10px) !important;
+  -webkit-backdrop-filter:blur(10px) !important;
+  border-radius:12px !important;
+}
+
+/* ─── TG BOX — LIQUID GLASS ─────────────────── */
+.tg-link{
+  background:rgba(4,8,20,0.92) !important;
+  backdrop-filter:blur(12px) !important;
+  -webkit-backdrop-filter:blur(12px) !important;
+  border-radius:10px !important;
+}
+
+/* ─── REJOIN BANNER — LIQUID GLASS ──────────── */
+#rejoin-banner{
+  background:rgba(6,30,18,0.90) !important;
+  backdrop-filter:blur(14px) !important;
+  -webkit-backdrop-filter:blur(14px) !important;
+  border:1px solid rgba(16,185,129,0.28) !important;
+  border-top:1px solid rgba(16,185,129,0.40) !important;
+  border-radius:var(--r-md) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.06) !important;
+}
+
+/* ─── PIECE HOVER — LIQUID SMOOTH ───────────── */
+.piece{
+  transition:transform .18s cubic-bezier(.16,1,.3,1),
+             box-shadow .18s cubic-bezier(.16,1,.3,1),
+             filter .18s !important;
+}
+.piece:hover{
+  transform:scale(1.12) translateY(-2px) !important;
+  filter:brightness(1.10) !important;
+}
+
+/* ─── CELL TRANSITIONS — LIQUID SMOOTH ──────── */
+.cell{
+  transition:background .15s cubic-bezier(.4,0,.2,1) !important;
+}
+
+/* ─── SMOOTH ALL INTERACTIVE ELEMENTS ───────── */
+button{
+  transition:transform .18s cubic-bezier(.16,1,.3,1),
+             box-shadow .18s cubic-bezier(.16,1,.3,1),
+             background .18s,
+             opacity .18s,
+             filter .18s !important;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ─── PREMIUM MOBILE TOUCH FEEDBACK ─────────── */
+@media (hover:none){
+  .piece:active{transform:scale(1.08) translateY(-1px) !important}
+  .bgold:active,.bai:active,.ai-start:active{transform:scale(0.96) !important}
+  .ai-diff-btn:active{transform:scale(0.97) !important}
+}
+
+/* ─── IN-MATCH PREMIUM PANELS ─────────────── */
+/* Panel wrapper background — subtle glass depth */
+.panel{
+  gap:7px !important;
+}
+/* Info card headers — Myanmar-style gold micro caps */
+.ich{
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;
+  font-size:.60rem !important;
+  color:rgba(212,168,67,0.55) !important;
+  letter-spacing:1.5px !important;
+  font-weight:600 !important;
+  margin-bottom:8px !important;
+}
+/* Player name in cards */
+.pnm{
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;
+  font-weight:700 !important;
+  font-size:.78rem !important;
+  color:#F0E8D8 !important;
+}
+/* Player name in bars */
+.pbnm{
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;
+  font-weight:700 !important;
+}
+/* Role label */
+.prl{
+  font-family:'Outfit',sans-serif !important;
+  font-size:.56rem !important;
+  color:rgba(180,148,70,0.70) !important;
+  letter-spacing:.8px !important;
+}
+/* Turn label in info card */
+.tlbl{
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;
+  font-size:.76rem !important;
+  font-weight:700 !important;
+  color:#F0E8D8 !important;
+}
+/* Log list */
+.logul li{
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;
+  font-size:.60rem !important;
+  color:rgba(176,148,80,0.65) !important;
+}
+/* Chat title */
+.chtit{
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;
+  font-size:.60rem !important;
+  color:rgba(212,168,67,0.50) !important;
+  letter-spacing:1.5px !important;
+}
+/* Board column/row labels */
+.bcols span,.brows span{
+  color:rgba(212,168,67,0.42) !important;
+}
+/* Win overlay text */
+.wt{
+  font-family:'Cinzel Decorative','Noto Sans Myanmar',cursive !important;
+  color:#F0E8D8 !important;
+  text-shadow:0 0 30px rgba(212,168,67,0.35) !important;
+}
+.wm{
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;
+  color:#C8B888 !important;
+}
+/* HUff bars Myanmar font */
+.hpb-title,.hwb-title{
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;
+}
+.hpb-sub,.hwb-sub{
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;
+}
+/* Chat messages */
+.cb{
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;
+  font-size:.68rem !important;
+}
+/* Your-turn badge */
+.your-turn-badge{
+  font-family:'Outfit',sans-serif !important;
+  font-size:.52rem !important;
+  background:rgba(212,168,67,0.12) !important;
+  border:1px solid rgba(212,168,67,0.28) !important;
+  color:rgba(240,204,114,0.90) !important;
+  border-radius:20px !important;
+  backdrop-filter:blur(6px) !important;
+}
+/* Premium resign button */
+.brsg{
+  border-radius:10px !important;
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;
+  font-size:.70rem !important;
+  letter-spacing:.2px !important;
+}
+/* Smooth board hover/active */
+.cell.dark:hover:not(.nc){
+  background:#2A1500 !important;
+  transition:background .12s !important;
+}
+.cell.sel{
+  background:rgba(220,172,55,0.40) !important;
+  box-shadow:inset 0 0 8px rgba(212,168,67,0.22) !important;
+}
+/* Win overlay action buttons  */
+.wbtn-row .bgold, .wbtn-row .brematch{
+  min-width:120px;
+}
 /* ═══════════════════════════════════════════
    OPPONENT LEFT OVERLAY
 ═══════════════════════════════════════════ */
@@ -1475,64 +2440,1175 @@ body::before, body::after, #mm-bg, .mg-scene, .lbox::before, .lbox::after { disp
     mix-blend-mode: plus-lighter !important;
 }
 
-/* 6. Elite Inputs & Forms */
+/* 6. Liquid Glass Inputs */
 .linp, .cinp, input {
-    background: rgba(2, 6, 23, 0.6) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    padding: 16px 20px !important; border-radius: 16px !important;
-    color: #f8fafc !important; font-size: 15px !important; font-weight: 500 !important;
-    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.5) !important; transition: all 0.3s ease !important;
+    background: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.09) !important;
+    border-top: 1px solid rgba(255,255,255,0.16) !important;
+    border-radius: 12px !important;
+    color: #f0e8d8 !important;
+    backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important;
+    transition: all 0.2s ease !important;
 }
 .linp:focus, .cinp:focus {
-    background: rgba(15, 23, 42, 0.8) !important; border-color: var(--cyan-core) !important;
-    box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15), inset 0 2px 4px 0 rgba(0, 0, 0, 0.5) !important; outline: none !important;
+    background: rgba(255,255,255,0.07) !important; border-color: rgba(212,168,67,0.45) !important;
+    box-shadow: 0 0 0 3px rgba(212,168,67,0.08) !important; outline: none !important;
 }
 
-/* 7. Premium Action Buttons */
-.bgold, .bai, .brematch, .ai-start, .rr-accept {
-    background: linear-gradient(to bottom right, #14b8a6, #0d9488) !important;
-    color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.4) !important;
-    border-radius: 16px !important; font-weight: 700 !important; font-size: 15px !important; padding: 16px 28px !important;
-    box-shadow: 0 10px 15px -3px rgba(13, 148, 136, 0.4), 0 4px 6px -2px rgba(13, 148, 136, 0.2) !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important; letter-spacing: 0.5px !important; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
+/* 7. Liquid Glass Action Buttons — keep BGOLD gold, BAI purple */
 .bgold::before, .bai::before { display: none !important; }
-.bgold:hover, .bai:hover, .brematch:hover, .ai-start:hover {
-    background: linear-gradient(to bottom right, #2dd4bf, #0f766e) !important;
-    transform: translateY(-2px) scale(1.02) !important;
-    box-shadow: 0 20px 25px -5px rgba(13, 148, 136, 0.5), 0 10px 10px -5px rgba(13, 148, 136, 0.3) !important;
-}
 .bgold:active, .bai:active, .brematch:active, .ai-start:active { transform: translateY(0) scale(0.98) !important; }
 
 /* Secondary Actions */
-.bout, .bcanc, .bspec, .rr-decline, .ai-cancel, .rjb-no, .rjb-yes, .eb, .brsg, .csnd {
-    background: rgba(30, 41, 59, 0.5) !important; color: #cbd5e1 !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 12px !important;
-    font-weight: 600 !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1) !important; transition: all 0.2s ease !important;
+.bout, .bcanc, .bspec, .rr-decline, .ai-cancel, .rjb-no, .rjb-yes, .eb, .brsg {
+    background: rgba(255,255,255,0.04) !important; color: #c8b888 !important;
+    border: 1px solid rgba(255,255,255,0.09) !important; border-radius: 12px !important;
+    backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important;
+    transition: all 0.2s cubic-bezier(.16,1,.3,1) !important;
 }
-.bout:hover, .bcanc:hover, .bspec:hover, .csnd:hover { 
-    background: rgba(51, 65, 85, 0.8) !important; color: #fff !important;
-    border-color: rgba(255, 255, 255, 0.2) !important; transform: translateY(-1px) !important; 
+.bout:hover, .bcanc:hover, .bspec:hover {
+    background: rgba(255,255,255,0.08) !important; color: #f0e8d8 !important;
+    border-color: rgba(255,255,255,0.18) !important; transform: translateY(-1px) !important;
 }
 
-/* 8. Topbar Modernization */
-.topbar { 
-    background: rgba(2, 6, 23, 0.8) !important; backdrop-filter: blur(24px) !important; 
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important; 
+/* Topbar stays as Liquid Glass */
+.tlogo small { -webkit-text-fill-color:transparent !important; background-clip:text !important; -webkit-background-clip:text !important; }
+.tlogo-room { background: rgba(15,10,30,0.70) !important; border: 1px solid rgba(212,168,67,0.28) !important; border-radius: 8px !important; color: var(--g100) !important; }
+
+/* Typography stays as original gold */
+.llbl, .ich, .chtit, .lsub, .whint, .prl, .pbrl, .ai-lbl, .twho { color: #806840 !important; }
+.wt, .ai-title { color: #F0E8D8 !important; }
+
+/* Player Avatar — restore blue/red glass distinction (NOT override to same dark) */
+.pav {
+  box-shadow: 0 4px 14px rgba(0,0,0,0.65) !important;
+  backdrop-filter: blur(6px) !important;
 }
-.tlogo small { color: #f8fafc !important; text-shadow: none !important; font-weight: 800 !important; letter-spacing: 0.5px !important; }
-.tlogo-room { background: rgba(15, 23, 42, 0.6) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: var(--cyan-core) !important; border-radius: 8px !important;}
+.av-b {
+  background: linear-gradient(135deg, rgba(20,120,110,0.82), rgba(12,95,88,0.96)) !important;
+  border: 1.5px solid rgba(45,212,191,0.58) !important;
+  box-shadow: 0 0 12px rgba(20,184,166,0.30), 0 4px 14px rgba(0,0,0,0.65) !important;
+}
+.av-w {
+  background: linear-gradient(135deg, rgba(200,120,0,0.82), rgba(165,90,0,0.96)) !important;
+  border: 1.5px solid rgba(245,158,11,0.58) !important;
+  box-shadow: 0 0 12px rgba(200,130,0,0.30), 0 4px 14px rgba(0,0,0,0.65) !important;
+}
 
-/* Typography & Badges */
-.llbl, .ich, .chtit, .lsub, .whint, .prl, .pbrl, .ai-lbl, .twho { color: #94a3b8 !important; }
-.wt, .ai-title, .title-container h1 { color: #f8fafc !important; text-shadow: none !important; font-weight: 900 !important;}
-.pav { background: #0f172a !important; border: 2px solid rgba(255,255,255,0.1) !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5) !important; }
+/* Player bar piece dots — blue/red preserved */
+.pbpc.b {
+  background: var(--blue-glass-bg) !important;
+  border: 1.5px solid var(--blue-glass-border) !important;
+  box-shadow: 0 0 10px var(--blue-glass-glow) !important;
+}
+.pbpc.w {
+  background: var(--red-glass-bg) !important;
+  border: 1.5px solid var(--red-glass-border) !important;
+  box-shadow: 0 0 10px var(--red-glass-glow) !important;
+}
 
-/* Move & Capture Dots */
-.dotmv { background: var(--cyan-core) !important; border: none !important; box-shadow: 0 0 15px var(--cyan-glow) !important; width: 14px !important; height: 14px !important; }
-.dotcp { background: var(--amber-core) !important; border: none !important; box-shadow: 0 0 15px var(--amber-glow) !important; width: 14px !important; height: 14px !important;}
-.dotskip { background: #64748b !important; border: none !important; opacity: 0.5 !important; }
+/* Move & Capture Dots — keep gold/teal/red signature */
+.dotmv { background: rgba(16,185,129,0.90) !important; border: 1.5px solid rgba(52,211,153,0.9) !important; box-shadow: 0 0 10px rgba(16,185,129,0.6) !important; width: 13px !important; height: 13px !important; }
+.dotcp { background: rgba(239,68,68,0.95) !important; border: 1.5px solid rgba(252,165,165,0.9) !important; box-shadow: 0 0 10px rgba(239,68,68,0.6) !important; width: 13px !important; height: 13px !important; }
+.dotskip { background: rgba(200,170,80,0.5) !important; border: 1.5px solid rgba(220,190,100,0.55) !important; opacity: .65 !important; }
+
+/* ═══════════════════════════════════════════════════════════════
+   ██╗     ██╗ ██████╗ ██╗   ██╗██╗██████╗     ██████╗ ██╗      █████╗ ███████╗███████╗
+   ██║     ██║██╔═══██╗██║   ██║██║██╔══██╗   ██╔════╝ ██║     ██╔══██╗██╔════╝██╔════╝
+   ██║     ██║██║   ██║██║   ██║██║██║  ██║   ██║  ███╗██║     ███████║███████╗███████╗
+   ██║     ██║██║▄▄ ██║██║   ██║██║██║  ██║   ██║   ██║██║     ██╔══██║╚════██║╚════██║
+   ███████╗██║╚██████╔╝╚██████╔╝██║██████╔╝   ╚██████╔╝███████╗██║  ██║███████║███████║
+   ╚══════╝╚═╝ ╚══▀▀═╝  ╚═════╝ ╚═╝╚═════╝     ╚═════╝ ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝
+   ULTRA-PREMIUM LIQUID GLASS SYSTEM — from 0eb7fa540bde1768.css
+═══════════════════════════════════════════════════════════════ */
+
+/* ── GLASS DESIGN TOKENS (from CSS file: --glass-*, --blur-*) ── */
+:root {
+  /* Glass surface tokens */
+  --glass-bg: #ffffff14;
+  --glass-border: #ffffff26;
+  --glass-shadow: #0000005e;
+  --glass-highlight: #fff3;
+  /* Glass glow colors */
+  --glass-glow-cyan:   #06b6d44d;
+  --glass-glow-blue:   #3b82f64d;
+  --glass-glow-purple: #a855f74d;
+  /* Blur scale (from CSS blur-* tokens) */
+  --blur-sm:  8px;
+  --blur-md:  12px;
+  --blur-lg:  16px;
+  --blur-xl:  24px;
+  --blur-2xl: 40px;
+  --blur-3xl: 64px;
+  /* Ease tokens from CSS */
+  --ease-out:    cubic-bezier(0,0,.2,1);
+  --ease-in-out: cubic-bezier(.4,0,.2,1);
+}
+
+/* ── GLASS COMPONENT CLASSES (from CSS @layer components) ───── */
+
+/* .glass-surface — backdrop-blur-xl, white/10 bg, white/15 border, glass-shadow */
+.gl-surface {
+  background-color: var(--glass-bg) !important;               /* #ffffff14 */
+  border: 1px solid var(--glass-border) !important;            /* #ffffff26 */
+  backdrop-filter: blur(var(--blur-xl)) saturate(1.6) !important;
+  -webkit-backdrop-filter: blur(var(--blur-xl)) saturate(1.6) !important;
+  box-shadow: 0 8px 32px var(--glass-shadow),
+              inset 0 1px 1px var(--glass-highlight),
+              inset 0 -1px 1px rgba(0,0,0,0.1) !important;
+}
+
+/* .glass-glow — absolute, -4px inset, blur(16px), cyan→blue→purple gradient, opacity .7 */
+.gl-glow {
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  opacity: .65;
+  filter: blur(var(--blur-lg));
+  background: linear-gradient(to right,
+    var(--glass-glow-cyan),
+    var(--glass-glow-blue),
+    var(--glass-glow-purple));
+  pointer-events: none;
+  z-index: -1;
+}
+/* Gold-tinted glow for lobby / AI card */
+.gl-glow-gold {
+  position: absolute;
+  inset: -6px;
+  border-radius: inherit;
+  opacity: .45;
+  filter: blur(20px);
+  background: linear-gradient(135deg,
+    rgba(212,168,67,0.4),
+    rgba(120,60,220,0.25),
+    rgba(212,168,67,0.35));
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* .glass-highlight — absolute inset-0, linear white→transparent from-top */
+.gl-highlight {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(to bottom, var(--glass-highlight), transparent 60%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* .glass-inner-shadow — absolute inset-1px, inset box-shadow */
+.gl-inner {
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── KEYFRAMES (enhanced) ──────────────────────────────────── */
+@keyframes gl-glow-pulse{
+  0%,100%{ opacity:.55; filter:blur(16px) }
+  50%    { opacity:.80; filter:blur(20px) }
+}
+@keyframes gl-shimmer{
+  0%  { transform:translateX(-120%) skewX(-18deg); opacity:0 }
+  20% { opacity:.6 }
+  80% { opacity:.6 }
+  100%{ transform:translateX(240%)  skewX(-18deg); opacity:0 }
+}
+@keyframes gl-border-breathe{
+  0%,100%{ box-shadow:0 8px 32px var(--glass-shadow),
+                       inset 0 1px 1px var(--glass-highlight),
+                       0 0 0 1px rgba(212,168,67,.08) }
+  50%    { box-shadow:0 12px 48px var(--glass-shadow),
+                       inset 0 1px 1px var(--glass-highlight),
+                       0 0 20px rgba(212,168,67,.12),
+                       0 0 0 1px rgba(212,168,67,.16) }
+}
+@keyframes gl-float{
+  0%,100%{ transform:translateY(0) scale(1) }
+  50%    { transform:translateY(-5px) scale(1.008) }
+}
+@keyframes gl-orb-slow{
+  0%  { transform:translate(0,0) scale(1); opacity:.55 }
+  33% { transform:translate(45px,-35px) scale(1.18); opacity:.80 }
+  66% { transform:translate(-28px,22px) scale(.88); opacity:.50 }
+  100%{ transform:translate(0,0) scale(1); opacity:.55 }
+}
+@keyframes shimmer-line{
+  0%  { background-position:200% 0 }
+  100%{ background-position:-200% 0 }
+}
+
+/* ── SHIMMER STREAK UTILITY ─────────────────────────────────── */
+.gl-shimmer-stripe {
+  position:absolute;
+  top:0;left:0;width:35%;height:100%;
+  background:linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,255,255,0.07) 50%,
+    transparent 100%);
+  pointer-events:none;
+  animation: gl-shimmer 6s ease-in-out infinite;
+  border-radius:inherit;
+  z-index:2;
+}
+
+/* ═══════════════════════
+   BODY — Liquid ambient
+═══════════════════════ */
+body {
+  background:
+    radial-gradient(ellipse 110% 70% at 20% 5%,  rgba(60,20,140,.16) 0%,transparent 55%),
+    radial-gradient(ellipse 90%  60% at 80% 90%, rgba(10,40,180,.12) 0%,transparent 50%),
+    radial-gradient(ellipse 70%  50% at 50% 50%, rgba(100,20,80,.08) 0%,transparent 65%),
+    #06050E !important;
+}
+
+/* ═══════════════════════
+   LOBBY BOX — glass-surface + gl-glow-gold
+═══════════════════════ */
+.lbox {
+  position:relative;
+  background: rgba(8,5,18,0.88) !important;
+  backdrop-filter: blur(var(--blur-2xl)) saturate(1.8) !important;
+  -webkit-backdrop-filter: blur(var(--blur-2xl)) saturate(1.8) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-top: 1px solid rgba(255,255,255,0.28) !important;
+  border-radius: 28px !important;
+  box-shadow:
+    0 8px 32px var(--glass-shadow),
+    0 25px 50px -12px rgba(0,0,0,.65),
+    inset 0 1px 1px var(--glass-highlight),
+    inset 0 -1px 1px rgba(0,0,0,.12),
+    0 0 0 1px rgba(212,168,67,.06) !important;
+  animation: fadeUp .6s var(--ease-out) both,
+             gl-border-breathe 5s ease-in-out 1s infinite !important;
+  overflow: visible;
+}
+/* Lobby ambient orbs using gl-orb-slow */
+.lobby-orb-1 {
+  background:radial-gradient(circle,rgba(120,60,220,.22),rgba(60,20,160,.14) 40%,transparent 70%) !important;
+  animation: gl-orb-slow 9s ease-in-out infinite !important;
+}
+.lobby-orb-2 {
+  background:radial-gradient(circle,rgba(0,120,255,.18),rgba(0,60,200,.12) 40%,transparent 70%) !important;
+  animation: gl-orb-slow 13s ease-in-out infinite reverse !important;
+}
+
+/* ═══════════════════════
+   AI MODAL — glass-surface backdrop + deep blur-3xl
+═══════════════════════ */
+#ai-modal {
+  position:fixed;inset:0;z-index:950;display:none;
+  align-items:center;justify-content:center;overflow:hidden;
+  background: rgba(2,1,10,0.85) !important;
+  backdrop-filter: blur(var(--blur-3xl)) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(var(--blur-3xl)) saturate(1.5) !important;
+}
+#ai-modal::before {
+  content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 55% 45% at 28% 22%, rgba(80,30,160,.22) 0%,transparent 60%),
+    radial-gradient(ellipse 45% 38% at 72% 78%, rgba(20,40,180,.18) 0%,transparent 58%),
+    radial-gradient(ellipse 38% 32% at 50% 50%, rgba(100,40,200,.10) 0%,transparent 70%);
+}
+#ai-modal::after { content:none }
+#ai-modal.show { display:flex }
+
+/* AI box — uses exact shadow: 0 25px 50px -12px rgba(0,0,0,.5), inset 0 1px 1px rgba(255,255,255,.2) */
+.ai-box {
+  position:relative;z-index:2;border-radius:28px;
+  padding:2px;width:370px;max-width:94vw;
+  animation: ai-border 5s linear infinite, fadeUp .5s var(--ease-out) both;
+  background: conic-gradient(from var(--ai-angle),
+    rgba(212,168,67,.18), rgba(160,80,255,.42), rgba(212,168,67,.65),
+    rgba(160,80,255,.42), rgba(212,168,67,.18));
+  box-shadow:
+    0 25px 50px -12px rgba(0,0,0,.65),
+    inset 0 1px 1px rgba(255,255,255,.2),
+    0 0 0 1px rgba(255,255,255,.05),
+    0 0 60px rgba(100,50,200,.20) !important;
+}
+.ai-inner {
+  background: rgba(5,3,16,.97) !important;
+  backdrop-filter: blur(var(--blur-xl)) saturate(1.8) !important;
+  -webkit-backdrop-filter: blur(var(--blur-xl)) saturate(1.8) !important;
+  border-radius: 26px !important;
+  padding: 30px 26px !important;
+  position:relative;overflow:hidden;
+}
+/* glass-highlight inside ai-inner */
+.ai-inner::before {
+  content:'';position:absolute;inset:0;border-radius:26px;
+  background:linear-gradient(to bottom, var(--glass-highlight), transparent 55%);
+  pointer-events:none;z-index:0}
+/* top accent line */
+.ai-inner::after {
+  content:'';position:absolute;top:0;left:12%;right:12%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(212,168,67,.60),rgba(180,120,255,.45),rgba(212,168,67,.60),transparent)}
+/* shimmer sweep — REMOVED */
+.ai-inner .glass-sweep {
+  display:none !important;
+}
+
+/* AI diff/color btns — glass-surface pattern */
+.ai-diff-btn {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-top: 1px solid rgba(255,255,255,.22) !important;
+  backdrop-filter: blur(var(--blur-md)) !important;
+  -webkit-backdrop-filter: blur(var(--blur-md)) !important;
+  border-radius:14px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2), inset 0 1px 1px var(--glass-highlight) !important;
+  transition: all .25s var(--ease-out) !important;
+}
+.ai-diff-btn:hover {
+  background: rgba(255,255,255,.09) !important;
+  border-color: rgba(255,255,255,.32) !important;
+  transform: translateY(-3px) scale(1.03) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35), inset 0 1px 1px var(--glass-highlight) !important;
+}
+.ai-diff-btn.sel {
+  background: rgba(212,168,67,.12) !important;
+  border-color: rgba(212,168,67,.58) !important;
+  box-shadow: 0 0 20px rgba(212,168,67,.15),
+              0 4px 16px rgba(0,0,0,.35),
+              inset 0 1px 1px rgba(212,168,67,.20) !important;
+}
+.ai-color-btn {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-top: 1px solid rgba(255,255,255,.20) !important;
+  backdrop-filter: blur(var(--blur-md)) !important;
+  border-radius:14px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2), inset 0 1px 1px var(--glass-highlight) !important;
+  transition: all .25s var(--ease-out) !important;
+}
+.ai-color-btn.sel {
+  background: rgba(212,168,67,.12) !important;
+  border-color: rgba(212,168,67,.58) !important;
+  box-shadow: 0 0 18px rgba(212,168,67,.14), inset 0 1px 1px rgba(212,168,67,.20) !important;
+}
+
+/* AI start btn — glass with gold gradient + shimmer */
+.ai-start {
+  background: linear-gradient(135deg,#4A2A04,#C0902A 35%,#E0B848 50%,#C08828 65%,#6A4008) !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  border-top: 1px solid rgba(255,255,255,.38) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 20px rgba(200,150,42,.28),
+              inset 0 1px 0 rgba(255,255,255,.20) !important;
+  position:relative;overflow:hidden;
+  transition: all .25s var(--ease-out) !important;
+}
+.ai-start::after {
+  content:'';position:absolute;top:0;left:-70%;width:50%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+  transform:skewX(-20deg);
+  animation: gl-shimmer 3.5s ease-in-out infinite;
+  pointer-events:none;
+}
+.ai-start:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 32px rgba(200,150,42,.38),
+              inset 0 1px 0 rgba(255,255,255,.24) !important;
+}
+
+/* AI cancel — proper glass button */
+.ai-cancel {
+  display:block;width:100%;
+  padding:11px 16px;margin-top:2px;
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-top: 1px solid rgba(255,255,255,.20) !important;
+  border-radius: 14px !important;
+  color: rgba(200,180,255,.72) !important;
+  font-size:.80rem;font-weight:600;
+  cursor:pointer;font-family:'Outfit',sans-serif;
+  letter-spacing:.5px;text-align:center;
+  backdrop-filter: blur(var(--blur-sm)) !important;
+  -webkit-backdrop-filter: blur(var(--blur-sm)) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2), inset 0 1px 1px var(--glass-highlight) !important;
+  transition: all .22s var(--ease-out) !important;
+}
+.ai-cancel:hover {
+  background: rgba(255,255,255,.08) !important;
+  border-color: rgba(212,168,67,.38) !important;
+  color: rgba(212,168,67,.88) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,.3), inset 0 1px 1px var(--glass-highlight) !important;
+}
+
+/* ═══════════════════════
+   TOPBAR — glass-surface
+═══════════════════════ */
+.topbar {
+  background: rgba(4,2,14,.84) !important;
+  backdrop-filter: blur(var(--blur-2xl)) saturate(1.8) !important;
+  -webkit-backdrop-filter: blur(var(--blur-2xl)) saturate(1.8) !important;
+  border-bottom: 1px solid var(--glass-border) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3),
+              inset 0 -1px 0 rgba(255,255,255,.04),
+              0 1px 0 rgba(212,168,67,.08) !important;
+  position:relative;overflow:hidden;
+}
+/* Topbar bottom shimmer line */
+.topbar::after {
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,
+    rgba(255,255,255,.08),
+    rgba(212,168,67,.22),
+    rgba(255,255,255,.08),transparent);
+  pointer-events:none}
+/* Myanmar title — clean static gold */
+.tlogo small {
+  font-family:'Noto Sans Myanmar',sans-serif !important;
+  font-size:clamp(.90rem,3vw,1.18rem) !important;
+  font-weight:800 !important;
+  letter-spacing:.4px !important;
+  background:linear-gradient(135deg,#F0CC72 0%,#FFE8A0 40%,#D4A843 65%,#F0CC72 100%) !important;
+  background-size:100% auto !important;
+  background-clip:text !important;
+  -webkit-background-clip:text !important;
+  -webkit-text-fill-color:transparent !important;
+  animation: none !important;
+  line-height:1.5;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;max-width:clamp(80px,38vw,220px);
+}
+.tlogo-room {
+  background: rgba(10,6,24,.72) !important;
+  border: 1px solid rgba(212,168,67,.28) !important;
+  border-radius: 8px !important;
+  color: var(--g100) !important;
+  backdrop-filter: blur(var(--blur-sm)) !important;
+}
+
+/* ═══════════════════════
+   PLAYER BARS — glass-surface
+═══════════════════════ */
+.pbar {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(var(--blur-lg)) saturate(1.6) !important;
+  -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(1.6) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-top: 1px solid rgba(255,255,255,.14) !important;
+  border-radius: var(--r-md) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2),
+              inset 0 1px 1px var(--glass-highlight) !important;
+  transition: all .3s var(--ease-out) !important;
+}
+.pbar.act {
+  background: rgba(255,255,255,.05) !important;
+  border-color: rgba(212,168,67,.22) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.25),
+              inset 0 1px 1px var(--glass-highlight),
+              0 0 16px rgba(212,168,67,.06) !important;
+}
+.pbar.my-turn {
+  background: rgba(255,255,255,.06) !important;
+  border-color: rgba(212,168,67,.38) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,.28),
+              inset 0 1px 1px var(--glass-highlight),
+              0 0 0 1px rgba(212,168,67,.12) inset !important;
+}
+
+/* ═══════════════════════
+   INFO CARDS — glass-surface
+═══════════════════════ */
+.ic {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(var(--blur-md)) !important;
+  -webkit-backdrop-filter: blur(var(--blur-md)) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-top: 1px solid rgba(255,255,255,.15) !important;
+  border-radius: var(--r-md) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2),
+              inset 0 1px 1px var(--glass-highlight) !important;
+  position:relative;overflow:hidden;
+  transition: all .2s !important;
+}
+/* Info card shimmer stripe */
+.ic::after {
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(212,168,67,.18),transparent);
+  pointer-events:none}
+
+/* ═══════════════════════
+   PLAYER CARDS — glass-surface
+═══════════════════════ */
+.pc {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(var(--blur-md)) !important;
+  -webkit-backdrop-filter: blur(var(--blur-md)) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-top: 1px solid rgba(255,255,255,.16) !important;
+  border-radius: var(--r-md) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2),
+              inset 0 1px 1px var(--glass-highlight) !important;
+  position:relative;overflow:hidden;
+}
+.pc.act {
+  border-color: rgba(212,168,67,.30) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,.28),
+              inset 0 1px 1px rgba(212,168,67,.18),
+              0 0 20px rgba(212,168,67,.06) !important;
+}
+
+/* ═══════════════════════
+   PLAYER AVATARS — blue/red glass preserved
+═══════════════════════ */
+.pav {
+  backdrop-filter: blur(var(--blur-sm)) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2), inset 0 1px 1px rgba(255,255,255,.15) !important;
+}
+.av-b {
+  background: linear-gradient(135deg, rgba(20,120,110,.82), rgba(12,95,88,.96)) !important;
+  border: 1.5px solid rgba(45,212,191,.58) !important;
+  box-shadow: 0 0 12px rgba(20,184,166,.32),
+              0 4px 16px rgba(0,0,0,.55),
+              inset 0 1px 0 rgba(120,250,230,.25) !important;
+}
+.av-w {
+  background: linear-gradient(135deg, rgba(200,120,0,.82), rgba(165,90,0,.96)) !important;
+  border: 1.5px solid rgba(245,158,11,.58) !important;
+  box-shadow: 0 0 12px rgba(200,130,0,.32),
+              0 4px 16px rgba(0,0,0,.55),
+              inset 0 1px 0 rgba(255,220,100,.25) !important;
+}
+.pbpc.b {
+  background: var(--blue-glass-bg) !important;
+  border: 1.5px solid var(--blue-glass-border) !important;
+  box-shadow: 0 0 10px var(--blue-glass-glow), inset 0 1px 0 rgba(120,180,255,.2) !important;
+}
+.pbpc.w {
+  background: var(--red-glass-bg) !important;
+  border: 1.5px solid var(--red-glass-border) !important;
+  box-shadow: 0 0 10px var(--red-glass-glow), inset 0 1px 0 rgba(255,150,130,.2) !important;
+}
+
+/* ═══════════════════════
+   BOARD FRAME — deep glass
+═══════════════════════ */
+.bframe {
+  background: linear-gradient(145deg,rgba(22,10,0,.99),rgba(12,6,0,.99),rgba(18,9,0,.99)) !important;
+  border: 1.5px solid rgba(212,168,67,.62) !important;
+  border-radius: var(--r-md) !important;
+  box-shadow:
+    0 0 0 1px rgba(212,168,67,.10),
+    0 0 0 4px rgba(0,0,0,.75),
+    0 0 80px rgba(212,168,67,.10),
+    0 30px 80px rgba(0,0,0,.95),
+    inset 0 0 50px rgba(0,0,0,.65),
+    inset 0 1px 0 rgba(212,168,67,.30),
+    0 8px 32px var(--glass-shadow) !important;
+}
+
+/* ═══════════════════════
+   CHAT — glass-surface
+═══════════════════════ */
+.chat {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(var(--blur-md)) !important;
+  -webkit-backdrop-filter: blur(var(--blur-md)) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-top: 1px solid rgba(255,255,255,.15) !important;
+  border-radius: var(--r-md) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2),
+              inset 0 1px 1px var(--glass-highlight) !important;
+}
+.chdr {
+  background: rgba(0,0,0,.18) !important;
+  border-bottom: 1px solid var(--glass-border) !important;
+}
+.cinr { border-top: 1px solid var(--glass-border) !important; }
+.erow { border-top: 1px solid var(--glass-border) !important; }
+.cinp {
+  background: rgba(255,255,255,.04) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 10px !important;
+  backdrop-filter: blur(var(--blur-sm)) !important;
+  color: var(--text-1) !important;
+}
+.cinp:focus {
+  background: rgba(255,255,255,.07) !important;
+  border-color: rgba(212,168,67,.42) !important;
+  box-shadow: 0 0 0 3px rgba(212,168,67,.08) !important;
+}
+.eb {
+  background: rgba(255,255,255,.03) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 8px !important;
+  transition: all .15s !important;
+}
+.eb:hover {
+  background: rgba(212,168,67,.10) !important;
+  border-color: rgba(212,168,67,.28) !important;
+  transform: scale(1.12) !important;
+}
+
+/* ═══════════════════════
+   WIN OVERLAY — blur-2xl
+═══════════════════════ */
+#wino.on {
+  background: rgba(0,0,0,.90) !important;
+  backdrop-filter: blur(var(--blur-2xl)) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(var(--blur-2xl)) saturate(1.5) !important;
+}
+.wb {
+  background: rgba(6,4,16,.95) !important;
+  backdrop-filter: blur(var(--blur-xl)) saturate(1.8) !important;
+  -webkit-backdrop-filter: blur(var(--blur-xl)) saturate(1.8) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-top: 1px solid rgba(255,255,255,.24) !important;
+  border-radius: 28px !important;
+  box-shadow:
+    0 25px 50px -12px rgba(0,0,0,.70),
+    inset 0 1px 1px var(--glass-highlight),
+    0 0 80px rgba(212,168,67,.12),
+    0 0 0 1px rgba(212,168,67,.06) !important;
+  position:relative;overflow:hidden;
+  animation: gl-border-breathe 4s ease-in-out infinite !important;
+}
+.wb::before {
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(212,168,67,.72),transparent);
+  pointer-events:none}
+.wb::after {
+  content:'';position:absolute;top:0;left:0;width:30%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.04),transparent);
+  animation: gl-shimmer 8s ease-in-out infinite;
+  pointer-events:none}
+
+/* ═══════════════════════
+   REMATCH BOX — glass
+═══════════════════════ */
+.rr-box {
+  background: rgba(6,4,16,.95) !important;
+  backdrop-filter: blur(var(--blur-xl)) !important;
+  -webkit-backdrop-filter: blur(var(--blur-xl)) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-top: 1px solid rgba(255,255,255,.22) !important;
+  border-radius: 28px !important;
+  box-shadow: 0 8px 32px var(--glass-shadow),
+              inset 0 1px 1px var(--glass-highlight) !important;
+}
+#rematch-req.on {
+  background: rgba(0,0,0,.88) !important;
+  backdrop-filter: blur(var(--blur-xl)) !important;
+  -webkit-backdrop-filter: blur(var(--blur-xl)) !important;
+}
+
+/* ═══════════════════════
+   OPPONENT LEFT — glass
+═══════════════════════ */
+.ol-box {
+  background: rgba(8,4,16,.95) !important;
+  backdrop-filter: blur(var(--blur-xl)) !important;
+  -webkit-backdrop-filter: blur(var(--blur-xl)) !important;
+  border: 1px solid rgba(255,80,80,.22) !important;
+  border-top: 1px solid rgba(255,120,120,.30) !important;
+  border-radius: 28px !important;
+  box-shadow: 0 8px 32px var(--glass-shadow),
+              inset 0 1px 1px rgba(255,200,200,.08) !important;
+}
+#opp-left-overlay.on {
+  background: rgba(0,0,0,.86) !important;
+  backdrop-filter: blur(var(--blur-xl)) !important;
+  -webkit-backdrop-filter: blur(var(--blur-xl)) !important;
+}
+
+/* ═══════════════════════
+   TOAST — glass-surface
+═══════════════════════ */
+.toast {
+  background: rgba(6,4,18,.97) !important;
+  backdrop-filter: blur(var(--blur-xl)) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(var(--blur-xl)) saturate(1.5) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-top: 1px solid rgba(255,255,255,.22) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 32px var(--glass-shadow),
+              inset 0 1px 1px var(--glass-highlight) !important;
+}
+
+/* ═══════════════════════
+   DC BANNER — glass
+═══════════════════════ */
+#opp-dc-banner {
+  background: rgba(10,6,0,.92) !important;
+  backdrop-filter: blur(var(--blur-lg)) !important;
+  -webkit-backdrop-filter: blur(var(--blur-lg)) !important;
+  border: 1px solid rgba(245,158,11,.28) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.4),
+              inset 0 1px 1px rgba(255,220,100,.06) !important;
+}
+
+/* ═══════════════════════
+   LOBBY INPUT FIELDS — glass
+═══════════════════════ */
+.linp {
+  background: rgba(255,255,255,.04) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-top: 1px solid rgba(255,255,255,.16) !important;
+  border-radius: 12px !important;
+  backdrop-filter: blur(var(--blur-sm)) !important;
+  color: var(--text-1) !important;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.04) !important;
+  transition: all .2s !important;
+}
+.linp:focus {
+  background: rgba(255,255,255,.07) !important;
+  border-color: rgba(212,168,67,.46) !important;
+  box-shadow: 0 0 0 3px rgba(212,168,67,.08),
+              inset 0 1px 1px rgba(255,255,255,.06) !important;
+}
+
+/* ═══════════════════════
+   BUTTONS — premium glass
+═══════════════════════ */
+.bgold {
+  background: linear-gradient(135deg,#4A2A04,#C0902A 35%,#E0B848 50%,#C08828 65%,#6A4008) !important;
+  border: 1px solid rgba(255,255,255,.20) !important;
+  border-top: 1px solid rgba(255,255,255,.35) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 20px rgba(200,150,42,.24),
+              inset 0 1px 0 rgba(255,255,255,.18) !important;
+  position:relative;overflow:hidden;
+  transition: all .25s var(--ease-out) !important;
+}
+.bgold:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 30px rgba(200,150,42,.36),
+              inset 0 1px 0 rgba(255,255,255,.22) !important;
+}
+.bai {
+  background: linear-gradient(135deg,#1a0840,#4a1598 40%,#7020d0 60%,#4010a0) !important;
+  border: 1px solid rgba(160,80,255,.32) !important;
+  border-top: 1px solid rgba(200,130,255,.48) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 22px rgba(100,40,200,.28),
+              inset 0 1px 0 rgba(255,255,255,.14) !important;
+  position:relative;overflow:hidden;
+}
+.bout {
+  background: rgba(255,255,255,.05) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 12px !important;
+  backdrop-filter: blur(var(--blur-sm)) !important;
+  box-shadow: inset 0 1px 1px var(--glass-highlight) !important;
+  transition: all .2s var(--ease-out) !important;
+}
+.bout:hover {
+  background: rgba(255,255,255,.09) !important;
+  border-color: rgba(255,255,255,.30) !important;
+  transform: translateY(-1px) !important;
+}
+.brematch {
+  background: linear-gradient(135deg,#0E5C1A,#16A34A,#0E8030) !important;
+  border: 1px solid rgba(22,163,74,.38) !important;
+  border-top: 1px solid rgba(52,211,153,.35) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 22px rgba(22,163,74,.28),
+              inset 0 1px 0 rgba(255,255,255,.14) !important;
+}
+.brsg {
+  background: rgba(239,68,68,.06) !important;
+  border: 1px solid rgba(239,68,68,.18) !important;
+  border-radius: 10px !important;
+  backdrop-filter: blur(var(--blur-sm)) !important;
+}
+.bcanc {
+  background: rgba(239,68,68,.06) !important;
+  border: 1px solid rgba(239,68,68,.22) !important;
+  border-radius: var(--r-sm) !important;
+  backdrop-filter: blur(var(--blur-sm)) !important;
+}
+
+/* ═══════════════════════
+   HUFF BARS — glass
+═══════════════════════ */
+.huff-pick-bar, .huff-wait-bar {
+  background: rgba(8,5,14,.92) !important;
+  backdrop-filter: blur(var(--blur-lg)) !important;
+  -webkit-backdrop-filter: blur(var(--blur-lg)) !important;
+  border-radius: var(--r-sm) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.45),
+              inset 0 1px 1px rgba(255,255,255,.05) !important;
+}
+
+/* ═══════════════════════
+   WAITING BOX — glass
+═══════════════════════ */
+#waiting {
+  backdrop-filter: blur(var(--blur-xl)) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(var(--blur-xl)) saturate(1.5) !important;
+}
+.wbox {
+  background: rgba(8,5,18,.92) !important;
+  backdrop-filter: blur(var(--blur-xl)) !important;
+  -webkit-backdrop-filter: blur(var(--blur-xl)) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-top: 1px solid rgba(255,255,255,.22) !important;
+  border-radius: 24px !important;
+  padding: 40px 36px !important;
+  box-shadow: 0 8px 32px var(--glass-shadow),
+              inset 0 1px 1px var(--glass-highlight) !important;
+}
+
+/* ═══════════════════════
+   PING PILL — glass
+═══════════════════════ */
+.ping-pill {
+  backdrop-filter: blur(var(--blur-sm)) !important;
+  border-radius: 10px !important;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.05) !important;
+}
+
+/* ═══════════════════════
+   TG LINK — glass
+═══════════════════════ */
+.tg-link {
+  background: rgba(4,8,20,.94) !important;
+  backdrop-filter: blur(var(--blur-md)) !important;
+  border-radius: 10px !important;
+}
+
+/* ═══════════════════════
+   IN-MATCH PREMIUM TYPOGRAPHY
+═══════════════════════ */
+.ich {
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;
+  font-size:.60rem !important;
+  color: rgba(212,168,67,.55) !important;
+  letter-spacing:1.5px !important;
+  font-weight:600 !important;
+  margin-bottom:8px !important;
+}
+.pnm {
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;
+  font-weight:700 !important;
+  font-size:.78rem !important;
+  color:#F0E8D8 !important;
+}
+.pbnm {
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;
+  font-weight:700 !important;
+}
+.prl { color:rgba(180,148,70,.70) !important; font-size:.56rem !important; }
+.tlbl {
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;
+  font-size:.76rem !important;font-weight:700 !important;color:#F0E8D8 !important;
+}
+.logul li {
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;
+  font-size:.60rem !important;color:rgba(176,148,80,.65) !important;
+}
+.chtit {
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;
+  font-size:.60rem !important;color:rgba(212,168,67,.50) !important;letter-spacing:1.5px !important;
+}
+.wt {
+  font-family:'Cinzel Decorative','Noto Sans Myanmar',cursive !important;
+  color:#F0E8D8 !important;
+  text-shadow:0 0 30px rgba(212,168,67,.35) !important;
+}
+.wm { font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;color:#C8B888 !important; }
+.your-turn-badge {
+  background: rgba(212,168,67,.12) !important;
+  border: 1px solid rgba(212,168,67,.28) !important;
+  color: rgba(240,204,114,.92) !important;
+  border-radius: 20px !important;
+  backdrop-filter: blur(var(--blur-sm)) !important;
+  box-shadow: inset 0 1px 0 rgba(212,168,67,.12) !important;
+}
+.hpb-title,.hwb-title,
+.hpb-sub,.hwb-sub,
+.cb {
+  font-family:'Noto Sans Myanmar','Outfit',sans-serif !important;
+}
+
+/* ═══════════════════════
+   GAME SCREEN AMBIENT
+═══════════════════════ */
+#game {
+  flex-direction:column;padding:8px 12px 8px;gap:8px;
+  background:transparent;position:relative;
+}
+#game::before {
+  content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 50% 35% at 12% 8%, rgba(30,12,80,.22) 0%,transparent 58%),
+    radial-gradient(ellipse 40% 30% at 88% 88%, rgba(60,12,12,.18) 0%,transparent 55%),
+    radial-gradient(ellipse 30% 25% at 50% 50%, rgba(20,8,50,.12) 0%,transparent 70%);
+}
+#game>*{position:relative;z-index:1}
+
+/* ═══════════════════════
+   SMOOTH TRANSITIONS
+═══════════════════════ */
+.piece {
+  transition: transform .18s var(--ease-out),
+              box-shadow .18s var(--ease-out),
+              filter .18s !important;
+}
+.piece:hover {
+  transform: scale(1.12) translateY(-2px) !important;
+  filter: brightness(1.10) !important;
+}
+.cell {
+  transition: background .12s var(--ease-in-out) !important;
+}
+.cell.dark:hover:not(.nc) {
+  background: #2A1500 !important;
+}
+.cell.sel {
+  background: rgba(220,172,55,.40) !important;
+  box-shadow: inset 0 0 8px rgba(212,168,67,.22) !important;
+}
+button {
+  transition: transform .18s var(--ease-out),
+              box-shadow .18s var(--ease-out),
+              background .18s,
+              opacity .18s,
+              filter .18s !important;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ═══════════════════════
+   MOBILE TOUCH
+═══════════════════════ */
+@media (hover:none) {
+  .piece:active { transform:scale(1.08) translateY(-1px) !important }
+  .bgold:active,.bai:active,.ai-start:active { transform:scale(0.96) !important }
+  .ai-diff-btn:active { transform:scale(0.97) !important }
+}
+
+/* ═══════════════════════════════════════════════════════
+   FINAL PREMIUM FRAME UNIFICATION — clean, consistent
+═══════════════════════════════════════════════════════ */
+
+/* ── Uniform glass radius for in-game panels ── */
+.pc, .ic {
+  border-radius: 16px !important;
+  background: rgba(255,255,255,0.03) !important;
+  backdrop-filter: blur(18px) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.5) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  border-top: 1px solid rgba(255,255,255,0.15) !important;
+  box-shadow:
+    0 4px 20px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.08) !important;
+  overflow: hidden !important;
+  transition: box-shadow .25s ease, border-color .25s ease !important;
+}
+.pc.act {
+  border-color: rgba(212,168,67,0.28) !important;
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.4),
+    0 0 18px rgba(212,168,67,0.06),
+    inset 0 1px 0 rgba(212,168,67,0.12) !important;
+}
+
+/* ── Progress bars ── */
+.pbar {
+  border-radius: 14px !important;
+  background: rgba(255,255,255,0.03) !important;
+  backdrop-filter: blur(18px) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.5) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  border-top: 1px solid rgba(255,255,255,0.13) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07) !important;
+  transition: all .28s cubic-bezier(.16,1,.3,1) !important;
+}
+.pbar.act {
+  border-color: rgba(212,168,67,0.20) !important;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.35), 0 0 12px rgba(212,168,67,0.05), inset 0 1px 0 rgba(212,168,67,0.10) !important;
+}
+.pbar.my-turn {
+  border-color: rgba(212,168,67,0.38) !important;
+  background: rgba(255,255,255,0.05) !important;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.38), 0 0 0 1px rgba(212,168,67,0.10) inset !important;
+}
+
+/* ── Chat ── */
+.chat {
+  border-radius: 16px !important;
+  background: rgba(255,255,255,0.028) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  border-top: 1px solid rgba(255,255,255,0.13) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.07) !important;
+  overflow: hidden !important;
+}
+
+/* ── Board frame — warm deep wood, premium edge ── */
+.bframe {
+  background: linear-gradient(150deg,rgba(22,10,0,.99),rgba(10,5,0,.99),rgba(18,8,0,.99)) !important;
+  border: 1.5px solid rgba(212,168,67,0.58) !important;
+  border-radius: 16px !important;
+  padding: 14px !important;
+  box-shadow:
+    0 0 0 1px rgba(212,168,67,0.08),
+    0 0 0 5px rgba(0,0,0,0.72),
+    0 0 70px rgba(212,168,67,0.08),
+    0 28px 80px rgba(0,0,0,0.96),
+    inset 0 0 50px rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(212,168,67,0.28) !important;
+  position: relative !important;
+}
+
+/* ── Board cells ── */
+#board {
+  border: none !important;
+  box-shadow: none !important;
+  gap: 1px !important;
+  background: rgba(0,0,0,0.3) !important;
+  border-radius: 6px !important;
+  padding: 1px !important;
+}
+.cell { border-radius: 5px !important; }
+.cell.dark { background: rgba(14,7,0,0.65) !important; }
+.cell.light { background: rgba(180,130,30,0.55) !important; }
+.cell.dark:hover:not(.nc) { background: rgba(45,212,191,0.12) !important; }
+.cell.sel {
+  background: rgba(212,168,67,0.30) !important;
+  box-shadow: inset 0 0 0 1.5px rgba(212,168,67,0.55) !important;
+}
+.cell.mvto { background: rgba(20,184,166,0.22) !important; }
+.cell.cpto { background: rgba(239,68,68,0.26) !important; }
+
+/* ── Win / Rematch overlays ── */
+.wb, .rr-box {
+  border-radius: 24px !important;
+}
+
+/* ── Lobby box ── */
+.lbox {
+  border-radius: 24px !important;
+  overflow: hidden !important;
+}
+
+/* ── AI modal box ── */
+.ai-box { border-radius: 24px !important; }
+.ai-inner { border-radius: 22px !important; }
+
+/* ── Waiting box ── */
+.wbox { border-radius: 20px !important; }
+
+/* ── Ping pill ── */
+.ping-pill {
+  border-radius: 10px !important;
+  padding: 3px 10px !important;
+}
+
+/* ── Topbar ── */
+.topbar {
+  border-bottom: 1px solid rgba(212,168,67,0.10) !important;
+}
+
+/* ── CRITICAL: Cancel god-tier cell transform bugs ── */
+/* God-tier added transform:scale(0.95) to hover/sel cells — causes jank especially on mobile */
+.cell.dark:hover:not(.nc) {
+  background: rgba(45,212,191,0.10) !important;
+  transform: none !important;
+}
+.cell.sel {
+  background: rgba(212,168,67,0.28) !important;
+  box-shadow: inset 0 0 0 1.5px rgba(212,168,67,0.55), inset 0 0 10px rgba(212,168,67,0.18) !important;
+  transform: none !important;
+}
+.cell.mvto { background: rgba(20,184,166,0.20) !important; transform: none !important; }
+.cell.cpto { background: rgba(239,68,68,0.24) !important; transform: none !important; }
+.cell.skipto { background: rgba(180,140,60,0.16) !important; transform: none !important; }
+/* Ensure all cells never transform — smooth only via background */
+.cell { transform: none !important; }
+
+/* ── Fix board gap & light cell ── */
+#board {
+  gap: 1px !important;
+  padding: 1px !important;
+  background: rgba(0,0,0,0.25) !important;
+  border-radius: 5px !important;
+  overflow: hidden !important;
+}
+.cell.light {
+  background: rgba(185,140,40,0.52) !important;
+}
+.cell.dark {
+  background: rgba(12,6,0,0.62) !important;
+  box-shadow: none !important;
+}
+
+/* ── Fix iOS safe areas ── */
+#game { padding: 8px max(12px, env(safe-area-inset-left)) 8px; }
+.topbar { padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left)); }
+
+/* ── No hover lift on cards in mobile (prevents jank) ── */
+@media (hover:none) {
+  .pc:hover, .ic:hover, .chat:hover { transform: none !important; }
+}
+
+/* ── AI color buttons: teal circle / amber circle ── */
+.ci-blue {
+  background: radial-gradient(circle at 35% 32%, rgba(160,250,240,0.4), rgba(20,184,166,0.6) 45%, rgba(15,118,110,0.85)) !important;
+  border: 1.5px solid rgba(45,212,191,0.60) !important;
+  box-shadow: 0 0 10px rgba(20,184,166,0.45) !important;
+}
+.ci-red {
+  background: radial-gradient(circle at 35% 32%, rgba(255,240,150,0.4), rgba(245,158,11,0.6) 45%, rgba(170,90,0,0.85)) !important;
+  border: 1.5px solid rgba(245,158,11,0.60) !important;
+  box-shadow: 0 0 10px rgba(200,130,0,0.45) !important;
+}
+
+/* ── pbpc (progress bar piece circle) ── */
+.pbpc.b {
+  background: rgba(20,184,166,0.22) !important;
+  border: 1.5px solid rgba(45,212,191,0.55) !important;
+  box-shadow: 0 0 10px rgba(20,184,166,0.38), inset 0 1px 0 rgba(160,250,240,0.25) !important;
+}
+.pbpc.w {
+  background: rgba(180,105,0,0.22) !important;
+  border: 1.5px solid rgba(245,158,11,0.55) !important;
+  box-shadow: 0 0 10px rgba(200,130,0,0.38), inset 0 1px 0 rgba(255,230,100,0.25) !important;
+}
+
+/* ── Huff bars border-left accent colors ── */
+.huff-pick-bar {
+  border-left: 3px solid rgba(212,168,67,0.72) !important;
+  border-radius: 12px !important;
+}
+.huff-wait-bar {
+  border-left: 3px solid rgba(239,68,68,0.58) !important;
+  border-radius: 12px !important;
+}
+
+/* ── DC banner ── */
+#opp-dc-banner { border-radius: 12px !important; }
+
+/* ── Rejoin banner ── */
+#rejoin-banner { border-radius: 14px !important; }
+
+/* ── Toast ── */
+.toast { border-radius: 12px !important; }
+
+/* ── Spectator badge ── */
+.spectator-badge { border-radius: 10px !important; }
+
+/* ── Win overlay ── */
+.ol-box { border-radius: 24px !important; }
+
+/* ── Buttons uniform radius ── */
+.bgold, .bai, .brematch, .ai-start { border-radius: 12px !important; }
+.bout, .bcanc, .brsg, .bspec, .rr-accept, .rr-decline,
+.ai-cancel, .rjb-yes, .rjb-no { border-radius: 10px !important; }
+.linp, .cinp { border-radius: 10px !important; }
+.ai-diff-btn, .ai-color-btn { border-radius: 12px !important; }
+
 </style>
 </head>
 <body>
@@ -1543,6 +3619,7 @@ body::before, body::after, #mm-bg, .mg-scene, .lbox::before, .lbox::after { disp
 ══════════════════════════════════════════ -->
 <div id="lobby" class="scr show">
   <div class="lbox">
+    <div class="gl-glow-gold"></div>
     <div class="lobby-orb lobby-orb-1"></div>
     <div class="lobby-orb lobby-orb-2"></div>
     <!-- Logo Section: Mechanic System around Logo -->
@@ -1841,6 +3918,11 @@ body::before, body::after, #mm-bg, .mg-scene, .lbox::before, .lbox::after { disp
 <!-- WIN OVERLAY -->
 <div id="wino">
   <div class="wb">
+    <div class="gl-shimmer-stripe"></div>
+    <div class="win-orb"></div>
+    <div class="win-particles" id="win-particles"></div>
+    <div class="lose-vignette"></div>
+    <div class="lose-rain" id="lose-rain"></div>
     <div class="wi" id="wi">🏆</div>
     <div class="wt" id="wt">-</div>
     <div class="wm" id="wm">-</div>
@@ -2092,7 +4174,7 @@ async function _softLeave(){
   /* Don't await broadcast — channel is already dead */
   try{if(sbCh&&!aiMode)sbCh.send({type:'broadcast',event:'leave',payload:{senderColor:myColor,ts:Date.now()}});}catch(e){}
   if(sbCh){try{await SB().removeChannel(sbCh);}catch(e){}}sbCh=null;
-  $('wino').classList.remove('on');$('rematch-req').classList.remove('on');
+  const _wo=$('wino');_wo.classList.remove('on','win','lose');$('rematch-req').classList.remove('on');const _ge=$('game');if(_ge){_ge.classList.remove('game-won','game-lost');}
   const _olv=$('opp-left-overlay');if(_olv)_olv.classList.remove('on');
   _hideDcBanner();_oppDisconnected=false;
   clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;clearTimeout(window._pendingDcTimer);window._pendingDcTimer=null;
@@ -2436,7 +4518,7 @@ function handleMsg(type,payload){
     loadSt(payload.state);
     over=false;winShown=false;gameCount++;
     _hideDcBanner();_oppDisconnected=false;_hideOppLeft();window._lastHuffTs=0;
-    $('wino').classList.remove('on');$('rematch-req').classList.remove('on');
+    const _wo=$('wino');_wo.classList.remove('on','win','lose');$('rematch-req').classList.remove('on');const _ge=$('game');if(_ge){_ge.classList.remove('game-won','game-lost');}
     $s('rematch-status','');
     const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';btn.style.display='';}
     showGame();
@@ -2491,9 +4573,11 @@ function newBoard(){
 /* ══════════════════════════════════════════════
    MOVE GENERATION
 ══════════════════════════════════════════════ */
-function capPaths(r,c,t,bs,vis,isChain){
+function capPaths(r,c,t,bs,vis,isChain,forbidDr,forbidDc){
   const p=bs[r][c],king=isK(p);
-  const dirs=king?[[-1,-1],[-1,1],[1,-1],[1,1]]:(t===B?[[1,-1],[1,1]]:[[-1,-1],[-1,1]]);
+  const allDirs=king?[[-1,-1],[-1,1],[1,-1],[1,1]]:(t===B?[[1,-1],[1,1]]:[[-1,-1],[-1,1]]);
+  /* King fix: prevent reversing direction on same diagonal during multi-capture */
+  const dirs=(king&&forbidDr!==undefined)?allDirs.filter(([dr,dc])=>!(dr===forbidDr&&dc===forbidDc)):allDirs;
   let out=[];
   for(const[dr,dc]of dirs){
     if(king){
@@ -2513,7 +4597,8 @@ function capPaths(r,c,t,bs,vis,isChain){
         if(lr<0||lr>=8||lc<0||lc>=8)break;
         if(bs[lr][lc]!==E)break;
         const nb=nb0.map(x=>[...x]);nb[lr][lc]=p;
-        const sub=capPaths(lr,lc,t,nb,nv0,true);
+        /* Pass reverse direction as forbidden — king cannot go back the way it came */
+        const sub=capPaths(lr,lc,t,nb,nv0,true,-dr,-dc);
         if(!sub.length)out.push([{r:lr,c:lc,cap:[or,oc]}]);
         else for(const s of sub)out.push([{r:lr,c:lc,cap:[or,oc]},...s]);
         ld++;
@@ -2593,12 +4678,12 @@ function pick(r,c){
     if(uniqPaths.length)showCapPaths(r,c,uniqPaths.slice(0,4));
   } else if(ml>0&&!capEntry){
     const mv=normalMoves(r,c,turn,board);
-    if(!mv.length){toast('⚠️ ဤကျားမှ ရွေ့နိုင်သောနေရာ မရှိ');return;}
+    if(!mv.length){clearSel();draw();toast('⚠️ ဤကျားမှ ရွေ့နိုင်သောနေရာ မရှိ');return;}
     chainOrigin=null;chainPaths=[];chainDone=0;sel={r,c};
     legals=mv.map(m=>({r:m.r,c:m.c,isCap:false,isSkip:true}));
   } else {
     const mv=normalMoves(r,c,turn,board);
-    if(!mv.length){toast('⚠️ ဤကျားမှ ရွေ့နိုင်သောနေရာ မရှိ');return;}
+    if(!mv.length){clearSel();draw();toast('⚠️ ဤကျားမှ ရွေ့နိုင်သောနေရာ မရှိ');return;}
     chainOrigin=null;chainPaths=[];chainDone=0;sel={r,c};
     legals=mv.map(m=>({r:m.r,c:m.c,isCap:false,isSkip:false}));
   }
@@ -2856,7 +4941,7 @@ window.requestRematch=function(){
     huffOn=false;huffAt=null;_animPending=null;_huffAnimPending=null;_animBusy=false;
     huffPickMode=false;huffPickCands=[];huffPickResolve=null;
     huffWaitMode=false;huffWaitCands=[];
-    $('wino').classList.remove('on');showGame();
+    const _wo2=$('wino');_wo2.classList.remove('on','win','lose');const _ge2=$('game');if(_ge2){_ge2.classList.remove('game-won','game-lost');}showGame();
     const dl={easy:'😊 Easy AI',normal:'🎯 Normal AI',hard:'🔥 Hard AI'}[aiDifficulty];
     $s('opp-nm',dl);$s('opp-pnm',dl);
     setAiConnUI();/* restore AI UI on rematch */
@@ -2880,7 +4965,7 @@ function startRematch(){
     huffAvail:false,huffPos:null,huffFor:null,hostColor:hostIsBlack?B:W};
   applyRematchColor(newState);loadSt(newState);over=false;winShown=false;
   _hideDcBanner();_oppDisconnected=false;window._lastHuffTs=0;
-  $('wino').classList.remove('on');$('rematch-req').classList.remove('on');$s('rematch-status','');
+  const _wo=$('wino');_wo.classList.remove('on','win','lose');$('rematch-req').classList.remove('on');const _ge=$('game');if(_ge){_ge.classList.remove('game-won','game-lost');}$s('rematch-status','');
   const btn=$('btn-rematch');if(btn){btn.disabled=false;btn.textContent='🔄 ထပ်ဆော့မည်';btn.style.display='';}
   showGame();
   addChatMsg({name:'System',text:`🔄 ပွဲ ${gameCount} စတင်သည်! ${myColor===B?'🔵 ပြာ':'🔴 နီ'} ကစားမည်`,sys:true,ts:Date.now()});
@@ -3060,7 +5145,13 @@ async function applyRemote(st){
     lastF=st.lastF||null;lastT=st.lastT||null;
     if(st.lastLog)addLog(st.lastLog);
     over=st.over||false;
-    sel=null;legals=[];clearHuff();
+    sel=null;legals=[];clearHuff();clearCapOverlay();
+    /* Always clear huff bars when game is over */
+    if(over){
+      huffWaitMode=false;huffWaitCands=[];huffPickMode=false;huffPickCands=[];huffPickResolve=null;
+      const _hpb=$('huff-pick-bar');if(_hpb)_hpb.classList.remove('on');
+      const _hwb=$('huff-wait-bar');if(_hwb)_hwb.classList.remove('on');
+    }
     /* Clear huffWaitMode whenever we get a clean non-pending state */
     if(!st.huffPending){huffWaitMode=false;huffWaitCands=[];$('huff-wait-bar').classList.remove('on');}
     if(st.huffNotif&&st.huffNotif.ts&&(!window._lastHuffTs||st.huffNotif.ts>window._lastHuffTs)){
@@ -3119,6 +5210,7 @@ async function applyRemote(st){
         if(st.capBy){capBy[B]=[...(st.capBy[B]||[])];capBy[W]=[...(st.capBy[W]||[])];}
         turn=st.turn;ver=st.ver||0;
         over=st.over||false;sel=null;legals=[];
+        clearCapOverlay();
         draw();uiUpdate();
       }
     }catch(e2){console.error('Fallback also failed:',e2);}
@@ -3148,20 +5240,65 @@ function loadSt(st){
 ══════════════════════════════════════════════ */
 function showWin(iWon,wn){
   if(winShown)return;winShown=true;stopPeriodicSync();
+
   /* Spectator: show neutral result — who won, not "Spectator wins" */
   if(spectatorMode){
     $s('wi','🏆');$s('wt','ဂိမ်း ပြီးဆုံးပြီ');
     const winnerNm=iWon?($('my-pnm')?.textContent||'Blue'):($('opp-nm')?.textContent||'Red');
     $s('wm',`${winnerNm} (${wn}) အနိုင်ရသည်`);
-    $('wino').classList.add('on');
+    const w=$('wino');w.classList.remove('win','lose');
+    w.classList.add('on','win');
     const rBtn=$('btn-rematch');if(rBtn)rBtn.style.display='none';
     sysChat(`🏆 ${winnerNm} (${wn}) အနိုင်ရပြီ!`);
     return;
   }
-  $s('wi',iWon?'🏆':'😔');$s('wt',iWon?'အနိုင်ရပြီ! 🎉':'ရှုံးနိမ့်သွားသည်');
+
+  $s('wi',iWon?'🏆':'😔');
+  $s('wt',iWon?'အနိုင်ရပြီ! 🎉':'ရှုံးနိမ့်သွားသည်');
   const on=$('opp-nm').textContent||'ပြိုင်ဘက်';
   $s('wm',iWon?`ကောင်းမွန်သောဂိမ်း! ${myName} အနိုင်ရ!`:`${on} (${wn}) အနိုင်ရသည်`);
-  $('wino').classList.add('on');
+
+  /* Apply win/lose vibe class */
+  const winoEl=$('wino');
+  winoEl.classList.remove('win','lose');
+  winoEl.classList.add('on', iWon?'win':'lose');
+
+  /* Stamp game-won / game-lost on the game screen for board filter */
+  const gameEl=$('game');
+  if(gameEl){gameEl.classList.remove('game-won','game-lost');gameEl.classList.add(iWon?'game-won':'game-lost');}
+
+  if(iWon){
+    /* Spawn gold particles */
+    const pc=$('win-particles');
+    if(pc){pc.innerHTML='';
+      for(let i=0;i<18;i++){
+        const s=document.createElement('span');
+        const sz=4+Math.random()*8;
+        const angle=Math.random()*360;
+        const dist=60+Math.random()*140;
+        const px=Math.cos(angle*Math.PI/180)*dist+'px';
+        const py=(-(40+Math.random()*120))+'px';
+        const delay=(Math.random()*0.8).toFixed(2)+'s';
+        s.style.cssText=`width:${sz}px;height:${sz}px;left:calc(50% + ${Math.cos(angle*Math.PI/180)*20}px);top:calc(50% - 20px);--px:${px};--py:${py};animation-delay:${delay};animation-duration:${(1.4+Math.random()*0.8).toFixed(2)}s;opacity:0`;
+        pc.appendChild(s);
+      }
+    }
+  } else {
+    /* Spawn rain drops */
+    const rn=$('lose-rain');
+    if(rn){rn.innerHTML='';
+      for(let i=0;i<22;i++){
+        const s=document.createElement('span');
+        const h=12+Math.random()*30;
+        const left=(Math.random()*100).toFixed(1)+'%';
+        const delay=(Math.random()*2).toFixed(2)+'s';
+        const dur=(1.2+Math.random()*1.0).toFixed(2)+'s';
+        s.style.cssText=`left:${left};top:-${h}px;height:${h}px;--rd:${dur};--dd:${delay}`;
+        rn.appendChild(s);
+      }
+    }
+  }
+
   if(iWon)sysChat(`🏆 ${myName} အနိုင်ရပြီ!`);
 }
 
@@ -3179,7 +5316,7 @@ window.doLeave=async function(){
   await new Promise(r=>setTimeout(r,350));
   if(sbCh){try{await SB().removeChannel(sbCh);}catch(e){}}sbCh=null;
   if(isHost&&roomId){try{await SB().from('rooms').delete().eq('id',roomId);}catch(e){}}
-  $('wino').classList.remove('on');$('rematch-req').classList.remove('on');
+  const _wo=$('wino');_wo.classList.remove('on','win','lose');$('rematch-req').classList.remove('on');const _ge=$('game');if(_ge){_ge.classList.remove('game-won','game-lost');}
   const _olv=$('opp-left-overlay');if(_olv)_olv.classList.remove('on');
   _hideDcBanner();_oppDisconnected=false;
   clearTimeout(_dcReconnectTimer);_dcReconnectTimer=null;clearTimeout(window._pendingDcTimer);window._pendingDcTimer=null;
@@ -3593,8 +5730,13 @@ window.joinSpectator=async function(){
   const particles=Array.from({length:38},()=>new Particle());
   const orbs=Array.from({length:9},()=>new Orb());
   let frame=0;
+  let _loopRunning=true;
+  /* Pause canvas on page hide to save battery */
+  document.addEventListener('visibilitychange',()=>{ _loopRunning=!document.hidden; });
   function loop(){
-    requestAnimationFrame(loop);frame++;cx.clearRect(0,0,W,H);
+    requestAnimationFrame(loop);
+    if(!_loopRunning)return;
+    frame++;cx.clearRect(0,0,W,H);
     cx.fillStyle='#05030E';cx.fillRect(0,0,W,H);
     const v1=cx.createRadialGradient(W*.5,0,0,W*.5,0,H*1.1);v1.addColorStop(0,'rgba(25,10,45,.7)');v1.addColorStop(1,'rgba(6,2,10,0)');cx.fillStyle=v1;cx.fillRect(0,0,W,H);
     const v2=cx.createRadialGradient(0,H,0,0,H,W*.8);v2.addColorStop(0,'rgba(30,8,0,.5)');v2.addColorStop(1,'rgba(6,2,10,0)');cx.fillStyle=v2;cx.fillRect(0,0,W,H);
@@ -3802,6 +5944,7 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 <div id="ai-modal">
   <div class="ai-box">
     <div class="ai-inner">
+      <div class="glass-sweep"></div>
       <div class="ai-icon">🤖</div>
       <div class="ai-title">AI MODE</div>
       <div class="ai-sub">မြန်မာ ကျားကွက် · AI နှင့် ကစားမည်</div>
@@ -3817,8 +5960,8 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
         <button class="ai-color-btn sel" id="ai-col-b" onclick="selectAiColor('b')"><span class="ci ci-blue"></span><span>ပြာ (ဦးစွာ)</span></button>
         <button class="ai-color-btn" id="ai-col-w" onclick="selectAiColor('w')"><span class="ci ci-red"></span><span>နီ</span></button>
       </div>
-      <button class="ai-start" onclick="startAiGame()">▶ &nbsp;ကစားမည်</button><br>
-      <button class="ai-cancel" onclick="closeAiModal()">← ပြန်သွားမည်</button>
+      <button class="ai-start" onclick="startAiGame()">▶ &nbsp;ကစားမည်</button>
+      <button class="ai-cancel" onclick="closeAiModal()">← &nbsp;ပြန်သွားမည်</button>
     </div>
   </div>
 </div>
@@ -3865,4 +6008,4 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 </body>
-</html>
+   </html>
