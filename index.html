@@ -4270,10 +4270,161 @@ button {
   background:linear-gradient(135deg,#F0CC72,#FFE8A0,#D4A843);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
+
+/* ════════════════════════════════════
+   NOTIFICATION SYSTEM — Premium
+════════════════════════════════════ */
+@keyframes noti-slide-in {
+  from { transform: translateY(-100%) scale(.96); opacity: 0; }
+  to   { transform: translateY(0)    scale(1);   opacity: 1; }
+}
+@keyframes noti-slide-out {
+  from { transform: translateY(0)     scale(1);   opacity: 1; }
+  to   { transform: translateY(-110%) scale(.96); opacity: 0; }
+}
+@keyframes noti-progress {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+@keyframes noti-avatar-pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(212,168,67,.4); }
+  50%     { box-shadow: 0 0 0 6px rgba(212,168,67,0); }
+}
+
+#noti-container {
+  position: fixed;
+  top: env(safe-area-inset-top, 0px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  pointer-events: none;
+  width: min(100vw - 20px, 380px);
+}
+
+.noti-card {
+  width: 100%;
+  background: rgba(8, 5, 20, 0.97);
+  border: 1px solid rgba(255,255,255,.10);
+  border-top: 1px solid rgba(255,255,255,.22);
+  border-radius: 16px;
+  padding: 12px 14px 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  pointer-events: all;
+  cursor: pointer;
+  box-shadow: 0 8px 32px rgba(0,0,0,.75), 0 0 0 .5px rgba(255,255,255,.06);
+  animation: noti-slide-in .35s cubic-bezier(.16,1,.3,1) both;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+.noti-card.out {
+  animation: noti-slide-out .28s cubic-bezier(.7,0,.84,0) both;
+}
+
+/* Accent bar on left */
+.noti-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 2px 0 0 2px;
+}
+.noti-card.type-online::before  { background: linear-gradient(180deg,#10B981,#34D399); box-shadow: 0 0 10px rgba(16,185,129,.6); }
+.noti-card.type-friend::before  { background: linear-gradient(180deg,#F0CC72,#D4A843); box-shadow: 0 0 10px rgba(212,168,67,.5); }
+.noti-card.type-accept::before  { background: linear-gradient(180deg,#22C55E,#16A34A); box-shadow: 0 0 10px rgba(34,197,94,.6); }
+.noti-card.type-decline::before { background: linear-gradient(180deg,#EF4444,#DC2626); box-shadow: 0 0 10px rgba(239,68,68,.5); }
+.noti-card.type-info::before    { background: linear-gradient(180deg,#3B82F6,#2563EB); box-shadow: 0 0 10px rgba(59,130,246,.5); }
+
+/* Avatar */
+.noti-av {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  font-size: 1.4rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1.5px solid rgba(255,255,255,.12);
+}
+.noti-card.type-online .noti-av  { border-color: rgba(16,185,129,.5); background: rgba(16,185,129,.1); animation: noti-avatar-pulse 2s ease-in-out infinite; }
+.noti-card.type-friend .noti-av  { border-color: rgba(212,168,67,.4); background: rgba(212,168,67,.08); }
+.noti-card.type-accept .noti-av  { border-color: rgba(34,197,94,.5);  background: rgba(34,197,94,.1);  }
+.noti-card.type-decline .noti-av { border-color: rgba(239,68,68,.4);  background: rgba(239,68,68,.08); }
+
+/* Text */
+.noti-body { flex: 1; min-width: 0; }
+.noti-title {
+  font-size: .8rem; font-weight: 700;
+  color: #F0E8D8;
+  font-family: 'Noto Sans Myanmar','Outfit',sans-serif;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+.noti-sub {
+  font-size: .68rem; color: rgba(200,180,120,.65);
+  font-family: 'Outfit', sans-serif; letter-spacing: .2px;
+}
+
+/* Close btn */
+.noti-x {
+  flex-shrink: 0;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  color: rgba(255,255,255,.35);
+  font-size: .6rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .15s;
+}
+.noti-x:hover { background: rgba(239,68,68,.15); color: #ef4444; border-color: rgba(239,68,68,.3); }
+
+/* Progress bar */
+.noti-bar {
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(212,168,67,.5));
+  animation: noti-progress var(--dur, 4s) linear forwards;
+  border-radius: 0 0 16px 16px;
+}
+
+/* Action buttons inside noti */
+.noti-actions {
+  display: flex; gap: 6px; margin-top: 7px;
+}
+.noti-btn-acc {
+  flex: 1; padding: 5px 8px;
+  border: none; border-radius: 7px;
+  background: rgba(16,185,129,.18); border: 1px solid rgba(16,185,129,.35);
+  color: rgba(80,220,160,.95); font-size: .68rem; font-weight: 700;
+  cursor: pointer; font-family: 'Outfit',sans-serif;
+  transition: all .15s;
+}
+.noti-btn-acc:hover { background: rgba(16,185,129,.3); }
+.noti-btn-dec {
+  padding: 5px 10px;
+  border: none; border-radius: 7px;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+  color: rgba(255,255,255,.35); font-size: .68rem;
+  cursor: pointer; font-family: 'Outfit',sans-serif;
+  transition: all .15s;
+}
+.noti-btn-dec:hover { background: rgba(239,68,68,.1); color: #ef4444; }
+
 </style>
 </head>
 <body>
 <canvas id="mm-bg"></canvas>
+<div id="noti-container"></div>
+
 <div id="auth-loading">
   <div class="al-spin"></div>
   <div class="al-title">မြန်မာ ကျားကွက်</div>
@@ -4377,7 +4528,7 @@ button {
       </div>
     </div>
 
-    <div class="psetup-lbl">ကစားသမား အမည် *</div>
+    <div class="psetup-lbl">👤 နာမည် ထည့်ပါ</div>
     <input class="linp" id="psetup-name" type="text" placeholder="အမည်ထည့်ပါ..." maxlength="20" autocomplete="nickname" onkeydown="if(event.key==='Enter')doCreateProfile()">
 
     <button class="bgold" style="width:100%;margin-top:10px" onclick="doCreateProfile()">⚔️ ကစားစတင်မည်</button>
@@ -4432,7 +4583,7 @@ button {
         </div>
       </div>
       <!-- Name -->
-      <div class="llbl" style="font-size:.62rem;margin-bottom:5px">👤 ကစားသမား အမည်</div>
+      <div class="llbl" style="font-size:.62rem;margin-bottom:5px">👤 နာမည်</div>
       <input class="linp" id="pm-name-inp" type="text" placeholder="အမည်..." maxlength="20" onkeydown="if(event.key==='Enter')saveProfileChanges()">
       <!-- Player ID -->
       <div class="llbl" style="font-size:.62rem;margin-bottom:5px;margin-top:8px">🪪 Player ID</div>
@@ -6925,36 +7076,54 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
   <div class="fp-content">
     <div class="fp-handle"></div>
     <div class="fp-header">
-      <div class="fp-title">&#x1F465; သူငယ်ချင်းများ</div>
-      <button class="fp-close" onclick="closeFriendsPanel()">&#x2715;</button>
+      <div class="fp-title">👥 သူငယ်ချင်းများ</div>
+      <button class="fp-close" onclick="closeFriendsPanel()">✕</button>
     </div>
     <div class="fp-body">
-      <div class="fp-myid-card" onclick="copyPlayerId()">
+
+      <!-- My card: avatar upload + ID -->
+      <div class="fp-myid-card" style="cursor:default">
         <div class="fp-myid-top">
-          <span class="fp-myid-label">&#x1FAA6; ကိုယ်ပိုင် PLAYER ID</span>
-          <span class="fp-myid-hint">&#x1F4CB; နှိပြီး ကူးနိုင်သည်</span>
+          <span class="fp-myid-label">🪪 ကိုယ်ပိုင် PLAYER ID</span>
+          <span class="fp-myid-hint" onclick="copyPlayerId()" style="cursor:pointer">📋 ကူးရန် နှိပ်ပါ</span>
         </div>
-        <div class="fp-myid-val" id="fp-pid-val">KK------</div>
-        <div class="fp-myid-sub">အပ ID ကို သူငယ်ချင်းထဎ် ယေီသွားသာသူငယ်ချင်းများထဎ်ၕ Add နိုင်သည်</div>
+        <div style="display:flex;align-items:center;gap:12px;margin:8px 0 4px">
+          <div style="position:relative;flex-shrink:0">
+            <div id="fp-my-avatar" onclick="triggerAvatarUpload()" title="ပုံ တင်ရန် နှိပ်ပါ"
+              style="width:54px;height:54px;border-radius:50%;border:2px solid rgba(212,168,67,.4);background:rgba(212,168,67,.1);display:flex;align-items:center;justify-content:center;font-size:1.7rem;cursor:pointer;overflow:hidden">🐯</div>
+            <div onclick="triggerAvatarUpload()" title="ပုံ တင်မည်"
+              style="position:absolute;bottom:0;right:0;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#8A6410,#D4A843);display:flex;align-items:center;justify-content:center;font-size:.62rem;cursor:pointer;border:2px solid rgba(5,2,0,.9)">📷</div>
+            <input type="file" id="avatar-upload-inp" accept="image/*" style="display:none" onchange="handleAvatarUpload(this)">
+          </div>
+          <div style="flex:1;min-width:0">
+            <div class="fp-myid-val" id="fp-pid-val" onclick="copyPlayerId()" style="cursor:pointer">KK------</div>
+            <div id="fp-my-name" style="font-size:.76rem;color:var(--text-2);font-family:'Noto Sans Myanmar','Outfit',sans-serif;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">ကစားသမား</div>
+          </div>
+        </div>
+        <div class="fp-myid-sub">ဤ ID ကို သူငယ်ချင်းများထံ ပေးပို့ပါ — ၎င်းတို့ Add နိုင်သည်</div>
+        <div id="fp-upload-progress" style="display:none;font-size:.65rem;color:rgba(212,168,67,.8);font-family:Outfit,sans-serif;margin-top:5px">⏳ ပုံ တင်နေသည်...</div>
       </div>
 
-      <div class="fp-sec-lbl">&#x2795; သူငယ်ချင်း ထဎ့မည်</div>
+      <!-- Add friend -->
+      <div class="fp-sec-lbl">➕ သူငယ်ချင်း ထည့်မည်</div>
       <div class="fp-add-row">
         <input class="linp fp-add-inp" id="add-friend-inp" type="text"
           placeholder="KK......" maxlength="10"
           onkeydown="if(event.key==='Enter')doAddFriend()"
           autocomplete="off" spellcheck="false">
-        <button class="fp-add-btn" onclick="doAddFriend()">&#x2795;</button>
+        <button class="fp-add-btn" onclick="doAddFriend()">➕</button>
       </div>
 
+      <!-- Online summary -->
       <div class="fp-online-summary" id="fp-online-summary" style="display:none">
         <div class="fos-dot"></div>
-        <span class="fos-text" id="fp-online-txt">0 ဥး Online</span>
+        <span class="fos-text" id="fp-online-txt">0 ဦး Online</span>
       </div>
 
-      <div class="fp-sec-lbl">&#x1FAB2; သူငယ်ချင်းများ</div>
+      <!-- Friends list -->
+      <div class="fp-sec-lbl">🫂 သူငယ်ချင်းများ</div>
       <div class="friends-list" id="friends-list">
-        <div class="fl-empty">&#x1F465; သူငယ်ချင်း မရှိသေးပဪb်<br><small style="opacity:.5">ID ဖြင့် ထဎ့ပဪb ↑</small></div>
+        <div class="fl-empty">👥 သူငယ်ချင်း မရှိသေးပါ<br><small style="opacity:.5">ID ဖြင့် ထည့်ပါ ↑</small></div>
       </div>
     </div>
   </div>
@@ -6966,12 +7135,12 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
     <div class="freq-icon">&#x1F44B;</div>
     <div class="freq-info">
       <div class="freq-name" id="freq-name">ကစားသမား</div>
-      <div class="freq-sub" id="freq-sub-txt">သင်ကို Friend ကောင်းဆိုသည်</div>
+      <div class="freq-sub" id="freq-sub-txt">သင်ကို Friend တောင်းဆိုသည်</div>
     </div>
   </div>
   <div class="freq-btns">
     <button class="freq-acc" id="freq-acc-btn" onclick="acceptFriendRequest()">&#x2705; လက်ခံ</button>
-    <button class="freq-dec" onclick="dismissFriendRequest()">&#x2715; ငြင်ဆန်</button>
+    <button class="freq-dec" onclick="dismissFriendRequest()">✕ ငြင်းဆန်</button>
   </div>
 </div>
 
@@ -7186,6 +7355,113 @@ window.doLeave=async function(){
     ni.addEventListener('input',()=>{if(_globalCh&&ni.value.trim()){try{_globalCh.track({playerId:MY_PLAYER_ID,name:ni.value.trim(),status:'lobby',roomId:null,ts:Date.now()});}catch{}}});
   },300);
 })();
+
+/* ══════════════════════════════════════
+   AVATAR UPLOAD — Camera / Gallery
+   Uses Supabase Storage bucket "avatars"
+   Setup: Supabase Dashboard → Storage → New Bucket
+   Name: avatars  |  Public: ON
+══════════════════════════════════════ */
+window.triggerAvatarUpload = function() {
+  var inp = document.getElementById('avatar-upload-inp');
+  if (inp) inp.click();
+};
+
+window.handleAvatarUpload = async function(inp) {
+  if (!inp || !inp.files || !inp.files[0]) return;
+  var file = inp.files[0];
+  if (!file.type.startsWith('image/')) {
+    if (typeof toast==='function') toast('⚠️ ပုံဖိုင်သာ တင်နိုင်သည်');
+    return;
+  }
+  if (file.size > 5*1024*1024) {
+    if (typeof toast==='function') toast('⚠️ ဖိုင်ကြီးလွန်းသည် (5MB ထက် မပိုပါနှင့်)');
+    return;
+  }
+  var prog = document.getElementById('fp-upload-progress');
+  if (prog) prog.style.display = 'block';
+
+  // Try Supabase Storage first
+  var uploaded = false;
+  try {
+    var uid = (_authUser && _authUser.id) ? _authUser.id : MY_PLAYER_ID;
+    var ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    var path = uid + '_' + Date.now() + '.' + ext;
+    var upR = await SB().storage.from('avatars').upload(path, file, {
+      cacheControl:'3600', upsert:true, contentType:file.type
+    });
+    if (!upR.error) {
+      var pubR = SB().storage.from('avatars').getPublicUrl(path);
+      var url = pubR.data && pubR.data.publicUrl ? pubR.data.publicUrl : null;
+      if (url) { _applyNewAvatar(url); uploaded = true; }
+    }
+  } catch(e) { console.warn('Storage upload non-fatal:', e); }
+
+  // Fallback: FileReader local preview
+  if (!uploaded) {
+    var reader = new FileReader();
+    reader.onload = function(ev) { _applyNewAvatar(ev.target.result); };
+    reader.readAsDataURL(file);
+  }
+
+  if (prog) prog.style.display = 'none';
+  inp.value = '';
+};
+
+function _applyNewAvatar(url) {
+  // Save to profile
+  if (_userProfile) {
+    _userProfile.avatar_url = url;
+    if (!url.startsWith('data:')) _userProfile.avatar = url;
+    upsertProfile(_userProfile);
+  }
+  // Update all avatar elements
+  function setAv(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = '<img src="' + url + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
+  }
+  setAv('fp-my-avatar');
+  setAv('lp-avatar-el');
+  setAv('pm-avatar-el');
+  // Broadcast to friends via presence
+  if (_globalCh) {
+    try {
+      _globalCh.track({
+        playerId: MY_PLAYER_ID,
+        name: _userProfile ? _userProfile.display_name : (myName || 'ကစားသမား'),
+        avatarUrl: url,
+        status: 'lobby',
+        roomId: null,
+        ts: Date.now()
+      });
+    } catch(e) {}
+  }
+  if (typeof toast==='function') toast('✅ ပုံ တင်ပြီးပါပြီ!');
+  if (typeof vibrate==='function') vibrate([40,20,60]);
+}
+
+/* Patch openFriendsPanel to fill my avatar/name */
+(function(){
+  var _orig = window.openFriendsPanel;
+  window.openFriendsPanel = function() {
+    var myAv = document.getElementById('fp-my-avatar');
+    var myNm = document.getElementById('fp-my-name');
+    var pidEl = document.getElementById('fp-pid-val');
+    if (pidEl) pidEl.textContent = MY_PLAYER_ID;
+    if (myNm) myNm.textContent = _userProfile ? _userProfile.display_name : (myName || 'ကစားသမား');
+    if (myAv) {
+      var av = _userProfile ? (_userProfile.avatar_url || _userProfile.avatar) : null;
+      if (av && (av.startsWith('http') || av.startsWith('data:'))) {
+        myAv.innerHTML = '<img src="' + av + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
+      } else {
+        myAv.textContent = av || '🐯';
+      }
+    }
+    if (_orig) _orig.apply(this, arguments);
+  };
+})();
+
 </script>
 
 <script>
@@ -7726,5 +8002,365 @@ async function _recordGameResult(won) {
 })();
 
 </script>
+
+<script>
+/* ══════════════════════════════════════════════
+   NOTIFICATION SYSTEM + PREMIUM SOUNDS
+══════════════════════════════════════════════ */
+
+/* ── Premium Sound Engine ── */
+var _NAC = null;
+function _nac() {
+  if (!_NAC) try { _NAC = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  if (_NAC && _NAC.state === 'suspended') try { _NAC.resume(); } catch(e) {}
+  return _NAC;
+}
+// Unlock audio on first touch
+document.addEventListener('touchstart', function(){ _nac(); }, { once:true, passive:true });
+document.addEventListener('click',      function(){ _nac(); }, { once:true, passive:true });
+
+function playSoundOnline() {
+  /* Bright "ding-dong" — friend online */
+  var ac = _nac(); if (!ac) return;
+  try {
+    var t = ac.currentTime;
+    [[880,0,.12],[1320,.12,.10],[1760,.22,.16]].forEach(function(p) {
+      var o=ac.createOscillator(), g=ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.type='sine'; o.frequency.value=p[0];
+      g.gain.setValueAtTime(.0001,t+p[1]);
+      g.gain.linearRampToValueAtTime(.22,t+p[1]+.012);
+      g.gain.exponentialRampToValueAtTime(.0001,t+p[1]+p[2]);
+      o.start(t+p[1]); o.stop(t+p[1]+p[2]+.05);
+    });
+  } catch(e) {}
+}
+
+function playSoundFriendReq() {
+  /* Warm chime — friend request */
+  var ac = _nac(); if (!ac) return;
+  try {
+    var t = ac.currentTime;
+    [[528,0,.18],[660,.1,.14],[792,.18,.20]].forEach(function(p) {
+      var o=ac.createOscillator(), g=ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.type='triangle'; o.frequency.value=p[0];
+      g.gain.setValueAtTime(.0001,t+p[1]);
+      g.gain.linearRampToValueAtTime(.18,t+p[1]+.015);
+      g.gain.exponentialRampToValueAtTime(.0001,t+p[1]+p[2]);
+      o.start(t+p[1]); o.stop(t+p[1]+p[2]+.05);
+    });
+  } catch(e) {}
+}
+
+function playSoundAccept() {
+  /* Ascending success — accepted */
+  var ac = _nac(); if (!ac) return;
+  try {
+    var t = ac.currentTime;
+    [[440,0,.1],[660,.09,.1],[880,.17,.18]].forEach(function(p) {
+      var o=ac.createOscillator(), g=ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.type='sine'; o.frequency.value=p[0];
+      g.gain.setValueAtTime(.0001,t+p[1]);
+      g.gain.linearRampToValueAtTime(.25,t+p[1]+.01);
+      g.gain.exponentialRampToValueAtTime(.0001,t+p[1]+p[2]);
+      o.start(t+p[1]); o.stop(t+p[1]+p[2]+.05);
+    });
+  } catch(e) {}
+}
+
+function playSoundDecline() {
+  /* Descending — declined */
+  var ac = _nac(); if (!ac) return;
+  try {
+    var t = ac.currentTime;
+    [[440,0,.1],[330,.1,.12],[220,.2,.18]].forEach(function(p) {
+      var o=ac.createOscillator(), g=ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.type='sine'; o.frequency.value=p[0];
+      g.gain.setValueAtTime(.0001,t+p[1]);
+      g.gain.linearRampToValueAtTime(.18,t+p[1]+.012);
+      g.gain.exponentialRampToValueAtTime(.0001,t+p[1]+p[2]);
+      o.start(t+p[1]); o.stop(t+p[1]+p[2]+.05);
+    });
+  } catch(e) {}
+}
+
+/* ── Core notification function ── */
+var _notiQueue = [];
+var _notiTimer = {};
+
+function showNoti(opts) {
+  /* opts: { type, avatar, title, sub, dur, actions, onClick } */
+  /* type: 'online' | 'friend' | 'accept' | 'decline' | 'info' */
+  var container = document.getElementById('noti-container');
+  if (!container) return;
+
+  var id = 'noti_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+  var dur = opts.dur || 4000;
+
+  /* Build avatar HTML */
+  var avHtml;
+  var av = opts.avatar;
+  if (av && (av.startsWith('http') || av.startsWith('data:'))) {
+    avHtml = '<img src="' + av + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
+  } else {
+    avHtml = av || (opts.type==='online'?'🟢':opts.type==='accept'?'✅':opts.type==='decline'?'❌':'👤');
+  }
+
+  /* Build action buttons */
+  var actHtml = '';
+  if (opts.actions && opts.actions.length) {
+    actHtml = '<div class="noti-actions">';
+    opts.actions.forEach(function(a) {
+      actHtml += '<button class="' + (a.primary ? 'noti-btn-acc' : 'noti-btn-dec') + '" data-nfn="' + a.fn + '" data-nid="NOTIID">' + a.label + '</button>';
+    });
+    actHtml += '</div>';
+  }
+
+  var card = document.createElement('div');
+  card.id = id;
+  card.className = 'noti-card type-' + (opts.type || 'info');
+  card.innerHTML =
+    '<div class="noti-av">' + avHtml + '</div>' +
+    '<div class="noti-body">' +
+      '<div class="noti-title">' + (opts.title || '') + '</div>' +
+      '<div class="noti-sub">' + (opts.sub || '') + '</div>' +
+      actHtml +
+    '</div>' +
+    '<div class="noti-x" data-dismiss="NOTIID" title="ပိတ်မည်">✕</div>' +
+    '<div class="noti-bar" style="--dur:' + (dur/1000) + 's"></div>';
+
+  if (opts.onClick) card.addEventListener('click', function(e) {
+    if (!e.target.closest('.noti-x') && !e.target.closest('button')) opts.onClick();
+  });
+
+  // Replace __NOTIID__ placeholder with actual id
+  card.innerHTML = card.innerHTML.replace(/__NOTIID__/g, id);
+  // Wire up data-nfn buttons
+  card.querySelectorAll('[data-nfn]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var fn = btn.dataset.nfn;
+      var nid = btn.dataset.nid;
+      if (window[fn]) window[fn](nid);
+    });
+  });
+  // Replace NOTIID placeholder + wire button clicks
+  card.innerHTML = card.innerHTML.replace(/NOTIID/g, id);
+  card.querySelectorAll('[data-nfn]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var fn = btn.getAttribute('data-nfn');
+      var nid = btn.getAttribute('data-nid');
+      if (window[fn]) window[fn](nid);
+    });
+  });
+  card.querySelectorAll('[data-dismiss]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      dismissNoti(btn.getAttribute('data-dismiss'));
+    });
+  });
+  container.insertBefore(card, container.firstChild);
+
+  // Limit to 3 visible
+  var cards = container.querySelectorAll('.noti-card:not(.out)');
+  if (cards.length > 3) dismissNoti(cards[cards.length-1].id);
+
+  // Auto-dismiss
+  _notiTimer[id] = setTimeout(function() { dismissNoti(id); }, dur);
+}
+
+window.dismissNoti = function(id) {
+  clearTimeout(_notiTimer[id]);
+  var card = document.getElementById(id);
+  if (!card) return;
+  card.classList.add('out');
+  setTimeout(function() { if (card.parentNode) card.parentNode.removeChild(card); }, 300);
+};
+
+/* ── Specific notification types ── */
+function notiOnline(name, avatar) {
+  playSoundOnline();
+  if (typeof vibrate === 'function') vibrate([30, 10, 60]);
+  showNoti({
+    type: 'online',
+    avatar: avatar || '🟢',
+    title: name + ' Online ဝင်လာပြီ',
+    sub: '🟢 ယခု ကစားနိုင်သည်',
+    dur: 4000,
+    onClick: function() { if (typeof openFriendsPanel === 'function') openFriendsPanel(); }
+  });
+}
+
+function notiFriendRequest(fromId, fromName, fromAvatar, reqId) {
+  playSoundFriendReq();
+  if (typeof vibrate === 'function') vibrate([50, 20, 80, 20, 50]);
+  var nid = null;
+  showNoti({
+    type: 'friend',
+    avatar: fromAvatar || '👋',
+    title: (fromName || fromId) + ' မှ Friend တောင်းဆိုသည်',
+    sub: '📨 ID: ' + fromId,
+    dur: 8000,
+    actions: [
+      { label: '✅ လက်ခံ',  primary: true,  fn: '_notiAcceptFR_' + fromId.replace(/[^A-Z0-9]/g,'') + '_' + (reqId||'').replace(/-/g,'') },
+      { label: '✕ ငြင်းဆန်', primary: false, fn: '_notiDeclineFR' }
+    ]
+  });
+  // Register dynamic accept handler
+  var safeFn = '_notiAcceptFR_' + fromId.replace(/[^A-Z0-9]/g,'') + '_' + (reqId||'').replace(/-/g,'');
+  window[safeFn] = function(notiId) {
+    window._freqPending = { fromId: fromId, fromName: fromName, reqId: reqId };
+    if (typeof acceptFriendRequest === 'function') acceptFriendRequest();
+    dismissNoti(notiId);
+  };
+}
+
+window._notiDeclineFR = function(notiId) {
+  dismissNoti(notiId);
+  if (typeof dismissFriendRequest === 'function') dismissFriendRequest();
+  playSoundDecline();
+  showNoti({ type:'decline', avatar:'✕', title:'Friend တောင်းဆိုမှု ငြင်းဆန်ပြီ', sub:'', dur:2500 });
+};
+
+function notiAccepted(name, avatar) {
+  playSoundAccept();
+  if (typeof vibrate === 'function') vibrate([40, 15, 80]);
+  showNoti({
+    type: 'accept',
+    avatar: avatar || '🤝',
+    title: (name || 'ကစားသမား') + ' Friend လက်ခံပြီ! 🎉',
+    sub: '🫂 သူငယ်ချင်းများ စာရင်းတွင် ထည့်ပြီး',
+    dur: 4000,
+    onClick: function() { if (typeof openFriendsPanel === 'function') openFriendsPanel(); }
+  });
+}
+
+function notiDeclined(name) {
+  playSoundDecline();
+  if (typeof vibrate === 'function') vibrate([80, 30, 80]);
+  showNoti({
+    type: 'decline',
+    avatar: '❌',
+    title: (name || 'ကစားသမား') + ' Friend ငြင်းဆန်ပြီ',
+    sub: '😔 နောင်တစ်ကြိမ် ထပ်ကြိုးစားပါ',
+    dur: 3500
+  });
+}
+
+/* ── Hook into global presence to detect friends coming online ── */
+var _prevOnlineFriends = {};
+function _checkFriendOnlineNoti(newOnlinePlayers) {
+  if (typeof getFriends !== 'function') return;
+  var friends = getFriends();
+  friends.forEach(function(f) {
+    var wasOnline = !!_prevOnlineFriends[f.id];
+    var isOnline  = !!newOnlinePlayers[f.id];
+    if (!wasOnline && isOnline) {
+      // Friend just came online!
+      var p = newOnlinePlayers[f.id];
+      var name = p.name || f.name || f.id;
+      var av   = p.avatarUrl || null;
+      notiOnline(name, av);
+    }
+  });
+  // Update prev state
+  _prevOnlineFriends = {};
+  Object.keys(newOnlinePlayers).forEach(function(k) {
+    _prevOnlineFriends[k] = true;
+  });
+}
+
+/* ── Patch startGlobalPresence to hook online detection ── */
+(function() {
+  var _origSGP = window.startGlobalPresence;
+  window.startGlobalPresence = function() {
+    if (_origSGP) _origSGP.apply(this, arguments);
+    /* After global channel set up, patch the presence sync handler */
+    var _checkPatch = setInterval(function() {
+      if (typeof _globalCh === 'undefined' || !_globalCh) return;
+      var _origSync = _globalCh._handlers && _globalCh._handlers['presence'];
+      // The presence sync is handled via _onlinePlayers in friends system
+      // We poll _onlinePlayers every 3s to detect new online friends
+      clearInterval(_checkPatch);
+      setInterval(function() {
+        if (typeof _onlinePlayers !== 'undefined') {
+          _checkFriendOnlineNoti(_onlinePlayers);
+        }
+      }, 3000);
+    }, 500);
+  };
+})();
+
+/* ── Patch broadcast handlers for friend request accept/decline noti ── */
+/* Override showFriendRequestPopup to use new noti system */
+window.showFriendRequestPopup = function(fromId, fromName, reqId) {
+  window._freqPending = { fromId: fromId, fromName: fromName, reqId: reqId };
+  notiFriendRequest(fromId, fromName, null, reqId);
+  // Also keep legacy popup just in case
+  var p = document.getElementById('freq-popup');
+  var nm = document.getElementById('freq-name');
+  if (p && nm) {
+    nm.textContent = (fromName || fromId) + ' (' + fromId + ')';
+    // Don't show old popup — new noti system handles it
+  }
+};
+
+/* ── Patch kk_freq_acc broadcast to show noti ── */
+/* We intercept in startGlobalPresence broadcast handler */
+(function() {
+  var _patchTimer = setInterval(function() {
+    if (typeof _globalCh === 'undefined' || !_globalCh) return;
+    clearInterval(_patchTimer);
+    // Re-add broadcast listener for accept
+    _globalCh.on('broadcast', { event: 'kk_freq_acc' }, function(msg) {
+      var payload = msg.payload;
+      if (payload && payload.toId === MY_PLAYER_ID) {
+        notiAccepted(payload.fromName || payload.fromId, payload.fromAvatar || null);
+      }
+    });
+    // Re-add broadcast listener for decline
+    _globalCh.on('broadcast', { event: 'kk_freq_dec' }, function(msg) {
+      var payload = msg.payload;
+      if (payload && payload.toId === MY_PLAYER_ID) {
+        notiDeclined(payload.fromName || payload.fromId);
+      }
+    });
+  }, 800);
+})();
+
+/* ── Patch acceptFriendRequest to broadcast decline too ── */
+(function() {
+  var _origAFR = window.acceptFriendRequest;
+  window.acceptFriendRequest = async function() {
+    if (_origAFR) await _origAFR.apply(this, arguments);
+    // Show accept noti to self
+    if (window._freqPending) {
+      var name = window._freqPending.fromName || window._freqPending.fromId;
+      showNoti({ type:'accept', avatar:'🤝', title:name + ' Friend ထည့်ပြီ!', sub:'🫂 သူငယ်ချင်းများ တွင် ပါပြီ', dur:3000 });
+      playSoundAccept();
+    }
+  };
+
+  var _origDFR = window.dismissFriendRequest;
+  window.dismissFriendRequest = function() {
+    var pending = window._freqPending;
+    if (_origDFR) _origDFR.apply(this, arguments);
+    // Broadcast decline to sender
+    if (pending && pending.fromId && typeof _sendBcast === 'function') {
+      _sendBcast('kk_freq_dec', {
+        fromId: MY_PLAYER_ID,
+        fromName: _userProfile ? _userProfile.display_name : (myName || 'ကစားသမား'),
+        toId: pending.fromId
+      });
+    }
+  };
+})();
+
+</script>
+
 </body>
 </html>
