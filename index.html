@@ -7882,16 +7882,21 @@ window.doEmailSignup = async function() {
   if (btn) { btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(6,3,0,.3);border-top-color:#060300;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>ဖန်တီးနေသည်...'; }
   try {
     var r = await SB().auth.signUp({
-      email: email, password: pw,
-      options: { data: { display_name: name } }
+      email: email, password: pw
     });
     if (r.error) {
-      setStatus('auth-status', '❌ ' + r.error.message, 'err');
-    } else if (r.data && r.data.user && (!r.data.session)) {
-      // Email confirmation needed
-      setStatus('auth-status', '✅ Email စစ်ဆေးပါ — Confirmation link ပို့ပြီ', 'ok');
+      var emsg = r.error.message;
+      if (emsg.includes('already registered') || emsg.includes('User already registered')) {
+        emsg = 'ဒီ Email ရှိနှင့်ပြီး — Login tab ကနေ ဝင်ပါ';
+      }
+      setStatus('auth-status', '❌ ' + emsg, 'err');
+    } else if (r.data && r.data.user) {
+      if (!r.data.session) {
+        // Email confirmation still on
+        setStatus('auth-status', '📧 Email Inbox စစ်ပြီး Confirmation link နှိပ်ပါ', 'ok');
+      }
+      // session exists → onAuthStateChange(SIGNED_IN) → lobby automatically
     }
-    // if session exists: onAuthStateChange fires → profile-setup
   } catch(e) {
     setStatus('auth-status', '❌ ' + e.message, 'err');
   } finally {
@@ -8810,4 +8815,4 @@ window.handleAvatarUpload = async function(inp) {
 })();
 
 </body>
-</html>
+   </html>
