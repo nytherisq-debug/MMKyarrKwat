@@ -4488,6 +4488,10 @@ button {
       <button class="bgold" style="width:100%;margin-top:12px;padding:13px" onclick="doEmailSignup()" id="btn-signup">
         ✨ Account ဖန်တီးမည်
       </button>
+      <div style="font-size:.63rem;color:rgba(212,168,67,.5);font-family:Outfit,sans-serif;text-align:center;margin-top:8px;line-height:1.5">
+        Account ဖန်တီးပြီးရင် Email စစ်ပြီး Confirm link နှိပ်ပါ<br>
+        <span style="color:rgba(45,212,191,.5)">✓ ပြီးရင် Login tab ကနေ ဝင်ပါ</span>
+      </div>
     </div>
 
     <div class="auth-status" id="auth-status"></div>
@@ -7686,15 +7690,38 @@ async function initAuth() {
             if (typeof startGlobalPresence === 'function') startGlobalPresence();
             if (typeof _loadPendingFriendRequests === 'function') _loadPendingFriendRequests();
           } else {
-            // First time — profile setup
+            // No profile yet — auto-create from auth metadata then go to profile-setup
             var meta = session.user.user_metadata || {};
-            _pendingName = _pendingName || meta.full_name || meta.name || (session.user.email || '').split('@')[0] || '';
+            _pendingName = meta.full_name || meta.name || (session.user.email || '').split('@')[0] || 'ကစားသမား';
             _pendingAv = meta.avatar_url || meta.picture || null;
-            var si = document.getElementById('psetup-name');
-            if (si && _pendingName) si.value = _pendingName;
-            var ap = document.getElementById('psetup-av-preview');
-            if (ap) renderAv(ap, _pendingAv || '🐯');
-            showScr('profile-setup');
+            
+            // Auto-create minimal profile so user goes to lobby immediately
+            var autoProfile = {
+              id: session.user.id,
+              player_id: MY_PLAYER_ID,
+              display_name: _pendingName,
+              avatar: _pendingAv || '🐯',
+              avatar_url: _pendingAv || null,
+              games_played: 0,
+              wins: 0,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+            // Save to localStorage immediately
+            try { localStorage.setItem('kk_prof_' + session.user.id, JSON.stringify(autoProfile)); } catch(e) {}
+            // Save to DB (non-blocking)
+            upsertProfile(autoProfile).catch(function(){});
+            _userProfile = autoProfile;
+            applyProfileToLobby(autoProfile);
+            showScr('lobby');
+            if (typeof startGlobalPresence === 'function') startGlobalPresence();
+            // Go to profile-setup after short delay so they can customize
+            setTimeout(function(){
+              if (document.getElementById('lobby').classList.contains('show')) {
+                // Already in lobby — open profile edit instead
+                if (typeof openProfileModal === 'function') openProfileModal();
+              }
+            }, 1500);
           }
         } else if (event !== 'TOKEN_REFRESHED') {
           // Only show auth on explicit sign-out/no session, not on token refresh
@@ -7846,15 +7873,13 @@ window.doEmailLogin = async function() {
    EMAIL SIGNUP (name required)
 ═══════════════════════════════════════ */
 window.doEmailSignup = async function() {
-  var email = (document.getElementById('auth-semail') || {}).value || '';
-  var pw    = (document.getElementById('auth-spw')    || {}).value || '';
-  email = email.trim(); pw = pw.trim(); var name = '';
+  var email = ((document.getElementById('auth-semail') || {}).value || '').trim();
+  var pw    = ((document.getElementById('auth-spw')    || {}).value || '').trim();
   if (!email) { setStatus('auth-status', '⚠️ Email ထည့်ပါ', 'err'); return; }
   if (pw.length < 6) { setStatus('auth-status', '⚠️ Password အနည်းဆုံး 6 လုံး ထည့်ပါ', 'err'); return; }
-  _pendingName = name;
   setStatus('auth-status', '⏳ Account ဖန်တီးနေသည်...', 'info');
-  var btn = document.querySelector('#auth-signup-form .bgold');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ ...'; }
+  var btn = document.getElementById('btn-signup');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(6,3,0,.3);border-top-color:#060300;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>ဖန်တီးနေသည်...'; }
   try {
     var r = await SB().auth.signUp({
       email: email, password: pw,
