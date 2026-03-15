@@ -7224,15 +7224,15 @@ function renderFriendsList(){
   const sumEl=document.getElementById('fp-online-summary');
   const txtEl=document.getElementById('fp-online-txt');
   if(sumEl)sumEl.style.display=friends.length>0?'flex':'none';
-  if(txtEl&&friends.length>0)txtEl.textContent=oc+' \u1025\u1038 Online \u2014 '+(friends.length-oc)+' \u1025\u1038 Offline';
-  if(friends.length===0){container.innerHTML='<div class="fl-empty">\u{1F465} \u101e\u1030\u1004\u101a\u103a\u1001\u103b\u1004\u103a\u1038 \u1019\u101b\u103e\u102d\u101e\u1031\u1038\u1015\u102a\u103a<br><small style="opacity:.5">ID \u1016\u103c\u1004\u103a\u1037 \u1011\u100e\u1037\u1015\u102a \u2191</small></div>';return;}
+  if(txtEl&&friends.length>0)txtEl.textContent=oc+' ဥး Online — '+(friends.length-oc)+' ဥး Offline';
+  if(friends.length===0){container.innerHTML='<div class="fl-empty">\u{1F465} သူငယ်ချင်း မရှိသေးပဪ်<br><small style="opacity:.5">ID ဖြင့် ထဎ့ပဪ ↑</small></div>';return;}
   const sorted=[...friends].sort((a,b)=>((_onlinePlayers[b.id]?1:0)-(_onlinePlayers[a.id]?1:0)));
   container.innerHTML=sorted.map(f=>{
     const ol=_onlinePlayers[f.id];
     if(ol?.name&&ol.name!==f.name)updateFriendName(f.id,ol.name);
     const dn=ol?.name||f.name||f.id;
     const sc=ol?(ol.status==='playing'?'fi-playing':'fi-online'):'fi-offline';
-    const st=ol?(ol.status==='playing'?'\u{1F3AE} \u1000\u1005\u102c\u1038\u1014\u1031\u101e\u100a\u103a':ol.status==='waiting'?'\u23F3 \u1000\u1005\u102c\u1038\u1016\u1031\u102c \u1005\u102c\u103e\u1031\u103a\u1014\u1031\u101e\u100a\u103a':'\u{1F7E2} Online'):'\u26AB Offline';
+    const st=ol?(ol.status==='playing'?'\u{1F3AE} ကစားနေသည်':ol.status==='waiting'?'⏳ ကစားဖော စာှေ်နေသည်':'\u{1F7E2} Online'):'⚫ Offline';
     const jh=(ol?.status==='waiting'&&ol?.roomId)?'<button class="fi-join" onclick="joinFriendRoom(\''+ol.roomId+'\')">&#x26A1; Join</button>':'';
     return '<div class="friend-item '+sc+'"><div class="fi-avatar">'+(function(){var av=ol&&(ol.avatarUrl||ol.avatar_url);if(av&&(av.startsWith('http')||av.startsWith('data:'))){return '<img src="'+av+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';}return (dn[0]||'?').toUpperCase();})()+'</div><div class="fi-info"><div class="fi-name">'+_esc(dn)+'</div><div class="fi-uid">'+f.id+'</div><div class="fi-status">'+st+'</div></div><div class="fi-actions">'+jh+'<button class="fi-remove" onclick="confirmRemoveFriend(\''+f.id+'\')">&#x2715;</button></div></div>';
   }).join('');
@@ -7241,15 +7241,15 @@ function renderFriendsList(){
 window.doAddFriend=function(){
   const inp=document.getElementById('add-friend-inp');if(!inp)return;
   const raw=inp.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
-  if(!raw||raw.length<4){if(typeof toast==='function')toast('\u26A0\uFE0F Player ID \u1019\u103e\u1014်ကန်ဖ\u102d\u102f \u1005\u1005\u1006\u1031\u1038\u1015\u102ab');return;}
-  if(raw===MY_PLAYER_ID){if(typeof toast==='function')toast('\u26A0\uFE0F \u1000\u102d\u102f\u101a\u103a ID \u1019\u1011\u100e\u1037\u1014\u102d\u102f\u1004်\u1015\u102ab');return;}
+  if(!raw||raw.length<4){if(typeof toast==='function')toast('⚠️ Player ID မှန်ကန်ဖို စစဆေးပဪb');return;}
+  if(raw===MY_PLAYER_ID){if(typeof toast==='function')toast('⚠️ ကိုယ် ID မထဎ့နိုင်ပဪb');return;}
   const fl=getFriends();
-  if(fl.some(f=>f.id===raw)){if(typeof toast==='function')toast('\u2139\uFE0F \u101e\u1030\u1004\u101a\u103a\u1001\u103b\u1004\u103a\u1038 \u101b\u103e\u102d\u1014\u103e\u1004\u103a\u1015\u103c\u102e\u1038\u1016\u103c\u1005\u103a\u101e\u100a\u103a');return;}
+  if(fl.some(f=>f.id===raw)){if(typeof toast==='function')toast('ℹ️ သူငယ်ချင်း ရှိနှင်ပြီးဖြစ်သည်');return;}
   const ol=_onlinePlayers[raw];const name=ol?.name||raw;
   addFriendLocal(raw,name);inp.value='';
   if(ol)_sendBcast('kk_freq',{fromId:MY_PLAYER_ID,fromName:document.getElementById('inp-name')?.value.trim()||myName||'Player',toId:raw});
   renderFriendsList();_refreshFriendBadge();
-  if(typeof toast==='function')toast('\u2705 '+_esc(name)+' \u1011\u100e\u1037\u1015\u103c\u102e\u1038\u1015\u102ab\u103a'+(ol?' \u{1F7E2}':' (Offline)'));
+  if(typeof toast==='function')toast('✅ '+_esc(name)+' ထဎ့ပြီးပဪb်'+(ol?' \u{1F7E2}':' (Offline)'));
   if(typeof vibrate==='function')vibrate([40,20,60]);
 };
 
@@ -7610,6 +7610,28 @@ async function initAuth() {
       await new Promise(function(res) { setTimeout(res, 400); });
     }
 
+    // ── Try to restore session from backup (for Brave/anti-tracking browsers) ──
+    try {
+      var _bk = JSON.parse(localStorage.getItem('kk_auth_backup') || 'null');
+      if (_bk && _bk.access_token && _bk.refresh_token) {
+        // Check if backup is not too old (7 days)
+        if (Date.now() - (_bk.savedAt||0) < 7*24*60*60*1000) {
+          // Check if Supabase key is missing
+          var _hasSbKey = Object.keys(localStorage).some(function(k){ return k.includes('sb-oxziinvwdhligrbllqbj'); });
+          if (!_hasSbKey) {
+            // Restore session from backup
+            try {
+              await SB().auth.setSession({
+                access_token: _bk.access_token,
+                refresh_token: _bk.refresh_token
+              });
+              console.log('Session restored from backup');
+            } catch(_re) { console.warn('Session restore failed:', _re); }
+          }
+        }
+      }
+    } catch(_be) {}
+
     // ── Show cached profile INSTANTLY while waiting for Supabase ──
     // If we have a cached session, show lobby immediately (no loading wait)
     var _cachedUid = null;
@@ -7639,6 +7661,19 @@ async function initAuth() {
       if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
         if (session && session.user) {
           _authUser = session.user;
+          // Backup session tokens for Brave/aggressive browsers
+          try {
+            if (session.access_token && session.refresh_token) {
+              localStorage.setItem('kk_auth_backup', JSON.stringify({
+                access_token: session.access_token,
+                refresh_token: session.refresh_token,
+                expires_at: session.expires_at,
+                user_id: session.user.id,
+                user_email: session.user.email,
+                savedAt: Date.now()
+              }));
+            }
+          } catch(e) {}
           var profile = await loadProfileFromDB(session.user.id);
           if (profile) {
             _userProfile = profile;
@@ -7693,7 +7728,18 @@ async function initAuth() {
     var splash = document.getElementById('auth-loading');
     if (splash) { splash.classList.add('fade'); setTimeout(function(){ splash.classList.add('gone'); }, 350); }
     if (!sess.data || !sess.data.session) {
-      if (!_cachedUid) showScr('auth'); // Only show auth if no cached session either
+      if (!_cachedUid) {
+        // Check saved guest session
+        try {
+          var _gs = JSON.parse(localStorage.getItem('kk_guest_v1') || 'null');
+          if (_gs && _gs.name) {
+            if (_applyGuestProfile()) {
+              showScr('lobby');
+              if (typeof startGlobalPresence === 'function') startGlobalPresence();
+            } else { showScr('auth'); }
+          } else { showScr('auth'); }
+        } catch(e) { showScr('auth'); }
+      }
     }
     // Session exists — onAuthStateChange(INITIAL_SESSION) will fire automatically
 
@@ -7848,23 +7894,62 @@ window.doForgotPassword = async function() {
 ═══════════════════════════════════════ */
 window.continueAsGuest = function() {
   _isGuest = true;
-  myName = 'Guest ' + Math.floor(Math.random() * 9000 + 1000);
+  // Load saved guest — same name/avatar every time
+  var saved = null;
+  try { saved = JSON.parse(localStorage.getItem('kk_guest_v1')); } catch(e) {}
+  if (saved && saved.name) {
+    myName = saved.name;
+  } else {
+    myName = 'Guest​' + Math.floor(Math.random() * 9000 + 1000);
+  }
+  // Persist forever
+  try {
+    var cur = saved || {};
+    cur.name = myName;
+    if (!cur.player_id) cur.player_id = MY_PLAYER_ID;
+    if (!cur.avatar) cur.avatar = '👤';
+    cur.savedAt = Date.now();
+    localStorage.setItem('kk_guest_v1', JSON.stringify(cur));
+  } catch(e) {}
+  _applyGuestProfile();
+  showScr('lobby');
+  if (typeof startGlobalPresence === 'function') startGlobalPresence();
+};
+
+function _applyGuestProfile() {
+  var saved = null;
+  try { saved = JSON.parse(localStorage.getItem('kk_guest_v1') || 'null'); } catch(e) {}
+  if (!saved || !saved.name) return false;
+  _isGuest = true;
+  myName = saved.name;
+  // Hide manual inputs
   var ni = document.getElementById('inp-name');
   if (ni) { ni.value = myName; ni.style.display = 'none'; }
   var nl = document.getElementById('name-lbl-el');
   if (nl) nl.style.display = 'none';
-  // Show minimal profile widget for guest
+  var pr = document.querySelector('.pid-row');
+  if (pr) pr.style.display = 'none';
+  // Show lobby profile widget
   var w = document.getElementById('lobby-profile');
   if (w) w.style.display = 'flex';
-  var la = document.getElementById('lp-avatar-el');
-  if (la) la.textContent = '👤';
+  var av = saved.avatar_url || saved.avatar || '👤';
+  renderAv(document.getElementById('lp-avatar-el'), av);
   var ln = document.getElementById('lp-name-el');
   if (ln) ln.textContent = myName;
   var lp = document.getElementById('lp-pid-el');
   if (lp) lp.textContent = MY_PLAYER_ID;
-  showScr('lobby');
-  if (typeof startGlobalPresence === 'function') startGlobalPresence();
-};
+  ['pid-display','fp-pid-val','pm-pid-val'].forEach(function(id){
+    var e = document.getElementById(id); if (e) e.textContent = MY_PLAYER_ID;
+  });
+  // Set _userProfile so modal/friends work
+  _userProfile = {
+    display_name: myName,
+    avatar: saved.avatar || '👤',
+    avatar_url: saved.avatar_url || null,
+    player_id: MY_PLAYER_ID
+  };
+  return true;
+}
 
 /* ═══════════════════════════════════════
    SIGN OUT
@@ -7877,7 +7962,7 @@ window.doSignOut = async function() {
   // Clear all Supabase + profile localStorage keys
   try {
     var toRemove = Object.keys(localStorage).filter(function(k) {
-      return k.startsWith('kk_prof_') || k.includes('supabase') || k.includes('sb-') || k.includes('auth-token');
+      return k.startsWith('kk_prof_') || k.includes('supabase') || k.includes('sb-') || k.includes('auth-token') || k === 'kk_guest_v1' || k === 'kk_auth_backup';
     });
     toRemove.forEach(function(k) { localStorage.removeItem(k); });
   } catch(e) {}
@@ -8002,6 +8087,19 @@ window.saveProfileChanges = async function() {
   if (lavatar) renderAv(lavatar, newAv);
   var ni = document.getElementById('inp-name');
   if (ni) ni.value = name;
+  // Save guest profile changes
+  if (_isGuest) {
+    try {
+      var gs = JSON.parse(localStorage.getItem('kk_guest_v1') || '{}');
+      gs.name = name; gs.savedAt = Date.now();
+      if (newAv && newAv !== '👤') {
+        if (newAv.startsWith('http') || newAv.startsWith('data:')) gs.avatar_url = newAv;
+        else gs.avatar = newAv;
+      }
+      localStorage.setItem('kk_guest_v1', JSON.stringify(gs));
+      if (_userProfile) { _userProfile.display_name = name; }
+    } catch(e) {}
+  }
   setStatus('pm-status', '✅ သိမ်းဆည်းပြီးပါပြီ!', 'ok');
   if (typeof updateGlobalPresence === 'function') updateGlobalPresence('lobby', null);
   setTimeout(function() { closeProfileModal(); setStatus('pm-status', ''); }, 900);
@@ -8687,4 +8785,4 @@ window.handleAvatarUpload = async function(inp) {
 })();
 
 </body>
-   </html>
+</html>
