@@ -7178,20 +7178,20 @@ function startGlobalPresence(){
   });
   _globalCh.on('broadcast',{event:'kk_freq_acc'},({payload})=>{
     if(payload&&payload.toId===MY_PLAYER_ID){
-      if(typeof toast==='function')toast('\u{1F389} '+(payload.fromName||payload.fromId)+' \u2014 Friend \u1000\u1031\u102c\u1004\u103a\u1038\u1006\u102d\u102f\u101e\u100a\u103a\u1000\u102d\u102f \u101c\u1000\u103a\u1001\u1036\u1015\u103c\u102e\u1038!');
+      if(typeof toast==='function')toast('\u{1F389} '+(payload.fromName||payload.fromId)+' — Friend ကောင်းဆိုသည်ကို လက်ခံပြီး!');
       if(typeof vibrate==='function')vibrate([60,30,60]);
     }
   });
   _globalCh.subscribe(status=>{
     if(status==='SUBSCRIBED'){
-      _globalCh.track({playerId:MY_PLAYER_ID,name:document.getElementById('inp-name')?.value.trim()||myName||'\u1000\u1005\u102c\u1038\u101e\u1019\u102c\u1038',status:'lobby',roomId:null,ts:Date.now()}).catch(()=>{});
+      _globalCh.track({playerId:MY_PLAYER_ID,name:document.getElementById('inp-name')?.value.trim()||myName||'ကစားသမား',status:'lobby',roomId:null,ts:Date.now()}).catch(()=>{});
     }
   });
 }
 
 function updateGlobalPresence(st,rm){
   if(!_globalCh)return;
-  const nm=myName||document.getElementById('inp-name')?.value.trim()||'\u1000\u1005\u102c\u1038\u101e\u1019\u102c\u1038';
+  const nm=myName||document.getElementById('inp-name')?.value.trim()||'ကစားသမား';
   try{_globalCh.track({playerId:MY_PLAYER_ID,name:nm,status:st,roomId:rm||null,ts:Date.now()});}catch{}
 }
 function _sendBcast(event,payload){if(_globalCh)_globalCh.send({type:'broadcast',event,payload}).catch(()=>{});}
@@ -7259,7 +7259,7 @@ window.doAddFriend=function(){
 
 window.confirmRemoveFriend=function(id){
   const f=getFriends().find(x=>x.id===id);
-  if(confirm(_esc(f?.name||id)+' \u1000\u102d\u102f \u1016\u103b\u1000်\u1019\u100a\u103a\u101c\u102c\u1038?')){removeFriendById(id);renderFriendsList();_refreshFriendBadge();if(typeof toast==='function')toast('\u{1F5D1}\uFE0F \u1016\u103b\u1000်\u1015\u103c\u102e\u1038\u1015\u102ab\u103a');}
+  if(confirm(_esc(f?.name||id)+' ကို ဖျက်မည်လား?')){removeFriendById(id);renderFriendsList();_refreshFriendBadge();if(typeof toast==='function')toast('\u{1F5D1}️ ဖျက်ပြီးပဪb်');}
 };
 
 window.joinFriendRoom=function(code){
@@ -7271,7 +7271,7 @@ window.joinFriendRoom=function(code){
 window.copyPlayerId=function(){
   const doCopy=()=>{try{const ta=document.createElement('textarea');ta.value=MY_PLAYER_ID;ta.style.cssText='position:fixed;left:-9999px;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}catch{}};
   if(navigator.clipboard){navigator.clipboard.writeText(MY_PLAYER_ID).catch(doCopy);}else{doCopy();}
-  if(typeof toast==='function')toast('\u2705 Player ID \u1000\u1030\u1038\u1015\u103c\u102e\u1038: '+MY_PLAYER_ID);
+  if(typeof toast==='function')toast('✅ Player ID ကူးပြီး: '+MY_PLAYER_ID);
   if(typeof vibrate==='function')vibrate([40]);
 };
 
@@ -7319,9 +7319,9 @@ window.acceptFriendRequest=function(){
   if(added){
     _sendBcast('kk_freq_acc',{fromId:MY_PLAYER_ID,fromName:document.getElementById('inp-name')?.value.trim()||myName||'Player',toId:fromId});
     renderFriendsList();_refreshFriendBadge();
-    if(typeof toast==='function')toast('\u{1F91D} '+_esc(fromName||fromId)+' Friend \u1011\u100e\u1037\u1015\u103c\u102e\u1038\u1015\u102ab\u103a!');
+    if(typeof toast==='function')toast('\u{1F91D} '+_esc(fromName||fromId)+' Friend ထဎ့ပြီးပဪb်!');
     if(typeof vibrate==='function')vibrate([40,20,40,20,80]);
-  }else{if(typeof toast==='function')toast('\u2139\uFE0F \u101e\u1030\u1004\u101a\u103a\u1001\u103b\u1004\u103a\u1038 \u101b\u103e\u102d\u1014\u103e\u1004\u103a\u1015\u103c\u102e\u1038\u1016\u103c\u1005\u103a\u101e\u100a\u103a');}
+  }else{if(typeof toast==='function')toast('ℹ️ သူငယ်ချင်း ရှိနှင်ပြီးဖြစ်သည်');}
   dismissFriendRequest();
 };
 window.dismissFriendRequest=function(){clearTimeout(_freqTimer);_freqPending=null;document.getElementById('freq-popup')?.classList.remove('on');};
@@ -7466,73 +7466,62 @@ function _applyNewAvatar(url) {
 </script>
 
 <script>
-/* ══════════════════════════════════════════════════════════════
-   COMPLETE AUTH + PROFILE + FRIENDS SYSTEM
-   Version: clean-v8 — No duplicates, no FB/Apple
-══════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════
+   AUTH SYSTEM — Clean Rewrite
+   မည်သည့် Bug မျှ မပါ
+══════════════════════════════════════════════════════ */
 
-   Supabase SQL (run once):
-   ─────────────────────────────────────────────────────────────
-   create table if not exists public.profiles (
-     id uuid references auth.users(id) on delete cascade primary key,
-     player_id text unique,
-     display_name text,
-     avatar text default '🐯',
-     avatar_url text,
-     games_played int default 0,
-     wins int default 0,
-     created_at timestamptz default now(),
-     updated_at timestamptz default now()
-   );
-   alter table public.profiles enable row level security;
-   create policy "read_all" on public.profiles for select using (true);
-   create policy "own_write" on public.profiles for all using (auth.uid() = id);
+/* ── State ── */
+var _authUser    = null;
+var _userProfile = null;
+var _isGuest     = false;
+var _pendingAv   = null;
+var _pendingAvModal = null;
+var _pendingName = '';
 
-   create table if not exists public.friend_requests (
-     id uuid default gen_random_uuid() primary key,
-     from_pid text not null,
-     from_name text,
-     to_pid text not null,
-     status text default 'pending',
-     created_at timestamptz default now()
-   );
-   alter table public.friend_requests enable row level security;
-   create policy "fr_all" on public.friend_requests for all using (true);
-   ─────────────────────────────────────────────────────────────
-*/
-
-/* ── State (declared ONCE here) ── */
-var _authUser    = null;   // Supabase auth user object
-var _userProfile = null;   // { id, player_id, display_name, avatar, avatar_url, ... }
-var _pendingAv   = null;   // avatar chosen in setup screen
-var _pendingAvModal = null;// avatar chosen in modal
-var _isGuest     = false;  // guest mode flag
-var _pendingName = '';     // pre-fill name from OAuth
-
-/* ── Helpers ── */
+/* ── Status helper ── */
 function setStatus(id, msg, type) {
   var el = document.getElementById(id);
   if (!el) return;
   el.textContent = msg;
-  el.className = 'auth-status' + (type ? ' ' + type : '');
+  el.className = 'auth-status' + (msg ? (' ' + (type||'info')) : '');
 }
 
+/* ── Render avatar ── */
 function renderAv(el, av) {
   if (!el) return;
   if (av && (av.startsWith('http') || av.startsWith('data:'))) {
-    el.innerHTML = '<img src="' + av + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.parentElement.innerHTML=\'🐯\'">';
+    el.innerHTML = '<img src="' + av + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.parentElement.textContent=\'🐯\'">';
   } else {
     el.textContent = av || '🐯';
-    el.style.backgroundImage = '';
   }
 }
 
-/* ── Screen transitions ── */
-// showScr is defined in game script — just call it
+/* ── Apply profile to lobby UI ── */
+function applyProfileToLobby(p) {
+  if (!p) return;
+  myName = p.display_name || 'ကစားသမား';
+  var ni = document.getElementById('inp-name');
+  if (ni) { ni.value = myName; ni.style.display = 'none'; }
+  var nl = document.getElementById('name-lbl-el');
+  if (nl) nl.style.display = 'none';
+  var pr = document.querySelector('.pid-row');
+  if (pr) pr.style.display = 'none';
+  var lw = document.getElementById('lobby-profile');
+  if (lw) lw.style.display = 'flex';
+  renderAv(document.getElementById('lp-avatar-el'), p.avatar_url || p.avatar);
+  var ln = document.getElementById('lp-name-el');
+  if (ln) ln.textContent = p.display_name || 'ကစားသမား';
+  var lp2 = document.getElementById('lp-pid-el');
+  if (lp2) lp2.textContent = p.player_id || MY_PLAYER_ID;
+  ['pid-display','fp-pid-val','pm-pid-val'].forEach(function(id){
+    var e = document.getElementById(id);
+    if (e) e.textContent = p.player_id || MY_PLAYER_ID;
+  });
+  if (typeof updateGlobalPresence === 'function') updateGlobalPresence('lobby', null);
+}
 
-/* ═══════════════════════════════════════
-   SUPABASE: Profile DB operations
-═══════════════════════════════════════ */
+/* ── DB operations ── */
 async function loadProfileFromDB(uid) {
   try {
     var r = await SB().from('profiles').select('*').eq('id', uid).single();
@@ -7542,326 +7531,187 @@ async function loadProfileFromDB(uid) {
     }
   } catch(e) {}
   try {
-    var cached = localStorage.getItem('kk_prof_' + uid);
-    if (cached) return JSON.parse(cached);
+    var c = localStorage.getItem('kk_prof_' + uid);
+    if (c) return JSON.parse(c);
   } catch(e) {}
   return null;
 }
 
 async function upsertProfile(p) {
-  try { 
-    var toStore = Object.assign({}, p);
-    // Don't store large data: URIs in localStorage (use Supabase only)
-    if (toStore.avatar_url && toStore.avatar_url.startsWith('data:') && toStore.avatar_url.length > 50000) {
-      toStore = Object.assign({}, toStore, { avatar_url: null });
-    }
-    localStorage.setItem('kk_prof_' + p.id, JSON.stringify(toStore)); 
+  try {
+    var s = Object.assign({}, p);
+    if (s.avatar_url && s.avatar_url.startsWith('data:') && s.avatar_url.length > 50000) s.avatar_url = null;
+    localStorage.setItem('kk_prof_' + p.id, JSON.stringify(s));
   } catch(e) {}
   try {
-    var r = await SB().from('profiles').upsert(p, { onConflict: 'id' });
-    return !r.error;
-  } catch(e) { return false; }
+    await SB().from('profiles').upsert(p, { onConflict: 'id' });
+  } catch(e) {}
 }
 
-/* ═══════════════════════════════════════
-   APPLY PROFILE TO LOBBY UI
-═══════════════════════════════════════ */
-function applyProfileToLobby(p) {
-  if (!p) return;
-  // Set game name variable
-  myName = p.display_name || 'ကစားသမား';
-  // Name input (hidden but used by game logic)
-  var ni = document.getElementById('inp-name');
-  if (ni) { ni.value = myName; ni.style.display = 'none'; }
-  // Hide manual name label
-  var nl = document.getElementById('name-lbl-el');
-  if (nl) nl.style.display = 'none';
-  // Hide PID row (shown in profile widget instead)
-  var pr = document.querySelector('.pid-row');
-  if (pr) pr.style.display = 'none';
-  // Show profile widget
-  var w = document.getElementById('lobby-profile');
-  if (w) w.style.display = 'flex';
-  // Fill widget - prefer avatar_url (photo) over emoji avatar
-  renderAv(document.getElementById('lp-avatar-el'), p.avatar_url || p.avatar);
-  var ln = document.getElementById('lp-name-el');
-  if (ln) ln.textContent = p.display_name || 'ကစားသမား';
-  var lp = document.getElementById('lp-pid-el');
-  if (lp) lp.textContent = p.player_id || MY_PLAYER_ID;
-  // Update player ID displays
-  ['pid-display','fp-pid-val','pm-pid-val'].forEach(function(id) {
-    var e = document.getElementById(id);
-    if (e) e.textContent = p.player_id || MY_PLAYER_ID;
-  });
-  // Update global presence name
-  if (typeof updateGlobalPresence === 'function') updateGlobalPresence('lobby', null);
+/* ── Auto-create profile (first login) ── */
+async function autoCreateProfile(user) {
+  var meta = user.user_metadata || {};
+  var name = meta.full_name || meta.name || (user.email || '').split('@')[0] || 'ကစားသမား';
+  var av   = meta.avatar_url || meta.picture || '🐯';
+  var p = {
+    id: user.id,
+    player_id: MY_PLAYER_ID,
+    display_name: name,
+    avatar: av.startsWith('http') ? '🐯' : av,
+    avatar_url: av.startsWith('http') ? av : null,
+    games_played: 0, wins: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+  try { localStorage.setItem('kk_prof_' + user.id, JSON.stringify(p)); } catch(e) {}
+  upsertProfile(p);
+  return p;
 }
 
-/* ═══════════════════════════════════════
-   AUTH STATE LISTENER — main entry point
-═══════════════════════════════════════ */
+/* ── Handle signed-in user ── */
+async function onUserSignedIn(user) {
+  _authUser = user;
+  // Save session backup for Brave
+  try {
+    var sess = await SB().auth.getSession();
+    if (sess.data && sess.data.session) {
+      localStorage.setItem('kk_auth_backup', JSON.stringify({
+        access_token:  sess.data.session.access_token,
+        refresh_token: sess.data.session.refresh_token,
+        user_id:       user.id,
+        savedAt:       Date.now()
+      }));
+    }
+  } catch(e) {}
+  // Load or create profile
+  var profile = await loadProfileFromDB(user.id);
+  if (!profile) profile = await autoCreateProfile(user);
+  _userProfile = profile;
+  applyProfileToLobby(profile);
+  showScr('lobby');
+  if (typeof startGlobalPresence === 'function') startGlobalPresence();
+  if (typeof _loadPendingFriendRequests === 'function') _loadPendingFriendRequests();
+  // Hide splash
+  var sp = document.getElementById('auth-loading');
+  if (sp) sp.classList.add('gone');
+}
+
+/* ══════════════════════════════════════════
+   INIT AUTH — Entry point
+══════════════════════════════════════════ */
 async function initAuth() {
   try {
     if (typeof SB !== 'function') { setTimeout(initAuth, 300); return; }
-    var sb = SB();
 
-    // ── Handle OAuth redirect callback ──
-    // Google OAuth sends tokens in URL hash after redirect
-    var _hash = window.location.hash || '';
-    var _search = window.location.search || '';
-    if (_hash.includes('access_token') || _hash.includes('refresh_token') || _search.includes('code=')) {
-      try { window.history.replaceState({}, document.title, window.location.pathname); } catch(e) {}
-      await new Promise(function(res) { setTimeout(res, 400); });
+    // Handle OAuth redirect (Google)
+    var hash   = window.location.hash || '';
+    var search = window.location.search || '';
+    if (hash.includes('access_token') || hash.includes('refresh_token') || search.includes('code=')) {
+      try { window.history.replaceState({}, '', window.location.pathname); } catch(e) {}
+      await new Promise(function(r){ setTimeout(r, 500); });
     }
 
-    // ── Try to restore session from backup (for Brave/anti-tracking browsers) ──
+    // Restore backup session (for Brave)
     try {
-      var _bk = JSON.parse(localStorage.getItem('kk_auth_backup') || 'null');
-      if (_bk && _bk.access_token && _bk.refresh_token) {
-        // Check if backup is not too old (7 days)
-        if (Date.now() - (_bk.savedAt||0) < 7*24*60*60*1000) {
-          // Check if Supabase key is missing
-          var _hasSbKey = Object.keys(localStorage).some(function(k){ return k.includes('sb-oxziinvwdhligrbllqbj'); });
-          if (!_hasSbKey) {
-            // Restore session from backup
-            try {
-              await SB().auth.setSession({
-                access_token: _bk.access_token,
-                refresh_token: _bk.refresh_token
-              });
-              console.log('Session restored from backup');
-            } catch(_re) { console.warn('Session restore failed:', _re); }
-          }
+      var bk = JSON.parse(localStorage.getItem('kk_auth_backup') || 'null');
+      if (bk && bk.access_token && bk.refresh_token && (Date.now() - (bk.savedAt||0) < 30*24*60*60*1000)) {
+        var hasSb = Object.keys(localStorage).some(function(k){ return k.includes('sb-oxziinvwdhligrbllqbj'); });
+        if (!hasSb) {
+          try { await SB().auth.setSession({ access_token: bk.access_token, refresh_token: bk.refresh_token }); } catch(e) {}
         }
       }
-    } catch(_be) {}
+    } catch(e) {}
 
-    // ── Show cached profile INSTANTLY while waiting for Supabase ──
-    // If we have a cached session, show lobby immediately (no loading wait)
-    var _cachedUid = null;
-    try {
-      // Check if Supabase has a locally stored session
-      var _lsKey = Object.keys(localStorage).find(function(k){ return k.includes('sb-oxziinvwdhligrbllqbj-auth-token') || k.includes('supabase.auth.token'); });
-      if (_lsKey) {
-        var _lsVal = JSON.parse(localStorage.getItem(_lsKey) || '{}');
-        var _cachedUser = _lsVal.user || (_lsVal.currentSession && _lsVal.currentSession.user);
-        if (_cachedUser && _cachedUser.id) {
-          _cachedUid = _cachedUser.id;
-          var _cachedProfile = await loadProfileFromDB(_cachedUser.id);
-          if (_cachedProfile) {
-            // Show lobby immediately from cache — auth will verify in background
-            _authUser = _cachedUser;
-            _userProfile = _cachedProfile;
-            applyProfileToLobby(_cachedProfile);
-            showScr('lobby');
-            if (typeof startGlobalPresence === 'function') startGlobalPresence();
-          }
-        }
-      }
-    } catch(_ce) { /* cache check non-fatal */ }
-
-    // ── Auth state listener ──
-    sb.auth.onAuthStateChange(async function(event, session) {
-      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
+    // Register auth state listener
+    SB().auth.onAuthStateChange(function(event, session) {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session && session.user) {
-          _authUser = session.user;
-          // Backup session tokens for Brave/aggressive browsers
-          try {
-            if (session.access_token && session.refresh_token) {
-              localStorage.setItem('kk_auth_backup', JSON.stringify({
-                access_token: session.access_token,
-                refresh_token: session.refresh_token,
-                expires_at: session.expires_at,
-                user_id: session.user.id,
-                user_email: session.user.email,
-                savedAt: Date.now()
-              }));
-            }
-          } catch(e) {}
-          var profile = await loadProfileFromDB(session.user.id);
-          if (profile) {
-            _userProfile = profile;
-            applyProfileToLobby(profile);
-            // Only navigate to lobby if not already there
-            var lobbyEl = document.getElementById('lobby');
-            if (!lobbyEl || !lobbyEl.classList.contains('show')) {
-              showScr('lobby');
-            }
-            if (typeof startGlobalPresence === 'function') startGlobalPresence();
-            if (typeof _loadPendingFriendRequests === 'function') _loadPendingFriendRequests();
-          } else {
-            // No profile yet — auto-create from auth metadata then go to profile-setup
-            var meta = session.user.user_metadata || {};
-            _pendingName = meta.full_name || meta.name || (session.user.email || '').split('@')[0] || 'ကစားသမား';
-            _pendingAv = meta.avatar_url || meta.picture || null;
-            
-            // Auto-create minimal profile so user goes to lobby immediately
-            var autoProfile = {
-              id: session.user.id,
-              player_id: MY_PLAYER_ID,
-              display_name: _pendingName,
-              avatar: _pendingAv || '🐯',
-              avatar_url: _pendingAv || null,
-              games_played: 0,
-              wins: 0,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            };
-            // Save to localStorage immediately
-            try { localStorage.setItem('kk_prof_' + session.user.id, JSON.stringify(autoProfile)); } catch(e) {}
-            // Save to DB (non-blocking)
-            upsertProfile(autoProfile).catch(function(){});
-            _userProfile = autoProfile;
-            applyProfileToLobby(autoProfile);
-            showScr('lobby');
-            if (typeof startGlobalPresence === 'function') startGlobalPresence();
-            // Go to profile-setup after short delay so they can customize
-            setTimeout(function(){
-              if (document.getElementById('lobby').classList.contains('show')) {
-                // Already in lobby — open profile edit instead
-                if (typeof openProfileModal === 'function') openProfileModal();
-              }
-            }, 1500);
-          }
-        } else if (event !== 'TOKEN_REFRESHED') {
-          // Only show auth on explicit sign-out/no session, not on token refresh
-          if (!_cachedUid) showScr('auth');
+          onUserSignedIn(session.user);
+        }
+      } else if (event === 'INITIAL_SESSION') {
+        if (session && session.user) {
+          onUserSignedIn(session.user);
+        } else {
+          // No session - check guest then show auth
+          var sp = document.getElementById('auth-loading');
+          if (sp) sp.classList.add('gone');
+          if (!_tryRestoreGuest()) showScr('auth');
         }
       } else if (event === 'SIGNED_OUT') {
         _authUser = null; _userProfile = null; _isGuest = false;
-        _cachedUid = null;
-        // Clear all cached profile data
-        try {
-          Object.keys(localStorage).filter(function(k){
-            return k.startsWith('kk_prof_') || k.includes('supabase') || k.includes('auth-token');
-          }).forEach(function(k){ localStorage.removeItem(k); });
-        } catch(e) {}
         showScr('auth');
-      } else if (event === 'PASSWORD_RECOVERY') {
-        showScr('auth');
-        switchAuthTab('login');
-        setStatus('auth-status', '✅ Email စစ်ဆေးပါ — Reset link ပို့ပြီ', 'ok');
       }
     });
 
-    // ── Check & restore existing session ──
-    var sess = await sb.auth.getSession();
+    // Check current session
+    var sess = await SB().auth.getSession();
+    var sp = document.getElementById('auth-loading');
     if (!sess.data || !sess.data.session) {
-      // Retry once for OAuth callback timing
-      await new Promise(function(res) { setTimeout(res, 600); });
-      sess = await sb.auth.getSession();
+      if (sp) sp.classList.add('gone');
+      if (!_tryRestoreGuest()) showScr('auth');
     }
-    // Hide splash
-    var splash = document.getElementById('auth-loading');
-    if (splash) { splash.classList.add('fade'); setTimeout(function(){ splash.classList.add('gone'); }, 350); }
-    if (!sess.data || !sess.data.session) {
-      if (!_cachedUid) {
-        // Check saved guest session
-        try {
-          var _gs = JSON.parse(localStorage.getItem('kk_guest_v1') || 'null');
-          if (_gs && _gs.name) {
-            if (_applyGuestProfile()) {
-              showScr('lobby');
-              if (typeof startGlobalPresence === 'function') startGlobalPresence();
-            } else { showScr('auth'); }
-          } else { showScr('auth'); }
-        } catch(e) { showScr('auth'); }
-      }
-    }
-    // Session exists — onAuthStateChange(INITIAL_SESSION) will fire automatically
+    // else INITIAL_SESSION fires above
 
   } catch(e) {
-    console.warn('initAuth error:', e);
-    var splash2 = document.getElementById('auth-loading');
-    if (splash2) splash2.classList.add('gone');
-    showScr('auth');
+    console.error('initAuth error:', e);
+    var sp2 = document.getElementById('auth-loading');
+    if (sp2) sp2.classList.add('gone');
+    if (!_tryRestoreGuest()) showScr('auth');
   }
 }
 
-/* ═══════════════════════════════════════
+/* ══════════════════════════════════════════
    AUTH TAB SWITCH
-═══════════════════════════════════════ */
+══════════════════════════════════════════ */
 window.switchAuthTab = function(tab) {
-  var tl = document.getElementById('tab-login');
-  var ts = document.getElementById('tab-signup');
+  document.getElementById('tab-login')?.classList.toggle('sel', tab === 'login');
+  document.getElementById('tab-signup')?.classList.toggle('sel', tab === 'signup');
   var lf = document.getElementById('auth-login-form');
   var sf = document.getElementById('auth-signup-form');
-  if (tl) tl.classList.toggle('sel', tab === 'login');
-  if (ts) ts.classList.toggle('sel', tab === 'signup');
   if (lf) lf.style.display = tab === 'login' ? '' : 'none';
   if (sf) sf.style.display = tab === 'signup' ? '' : 'none';
   setStatus('auth-status', '');
 };
 
-/* ═══════════════════════════════════════
+/* ══════════════════════════════════════════
    GOOGLE OAUTH
-═══════════════════════════════════════ */
-/* ════════════════════════════════════════════════════
-   GOOGLE SIGN-IN — Popup approach (stays in same browser)
-   1. Get OAuth URL from Supabase (no auto-redirect)
-   2. Open in popup window we control
-   3. After auth, popup sends token back to parent
-   4. Parent creates session — popup closes
-════════════════════════════════════════════════════ */
-
-var _googlePopup = null;
-var _googlePollTimer = null;
-
-/* ══════════════════════════════════════════════════════
-   GOOGLE LOGIN — Standard OAuth redirect
-   Login ဝင်ပြီးရင် app ကို ပြန်ရောက်လာသည်
-══════════════════════════════════════════════════════ */
-var _GCI = '143473069573-h5quefjh8qsabdpodug6559qhdvchd4f.apps.googleusercontent.com';
-var _googlePopup = null;
-var _googlePollTimer = null;
-
+══════════════════════════════════════════ */
 window.signInWithGoogle = function() {
   if (window.location.protocol === 'file:') {
-    setStatus('auth-status', '⚠️ GitHub URL မှ ဖွင့်ပါ', 'err');
-    return;
+    setStatus('auth-status', '⚠️ GitHub URL မှ ဖွင့်ပါ', 'err'); return;
   }
   setStatus('auth-status', '⏳ Google ဆက်သွယ်နေသည်...', 'info');
-  var btn = document.getElementById('btn-google');
-  if (btn) { btn.disabled = true; }
-
   SB().auth.signInWithOAuth({
     provider: 'google',
-    options: {
-      redirectTo: 'https://nytherisq-debug.github.io/MMKyarrKwat/',
-      queryParams: { access_type: 'offline', prompt: 'consent' }
-    }
+    options: { redirectTo: 'https://nytherisq-debug.github.io/MMKyarrKwat/' }
   }).then(function(r) {
-    if (r.error) {
-      setStatus('auth-status', '❌ ' + r.error.message, 'err');
-      if (btn) btn.disabled = false;
-    }
-    // Success: browser redirects to Google, then back to app
+    if (r.error) setStatus('auth-status', '❌ ' + r.error.message, 'err');
   }).catch(function(e) {
     setStatus('auth-status', '❌ Google မချိတ်ဆက်နိုင်ပါ', 'err');
-    if (btn) btn.disabled = false;
   });
 };
 
-/* ═══════════════════════════════════════
+/* ══════════════════════════════════════════
    EMAIL LOGIN
-═══════════════════════════════════════ */
+══════════════════════════════════════════ */
 window.doEmailLogin = async function() {
-  var email = ((document.getElementById('auth-email') || {}).value || '').trim();
-  var pw    = ((document.getElementById('auth-pw')    || {}).value || '').trim();
-  if (!email) { setStatus('auth-status', '⚠️ Email ထည့်ပါ', 'err'); document.getElementById('auth-email')?.focus(); return; }
-  if (!pw)    { setStatus('auth-status', '⚠️ Password ထည့်ပါ', 'err'); document.getElementById('auth-pw')?.focus(); return; }
+  var email = ((document.getElementById('auth-email')||{}).value||'').trim();
+  var pw    = ((document.getElementById('auth-pw')||{}).value||'').trim();
+  if (!email) { setStatus('auth-status','⚠️ Email ထည့်ပါ','err'); return; }
+  if (!pw)    { setStatus('auth-status','⚠️ Password ထည့်ပါ','err'); return; }
   var btn = document.getElementById('btn-login');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(6,3,0,.3);border-top-color:#060300;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>Login ဝင်နေသည်...'; }
-  setStatus('auth-status', '', '');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ ဝင်နေသည်...'; }
+  setStatus('auth-status','');
   try {
     var r = await SB().auth.signInWithPassword({ email: email, password: pw });
     if (r.error) {
       var msg = r.error.message;
-      if (msg.includes('Invalid') || msg.includes('credentials')) msg = 'Email / Password မမှန်ပါ';
-      else if (msg.includes('Email not confirmed')) msg = 'Email ကို Confirm မလုပ်ရသေးပါ — Inbox စစ်ပါ';
-      setStatus('auth-status', '❌ ' + msg, 'err');
+      if (msg.includes('Invalid') || msg.includes('credentials') || msg.includes('invalid login')) msg = '❌ Email / Password မမှန်ပါ';
+      else if (msg.includes('Email not confirmed')) msg = '❌ Email Confirm မလုပ်ရသေးပါ — Inbox စစ်ပါ';
+      else msg = '❌ ' + msg;
+      setStatus('auth-status', msg, 'err');
     }
-    // success → onAuthStateChange → lobby
+    // Success → onAuthStateChange(SIGNED_IN) → onUserSignedIn → lobby
   } catch(e) {
     setStatus('auth-status', '❌ ချိတ်ဆက်မရပါ — Internet စစ်ပါ', 'err');
   } finally {
@@ -7869,33 +7719,28 @@ window.doEmailLogin = async function() {
   }
 };
 
-/* ═══════════════════════════════════════
-   EMAIL SIGNUP (name required)
-═══════════════════════════════════════ */
+/* ══════════════════════════════════════════
+   EMAIL SIGNUP
+══════════════════════════════════════════ */
 window.doEmailSignup = async function() {
-  var email = ((document.getElementById('auth-semail') || {}).value || '').trim();
-  var pw    = ((document.getElementById('auth-spw')    || {}).value || '').trim();
-  if (!email) { setStatus('auth-status', '⚠️ Email ထည့်ပါ', 'err'); return; }
-  if (pw.length < 6) { setStatus('auth-status', '⚠️ Password အနည်းဆုံး 6 လုံး ထည့်ပါ', 'err'); return; }
-  setStatus('auth-status', '⏳ Account ဖန်တီးနေသည်...', 'info');
+  var email = ((document.getElementById('auth-semail')||{}).value||'').trim();
+  var pw    = ((document.getElementById('auth-spw')||{}).value||'').trim();
+  if (!email) { setStatus('auth-status','⚠️ Email ထည့်ပါ','err'); return; }
+  if (pw.length < 6) { setStatus('auth-status','⚠️ Password အနည်းဆုံး 6 လုံး ထည့်ပါ','err'); return; }
   var btn = document.getElementById('btn-signup');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(6,3,0,.3);border-top-color:#060300;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>ဖန်တီးနေသည်...'; }
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ ဖန်တီးနေသည်...'; }
+  setStatus('auth-status','⏳ Account ဖန်တီးနေသည်...','info');
   try {
-    var r = await SB().auth.signUp({
-      email: email, password: pw
-    });
+    var r = await SB().auth.signUp({ email: email, password: pw });
     if (r.error) {
       var emsg = r.error.message;
-      if (emsg.includes('already registered') || emsg.includes('User already registered')) {
-        emsg = 'ဒီ Email ရှိနှင့်ပြီး — Login tab ကနေ ဝင်ပါ';
-      }
+      if (emsg.includes('already registered') || emsg.includes('already been registered')) emsg = 'ဒီ Email ရှိနှင့်ပြီ — Login tab ကနေ ဝင်ပါ';
       setStatus('auth-status', '❌ ' + emsg, 'err');
     } else if (r.data && r.data.user) {
       if (!r.data.session) {
-        // Email confirmation still on
         setStatus('auth-status', '📧 Email Inbox စစ်ပြီး Confirmation link နှိပ်ပါ', 'ok');
       }
-      // session exists → onAuthStateChange(SIGNED_IN) → lobby automatically
+      // session exists → SIGNED_IN fires → lobby
     }
   } catch(e) {
     setStatus('auth-status', '❌ ' + e.message, 'err');
@@ -7904,329 +7749,201 @@ window.doEmailSignup = async function() {
   }
 };
 
-/* ═══════════════════════════════════════
+/* ══════════════════════════════════════════
    FORGOT PASSWORD
-═══════════════════════════════════════ */
+══════════════════════════════════════════ */
 window.doForgotPassword = async function() {
-  var email = (document.getElementById('auth-email') || {}).value || '';
-  email = email.trim();
-  if (!email) { setStatus('auth-status', '⚠️ Email ထည့်ပြီးမှ နှိပ်ပါ', 'err'); return; }
-  setStatus('auth-status', '⏳ Reset link ပို့နေသည်...', 'info');
+  var email = ((document.getElementById('auth-email')||{}).value||'').trim();
+  if (!email) { setStatus('auth-status','⚠️ Email ထည့်ပြီးမှ နှိပ်ပါ','err'); return; }
+  setStatus('auth-status','⏳ Reset link ပို့နေသည်...','info');
   try {
-    var r = await SB().auth.resetPasswordForEmail(email, { redirectTo: window.location.href.includes('nytherisq-debug.github.io') ? 'https://nytherisq-debug.github.io/MMKyarrKwat/' : window.location.href });
-    if (r.error) setStatus('auth-status', '❌ ' + r.error.message, 'err');
-    else setStatus('auth-status', '✅ Email စစ်ဆေးပါ — Reset link ပို့ပြီ', 'ok');
-  } catch(e) { setStatus('auth-status', '❌ ' + e.message, 'err'); }
+    var r = await SB().auth.resetPasswordForEmail(email, { redirectTo: 'https://nytherisq-debug.github.io/MMKyarrKwat/' });
+    if (r.error) setStatus('auth-status','❌ '+r.error.message,'err');
+    else setStatus('auth-status','✅ Email စစ်ဆေးပါ — Reset link ပို့ပြီ','ok');
+  } catch(e) { setStatus('auth-status','❌ '+e.message,'err'); }
 };
 
-/* ═══════════════════════════════════════
+/* ══════════════════════════════════════════
    GUEST MODE
-═══════════════════════════════════════ */
+══════════════════════════════════════════ */
+function _tryRestoreGuest() {
+  try {
+    var g = JSON.parse(localStorage.getItem('kk_guest_v1')||'null');
+    if (g && g.name) { return _applyGuestProfile(); }
+  } catch(e) {}
+  return false;
+}
+
+function _applyGuestProfile() {
+  try {
+    var g = JSON.parse(localStorage.getItem('kk_guest_v1')||'null');
+    if (!g || !g.name) return false;
+    _isGuest = true;
+    myName = g.name;
+    _userProfile = { display_name: g.name, avatar: g.avatar||'👤', avatar_url: g.avatar_url||null, player_id: MY_PLAYER_ID };
+    applyProfileToLobby(_userProfile);
+    return true;
+  } catch(e) { return false; }
+}
+
 window.continueAsGuest = function() {
   _isGuest = true;
-  // Load saved guest — same name/avatar every time
-  var saved = null;
-  try { saved = JSON.parse(localStorage.getItem('kk_guest_v1')); } catch(e) {}
-  if (saved && saved.name) {
-    myName = saved.name;
-  } else {
-    myName = 'Guest​' + Math.floor(Math.random() * 9000 + 1000);
-  }
-  // Persist forever
+  var g = null;
+  try { g = JSON.parse(localStorage.getItem('kk_guest_v1')||'null'); } catch(e) {}
+  myName = (g && g.name) ? g.name : ('Guest ' + Math.floor(Math.random()*9000+1000));
   try {
-    var cur = saved || {};
-    cur.name = myName;
-    if (!cur.player_id) cur.player_id = MY_PLAYER_ID;
-    if (!cur.avatar) cur.avatar = '👤';
-    cur.savedAt = Date.now();
-    localStorage.setItem('kk_guest_v1', JSON.stringify(cur));
+    localStorage.setItem('kk_guest_v1', JSON.stringify({
+      name: myName, avatar: (g&&g.avatar)||'👤',
+      avatar_url: (g&&g.avatar_url)||null,
+      player_id: MY_PLAYER_ID, savedAt: Date.now()
+    }));
   } catch(e) {}
-  _applyGuestProfile();
+  _userProfile = { display_name: myName, avatar: (g&&g.avatar)||'👤', avatar_url: null, player_id: MY_PLAYER_ID };
+  applyProfileToLobby(_userProfile);
   showScr('lobby');
   if (typeof startGlobalPresence === 'function') startGlobalPresence();
 };
 
-function _applyGuestProfile() {
-  var saved = null;
-  try { saved = JSON.parse(localStorage.getItem('kk_guest_v1') || 'null'); } catch(e) {}
-  if (!saved || !saved.name) return false;
-  _isGuest = true;
-  myName = saved.name;
-  // Hide manual inputs
-  var ni = document.getElementById('inp-name');
-  if (ni) { ni.value = myName; ni.style.display = 'none'; }
-  var nl = document.getElementById('name-lbl-el');
-  if (nl) nl.style.display = 'none';
-  var pr = document.querySelector('.pid-row');
-  if (pr) pr.style.display = 'none';
-  // Show lobby profile widget
-  var w = document.getElementById('lobby-profile');
-  if (w) w.style.display = 'flex';
-  var av = saved.avatar_url || saved.avatar || '👤';
-  renderAv(document.getElementById('lp-avatar-el'), av);
-  var ln = document.getElementById('lp-name-el');
-  if (ln) ln.textContent = myName;
-  var lp = document.getElementById('lp-pid-el');
-  if (lp) lp.textContent = MY_PLAYER_ID;
-  ['pid-display','fp-pid-val','pm-pid-val'].forEach(function(id){
-    var e = document.getElementById(id); if (e) e.textContent = MY_PLAYER_ID;
-  });
-  // Set _userProfile so modal/friends work
-  _userProfile = {
-    display_name: myName,
-    avatar: saved.avatar || '👤',
-    avatar_url: saved.avatar_url || null,
-    player_id: MY_PLAYER_ID
-  };
-  return true;
-}
-
-/* ═══════════════════════════════════════
+/* ══════════════════════════════════════════
    SIGN OUT
-═══════════════════════════════════════ */
+══════════════════════════════════════════ */
 window.doSignOut = async function() {
   if (!confirm('Sign Out ထွက်မည်လား?')) return;
-  closeProfileModal();
-  _isGuest = false; _authUser = null; _userProfile = null;
+  if (typeof closeProfileModal === 'function') closeProfileModal();
+  _authUser = null; _userProfile = null; _isGuest = false;
   try { await SB().auth.signOut({ scope: 'local' }); } catch(e) {}
-  // Clear all Supabase + profile localStorage keys
   try {
-    var toRemove = Object.keys(localStorage).filter(function(k) {
-      return k.startsWith('kk_prof_') || k.includes('supabase') || k.includes('sb-') || k.includes('auth-token') || k === 'kk_guest_v1' || k === 'kk_auth_backup';
-    });
-    toRemove.forEach(function(k) { localStorage.removeItem(k); });
+    Object.keys(localStorage).filter(function(k){
+      return k.startsWith('kk_prof_') || k.includes('sb-oxziinvwdhligrbllqbj') || k === 'kk_auth_backup' || k === 'kk_guest_v1';
+    }).forEach(function(k){ localStorage.removeItem(k); });
   } catch(e) {}
   showScr('auth');
 };
 
-/* ═══════════════════════════════════════
-   AVATAR PICKER — Setup screen
-═══════════════════════════════════════ */
-window.setSetupAv = function(el, em) {
-  document.querySelectorAll('#av-picker .av-opt').forEach(function(o) { o.classList.remove('sel'); });
-  el.classList.add('sel');
-  _pendingAv = em;
-  var prev = document.getElementById('psetup-av-preview');
-  if (prev) { prev.textContent = em; prev.style.backgroundImage = ''; }
-};
-window.useAvatarUrl = function() {
-  var url = (document.getElementById('av-url-inp') || {}).value || '';
-  url = url.trim();
-  if (!url) return;
-  _pendingAv = url;
-  var prev = document.getElementById('psetup-av-preview');
-  if (prev) renderAv(prev, url);
-  document.querySelectorAll('#av-picker .av-opt').forEach(function(o) { o.classList.remove('sel'); });
-};
-
-/* ═══════════════════════════════════════
-   PROFILE SETUP (first time)
-═══════════════════════════════════════ */
-window.doCreateProfile = async function() {
-  var name = (document.getElementById('psetup-name') || {}).value || '';
-  name = name.trim();
-  if (!name) { setStatus('psetup-status', '⚠️ အမည် ထည့်ပါ', 'err'); return; }
-  if (!_authUser) { setStatus('psetup-status', '❌ Login ဝင်ထားခြင်း မရှိပါ', 'err'); return; }
-  setStatus('psetup-status', '⏳ Profile ဖန်တီးနေသည်...', 'info');
-  var av = _pendingAv || '🐯';
-  var profile = {
-    id: _authUser.id,
-    player_id: MY_PLAYER_ID,
-    display_name: name,
-    avatar: av.startsWith('http') ? '🐯' : av,
-    avatar_url: av.startsWith('http') ? av : null,
-    games_played: 0,
-    wins: 0,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-  await upsertProfile(profile);
-  _userProfile = profile;
-  applyProfileToLobby(profile);
-  setStatus('psetup-status', '', '');
-  showScr('lobby');
-  if (typeof startGlobalPresence === 'function') startGlobalPresence();
-  if (typeof _loadPendingFriendRequests === 'function') _loadPendingFriendRequests();
-};
-
-/* ═══════════════════════════════════════
-   PROFILE MODAL — open/close/save
-═══════════════════════════════════════ */
+/* ══════════════════════════════════════════
+   PROFILE MODAL
+══════════════════════════════════════════ */
 window.openProfileModal = function() {
-  var p = _userProfile;
   var modal = document.getElementById('profile-modal');
   if (!modal) return;
+  var p = _userProfile || {};
   _pendingAvModal = null;
-  // Fill fields
   var ni = document.getElementById('pm-name-inp');
-  if (ni) ni.value = p ? p.display_name : (myName || '');
+  if (ni) ni.value = p.display_name || myName || '';
   var pv = document.getElementById('pm-pid-val');
-  if (pv) pv.textContent = p ? (p.player_id || MY_PLAYER_ID) : MY_PLAYER_ID;
+  if (pv) pv.textContent = MY_PLAYER_ID;
   var ei = document.getElementById('pm-email-disp');
-  if (ei) ei.value = _isGuest ? 'Guest Mode' : (_authUser ? _authUser.email : '');
+  if (ei) ei.value = _isGuest ? 'Guest Mode' : ((_authUser && _authUser.email) || '');
   var av = document.getElementById('pm-avatar-el');
-  if (av && p) renderAv(av, p.avatar_url || p.avatar);
-  else if (av) av.textContent = '👤';
+  if (av) renderAv(av, p.avatar_url || p.avatar || '🐯');
   var picker = document.getElementById('pm-av-picker');
   if (picker) picker.style.display = 'none';
-  setStatus('pm-status', '');
+  setStatus('pm-status','');
   modal.style.display = 'flex';
 };
+
 window.closeProfileModal = function() {
-  var modal = document.getElementById('profile-modal');
-  if (modal) modal.style.display = 'none';
+  var m = document.getElementById('profile-modal');
+  if (m) m.style.display = 'none';
 };
+
 window.setModalAv = function(el, em) {
-  document.querySelectorAll('#pm-av-picker .av-opt').forEach(function(o) { o.classList.remove('sel'); });
+  document.querySelectorAll('#pm-av-picker .av-opt').forEach(function(o){ o.classList.remove('sel'); });
   el.classList.add('sel');
   _pendingAvModal = em;
   var av = document.getElementById('pm-avatar-el');
   if (av) { av.textContent = em; av.style.backgroundImage = ''; }
 };
-window.usePmAvatarUrl = function() {
-  var url = (document.getElementById('pm-av-url') || {}).value || '';
-  url = url.trim();
-  if (!url) return;
-  _pendingAvModal = url;
-  renderAv(document.getElementById('pm-avatar-el'), url);
-  document.querySelectorAll('#pm-av-picker .av-opt').forEach(function(o) { o.classList.remove('sel'); });
+
+window.togglePmAvPicker = function() {
+  var p = document.getElementById('pm-av-picker');
+  if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
 };
+
 window.saveProfileChanges = async function() {
-  var name = (document.getElementById('pm-name-inp') || {}).value || '';
-  name = name.trim();
-  if (!name) { setStatus('pm-status', '⚠️ အမည် ထည့်ပါ', 'err'); return; }
+  var name = ((document.getElementById('pm-name-inp')||{}).value||'').trim();
+  if (!name) { setStatus('pm-status','⚠️ အမည် ထည့်ပါ','err'); return; }
   var newAv = _pendingAvModal || (_userProfile ? (_userProfile.avatar_url || _userProfile.avatar) : '🐯');
-  setStatus('pm-status', '⏳ သိမ်းဆည်းနေသည်...', 'info');
-  if (_authUser && !_isGuest) {
-    var updated = Object.assign({}, _userProfile || {}, {
-      id: _authUser.id,
-      player_id: MY_PLAYER_ID,
+  setStatus('pm-status','⏳ သိမ်းဆည်းနေသည်...','info');
+  if (_authUser && !_isGuest && _userProfile) {
+    var up = Object.assign({}, _userProfile, {
       display_name: name,
-      avatar: newAv && newAv.startsWith('http') ? (_userProfile ? _userProfile.avatar : '🐯') : (newAv || '🐯'),
-      avatar_url: newAv && newAv.startsWith('http') ? newAv : null,
+      avatar: (newAv && (newAv.startsWith('http')||newAv.startsWith('data:'))) ? _userProfile.avatar : (newAv||'🐯'),
+      avatar_url: (newAv && (newAv.startsWith('http')||newAv.startsWith('data:'))) ? newAv : null,
       updated_at: new Date().toISOString()
     });
-    await upsertProfile(updated);
-    _userProfile = updated;
+    _userProfile = up;
+    await upsertProfile(up);
   }
-  // Apply regardless (guest too)
-  myName = name;
-  var lname = document.getElementById('lp-name-el');
-  if (lname) lname.textContent = name;
-  var lavatar = document.getElementById('lp-avatar-el');
-  if (lavatar) renderAv(lavatar, newAv);
-  var ni = document.getElementById('inp-name');
-  if (ni) ni.value = name;
-  // Save guest profile changes
   if (_isGuest) {
     try {
-      var gs = JSON.parse(localStorage.getItem('kk_guest_v1') || '{}');
-      gs.name = name; gs.savedAt = Date.now();
-      if (newAv && newAv !== '👤') {
-        if (newAv.startsWith('http') || newAv.startsWith('data:')) gs.avatar_url = newAv;
-        else gs.avatar = newAv;
-      }
+      var gs = JSON.parse(localStorage.getItem('kk_guest_v1')||'{}');
+      gs.name = name; if (newAv) { if (newAv.startsWith('http')||newAv.startsWith('data:')) gs.avatar_url=newAv; else gs.avatar=newAv; }
       localStorage.setItem('kk_guest_v1', JSON.stringify(gs));
-      if (_userProfile) { _userProfile.display_name = name; }
     } catch(e) {}
   }
-  setStatus('pm-status', '✅ သိမ်းဆည်းပြီးပါပြီ!', 'ok');
+  myName = name;
+  if (_userProfile) { _userProfile.display_name = name; if (newAv && _pendingAvModal) { _userProfile.avatar_url = newAv.startsWith('http')||newAv.startsWith('data:') ? newAv : null; _userProfile.avatar = newAv; } }
+  applyProfileToLobby(_userProfile || { display_name: name, avatar: newAv, player_id: MY_PLAYER_ID });
+  setStatus('pm-status','✅ သိမ်းဆည်းပြီးပါပြီ!','ok');
+  setTimeout(function(){ window.closeProfileModal(); setStatus('pm-status',''); }, 900);
   if (typeof updateGlobalPresence === 'function') updateGlobalPresence('lobby', null);
-  setTimeout(function() { closeProfileModal(); setStatus('pm-status', ''); }, 900);
 };
 
-/* ═══════════════════════════════════════
-   PERSISTENT FRIEND REQUESTS
-═══════════════════════════════════════ */
-async function _loadPendingFriendRequests() {
-  if (!MY_PLAYER_ID) return;
-  try {
-    var r = await SB().from('friend_requests')
-      .select('*').eq('to_pid', MY_PLAYER_ID).eq('status', 'pending')
-      .order('created_at', { ascending: false });
-    if (r.data && r.data.length > 0) {
-      var req = r.data[0];
-      if (typeof showFriendRequestPopup === 'function') {
-        showFriendRequestPopup(req.from_pid, req.from_name, req.id);
-      }
-    }
-  } catch(e) {}
-}
-
-/* ═══════════════════════════════════════
-   GAME STATS TRACKING
-═══════════════════════════════════════ */
+/* ══════════════════════════════════════════
+   GAME STATS
+══════════════════════════════════════════ */
 async function _recordGameResult(won) {
   if (!_authUser || !_userProfile) return;
-  _userProfile.games_played = (_userProfile.games_played || 0) + 1;
-  if (won) _userProfile.wins = (_userProfile.wins || 0) + 1;
+  _userProfile.games_played = (_userProfile.games_played||0) + 1;
+  if (won) _userProfile.wins = (_userProfile.wins||0) + 1;
   _userProfile.updated_at = new Date().toISOString();
   await upsertProfile(_userProfile);
 }
 
-/* ═══════════════════════════════════════
-   PATCH game name into game flow
-═══════════════════════════════════════ */
-(function() {
-  var _origCR = window.createRoom;
-  window.createRoom = async function() {
-    if (_userProfile) myName = _userProfile.display_name || myName;
-    var ni = document.getElementById('inp-name');
-    if (ni && myName) ni.value = myName;
-    if (_origCR) await _origCR.apply(this, arguments);
+/* ══════════════════════════════════════════
+   PATCH GAME FUNCTIONS
+══════════════════════════════════════════ */
+(function(){
+  var _cR = window.createRoom, _jR = window.joinRoom, _dL = window.doLeave, _sW = window.showWin;
+  window.createRoom = async function(){
+    if (_userProfile) { myName = _userProfile.display_name||myName; var ni=document.getElementById('inp-name'); if(ni)ni.value=myName; }
+    if (_cR) await _cR.apply(this,arguments);
+    setTimeout(function(){ if(window.roomId && typeof updateGlobalPresence==='function') updateGlobalPresence('waiting',window.roomId); },800);
   };
-  var _origJR = window.joinRoom;
-  window.joinRoom = async function() {
-    if (_userProfile) myName = _userProfile.display_name || myName;
-    var ni = document.getElementById('inp-name');
-    if (ni && myName) ni.value = myName;
-    if (_origJR) await _origJR.apply(this, arguments);
+  window.joinRoom = async function(){
+    if (_userProfile) { myName = _userProfile.display_name||myName; var ni=document.getElementById('inp-name'); if(ni)ni.value=myName; }
+    if (_jR) await _jR.apply(this,arguments);
+    setTimeout(function(){ if(window.roomId && typeof updateGlobalPresence==='function') updateGlobalPresence('playing',window.roomId); },1000);
   };
-  var _origDL = window.doLeave;
-  window.doLeave = async function() {
-    if (typeof updateGlobalPresence === 'function') updateGlobalPresence('lobby', null);
-    if (_origDL) await _origDL.apply(this, arguments);
+  window.doLeave = async function(){
+    if (typeof updateGlobalPresence==='function') updateGlobalPresence('lobby',null);
+    if (_dL) await _dL.apply(this,arguments);
   };
-})();
-
-/* ═══════════════════════════════════════
-   PATCH showWin to record stats
-═══════════════════════════════════════ */
-(function() {
-  var _origSW = window.showWin;
-  window.showWin = function(won) {
+  window.showWin = function(won){
     if (!aiMode && !spectatorMode) _recordGameResult(won);
-    if (_origSW) return _origSW.apply(this, arguments);
+    if (_sW) return _sW.apply(this,arguments);
   };
 })();
 
-/* ═══════════════════════════════════════
-   BOOT — show auth first, then init
-═══════════════════════════════════════ */
-(function boot() {
-  // Ensure auth screen is shown immediately
-  if (typeof showScr === 'function') showScr('auth');
-  else {
-    // showScr not yet available — force auth visible via DOM
-    var a = document.getElementById('auth');
-    var l = document.getElementById('lobby');
-    if (a) a.classList.add('show');
-    if (l) l.classList.remove('show');
-  }
-
-  function tryInit() {
-    if (typeof SB === 'function' && typeof supabase !== 'undefined') {
+/* ══════════════════════════════════════════
+   BOOT
+══════════════════════════════════════════ */
+(function(){
+  function tryInit(){
+    if (typeof SB==='function' && typeof supabase!=='undefined') {
       initAuth();
     } else {
-      setTimeout(tryInit, 300);
+      setTimeout(tryInit,300);
     }
   }
-  if (document.readyState === 'loading') {
+  if (document.readyState==='loading') {
     document.addEventListener('DOMContentLoaded', tryInit);
   } else {
     setTimeout(tryInit, 400);
   }
 })();
+
 
 </script>
 
@@ -8815,4 +8532,4 @@ window.handleAvatarUpload = async function(inp) {
 })();
 
 </body>
-   </html>
+</html>
