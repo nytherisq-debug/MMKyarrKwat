@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ကျားကွက်">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#06050E">
+<link rel="manifest" href="manifest.json">
 <title>မြန်မာ ကျားကွက်</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Noto+Sans+Myanmar:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -288,8 +293,8 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
       <button class="eic" onclick="saveEdit()" style="color:var(--ok)">✓</button>
       <button class="eic" onclick="cancelEdit()">✕</button>
     </div>
-    <div class="pro-code-pill" id="pcp" onclick="copyCode()" title="Code ကူးရန်">
-      <span>🔑</span><span id="pct">––</span><span style="font-size:.54rem;opacity:.6">ကူးရန်</span>
+    <div class="pro-code-pill" id="pcp" onclick="copyCode()" title="ID ကူးရန်">
+      <span>🪪</span><span id="pct">––</span><span style="font-size:.54rem;opacity:.6">ကူးရန်</span>
     </div>
     <div class="pro-email" id="pem"></div>
   </div>
@@ -298,7 +303,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
     <button class="ptab" id="pt-req" onclick="setProTab('req')">🔔 ခေါ်ချက်<span id="rbadge"></span></button>
   </div>
   <div class="psec on" id="ps-fri">
-    <div class="af-row"><input class="af-inp" id="aci" placeholder="Friend Code ထည့်ပါ" maxlength="8"><button class="btn-add" id="badd" onclick="addFriend()">ထည့်မည်</button></div>
+    <div class="af-row"><input class="af-inp" id="aci" placeholder="Player ID ထည့်ပါ" maxlength="8"><button class="btn-add" id="badd" onclick="addFriend()">ထည့်မည်</button></div>
     <div class="sec-ttl">သူငယ်ချင်းများ</div>
     <div class="fscroll" id="flist"><div class="fri-empty">သူငယ်ချင်း မရှိသေးပါ</div></div>
   </div>
@@ -419,13 +424,30 @@ async function loadProf(){
   try{
     let{data}=await SB().from('profiles').select('*').eq('id',_user.id).single();
     if(!data){
+      /* Profile မရှိသေးရင် create */
       const m=_user.user_metadata||{};
       const nm=m.full_name||m.name||m.username||_user.email?.split('@')[0]||'Player';
-      await SB().from('profiles').upsert({id:_user.id,username:nm,avatar_url:m.avatar_url||null});
-      const r=await SB().from('profiles').select('*').eq('id',_user.id).single();data=r.data;
+      const newCode=genID();
+      await SB().from('profiles').upsert({id:_user.id,username:nm,avatar_url:m.avatar_url||null,user_code:newCode});
+      const r=await SB().from('profiles').select('*').eq('id',_user.id).single();
+      data=r.data;
+    }
+    /* user_code null ဖြစ်နေရင် permanent ID generate ပြီး save */
+    if(!data?.user_code){
+      const code=genID();
+      await SB().from('profiles').update({user_code:code}).eq('id',_user.id);
+      if(data) data.user_code=code;
     }
     _prof=data;
   }catch(e){console.warn('loadProf:',e);}
+}
+
+/* Permanent unique ID generator  e.g. KK7X3A9F */
+function genID(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let id='KK';
+  for(let i=0;i<6;i++) id+=chars[Math.floor(Math.random()*chars.length)];
+  return id;
 }
 
 function renderProf(){
@@ -472,7 +494,7 @@ async function uploadAv(inp){
 }
 
 /* ══ COPY CODE ══ */
-function copyCode(){const c=document.getElementById('pct').textContent;navigator.clipboard?.writeText(c).then(()=>toast('✓ Code ကူးပြီး: '+c)).catch(()=>toast('Code: '+c));}
+function copyCode(){const c=document.getElementById('pct').textContent;navigator.clipboard?.writeText(c).then(()=>toast('✓ ID ကူးပြီး: '+c)).catch(()=>toast('ID: '+c));}
 
 /* ══ PROFILE TABS ══ */
 function setProTab(t){
@@ -503,7 +525,7 @@ async function loadReqs(){
 
 function renderFriends(){
   const b=document.getElementById('flist');
-  if(!_flist.length){b.innerHTML='<div class="fri-empty">သူငယ်ချင်း မရှိသေးပါ<br><small style="color:var(--t4);font-size:.62rem">Friend Code ဖြင့် ထည့်ပါ</small></div>';return;}
+  if(!_flist.length){b.innerHTML='<div class="fri-empty">သူငယ်ချင်း မရှိသေးပါ<br><small style="color:var(--t4);font-size:.62rem">Player ID ဖြင့် ထည့်ပါ</small></div>';return;}
   b.innerHTML=_flist.map(f=>{const o=f.requester_id===_user.id?f.addressee:f.requester;return friHTML(f.id,o,_online.has(o.id),'acc');}).join('');
 }
 
@@ -524,12 +546,12 @@ function friHTML(fid,p,online,type){
 
 async function addFriend(){
   const code=document.getElementById('aci').value.trim().toUpperCase();
-  if(!code||code.length<4){toast('⚠️ Friend Code ထည့်ပါ');return;}
-  if(_prof&&code===_prof.user_code){toast('⚠️ ကိုယ့် Code မဖြစ်နိုင်ပါ');return;}
+  if(!code||code.length<4){toast('⚠️ Player ID ထည့်ပါ');return;}
+  if(_prof&&code===_prof.user_code){toast('⚠️ ကိုယ့် ID မဖြစ်နိုင်ပါ');return;}
   const btn=document.getElementById('badd');btn.disabled=true;btn.textContent='…';
   try{
     const{data:tg,error:te}=await SB().from('profiles').select('id,username').eq('user_code',code).single();
-    if(te||!tg){toast('❌ Code မတွေ့ပါ: '+code);return;}
+    if(te||!tg){toast('❌ ID မတွေ့ပါ: '+code);return;}
     const{data:ex}=await SB().from('friendships').select('id,status').or(`and(requester_id.eq.${_user.id},addressee_id.eq.${tg.id}),and(requester_id.eq.${tg.id},addressee_id.eq.${_user.id})`).maybeSingle();
     if(ex){toast(ex.status==='accepted'?'ရှိပြီးသား သူငယ်ချင်း':'ခေါ်ချက် ပို့ပြီးပါပြီ');return;}
     const{error}=await SB().from('friendships').insert({requester_id:_user.id,addressee_id:tg.id,status:'pending'});
@@ -592,7 +614,12 @@ function chime(req=false){
 }
 
 /* ══ GO GAME ══ */
-function goGame(){document.getElementById('ottl').textContent='အောင်မြင်ပါသည်';document.getElementById('osub').textContent='Game သို့ ဝင်ရောက်နေပါသည်…';document.getElementById('overlay').classList.add('on');setTimeout(()=>{window.location.href=GAME;},900);}
+function goGame(){
+  document.getElementById('ottl').textContent='အောင်မြင်ပါသည်';
+  document.getElementById('osub').textContent='Game သို့ ဝင်ရောက်နေပါသည်…';
+  document.getElementById('overlay').classList.add('on');
+  setTimeout(()=>{ window.location.replace(GAME); },900);
+}
 
 /* ══ UTILS ══ */
 function val(id){return document.getElementById(id)?.value.trim()||'';}
