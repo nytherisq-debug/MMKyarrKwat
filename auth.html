@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>မြန်မာ ကျားကွက်</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Noto+Sans+Myanmar:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --g100:#F0CC72;--g200:#D4A843;
+  --surface:#06050E;
+  --t1:#F0E8D8;--t2:#C8B888;--t3:#7A6338;--t4:#2E2416;
+  --ok:#10B981;--err:#EF4444;
+  --glass-bg:rgba(255,255,255,0.05);
+  --glass-brd:rgba(255,255,255,0.13);
+  --spring:cubic-bezier(0.175,0.885,0.32,1.275);
+  --smooth:cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+input,textarea{-webkit-user-select:auto!important;user-select:auto!important}
+img{-webkit-user-drag:none}
+html,body{width:100%;min-height:100svh;font-family:'Outfit',sans-serif;color:var(--t1);background:var(--surface);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+/* BG */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 120% 80% at 50% -10%,rgba(18,8,50,.95) 0%,transparent 55%),radial-gradient(ellipse 70% 60% at -5% 100%,rgba(30,10,5,.80) 0%,transparent 50%),radial-gradient(ellipse 60% 50% at 105% 80%,rgba(10,5,25,.70) 0%,transparent 55%),linear-gradient(160deg,#060414 0%,#090516 50%,#060310 100%)}
+body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23D4A843' stroke-opacity='.010'%3E%3Cpath d='M50 2L98 50L50 98L2 50Z' stroke-width='.8'/%3E%3Ccircle cx='50' cy='50' r='18' stroke-width='.5'/%3E%3C/g%3E%3C/svg%3E");background-size:100px 100px}
+
+/* MESH ORBS */
+.mesh{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.mo{position:absolute;border-radius:50%;filter:blur(80px)}
+.mo1{width:500px;height:500px;top:-15%;left:-12%;background:radial-gradient(circle,rgba(212,168,67,.09) 0%,transparent 65%);animation:mdrift 20s ease-in-out infinite alternate}
+.mo2{width:380px;height:380px;bottom:-10%;right:-8%;background:radial-gradient(circle,rgba(70,30,160,.08) 0%,transparent 65%);animation:mdrift 16s ease-in-out infinite alternate-reverse}
+.mo3{width:260px;height:260px;top:40%;left:58%;background:radial-gradient(circle,rgba(212,168,67,.05) 0%,transparent 65%);animation:mdrift 24s ease-in-out infinite alternate}
+@keyframes mdrift{from{transform:translate(0,0)}to{transform:translate(32px,-28px)}}
+
+/* LAYOUT */
+.page{position:relative;z-index:10;min-height:100svh;width:100%;display:flex;align-items:center;justify-content:center;padding:20px 16px}
+.view{display:none}.view.on{display:flex;flex-direction:column;align-items:center;width:100%}
+
+/* GLASS CARD — from uploaded: ml-check-box + bottom-nav patterns */
+.gcard{
+  position:relative;width:100%;max-width:390px;border-radius:26px;
+  background:rgba(16,12,28,.48);
+  backdrop-filter:blur(35px) saturate(180%);-webkit-backdrop-filter:blur(35px) saturate(180%);
+  border:1px solid rgba(255,255,255,.09);
+  box-shadow:0 0 0 1px rgba(212,168,67,.08),0 20px 60px rgba(0,0,0,.55),0 8px 25px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),inset 0 0 40px rgba(212,168,67,.02);
+  overflow:hidden;animation:glassPopUp .55s var(--spring) both}
+/* from uploaded glassPopUp */
+@keyframes glassPopUp{0%{transform:scale(.88);opacity:0}100%{transform:scale(1);opacity:1}}
+.gcard::before{content:'';position:absolute;top:0;left:10%;right:10%;height:1px;z-index:4;background:linear-gradient(90deg,transparent,rgba(212,168,67,.55) 30%,rgba(240,204,114,.90) 50%,rgba(212,168,67,.55) 70%,transparent)}
+.gcard::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 70% 40% at 50% 0%,rgba(212,168,67,.04) 0%,transparent 60%)}
+.cin{position:relative;z-index:2;padding:28px 24px 24px}
+
+/* LOGO — no rings, just animated wave text (from uploaded: waveFlow + textFlowBlue) */
+.lhead{text-align:center;margin-bottom:22px;animation:slideUp .45s var(--smooth) both .06s}
+.ltitle{
+  font-family:'Cinzel Decorative',serif;font-size:1.10rem;font-weight:700;letter-spacing:.09em;
+  background:linear-gradient(90deg,#B8860B,#F0CC72,#FFEAA7,#D4A843,#F0CC72,#B8860B);
+  background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:waveFlow 4s linear infinite;filter:drop-shadow(0 0 8px rgba(212,168,67,.35))}
+/* waveFlow from uploaded */
+@keyframes waveFlow{0%{background-position:0% center}100%{background-position:200% center}}
+.lsub{font-size:.63rem;color:var(--t3);letter-spacing:.12em;margin-top:3px}
+
+/* TABS */
+.tabs{display:flex;margin-bottom:20px;padding:3px;background:rgba(0,0,0,.28);border:1px solid rgba(212,168,67,.14);border-radius:13px;animation:slideUp .45s var(--smooth) both .10s}
+.tab{flex:1;padding:8px 0;border:none;background:transparent;cursor:pointer;border-radius:10px;font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:600;color:var(--t3);letter-spacing:.04em;transition:all .18s var(--smooth)}
+.tab.on{color:var(--g100);background:rgba(212,168,67,.10);border:1px solid rgba(212,168,67,.20);box-shadow:0 2px 10px rgba(212,168,67,.14),inset 0 1px 0 rgba(255,255,255,.06);text-shadow:0 0 10px rgba(212,168,67,.35)}
+
+/* PANEL */
+.panel{display:none}.panel.on{display:block}
+
+/* GOOGLE BTN — from uploaded: glass-bg + glass-brd technique */
+.btn-google{
+  width:100%;padding:11px 14px;display:flex;align-items:center;justify-content:center;gap:9px;
+  border-radius:11px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.84rem;font-weight:600;
+  color:var(--t1);background:var(--glass-bg);border:1px solid var(--glass-brd);
+  backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);
+  box-shadow:0 4px 15px rgba(0,0,0,.30),inset 0 0 15px rgba(255,255,255,.03);
+  transition:all .18s var(--smooth);animation:slideUp .45s var(--smooth) both .13s}
+.btn-google:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.22);transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.45)}
+.btn-google:active{transform:none;background:rgba(255,255,255,.035)}
+.btn-google:disabled{opacity:.48;cursor:not-allowed;transform:none}
+.gico{width:18px;height:18px;flex-shrink:0}
+
+/* SEPARATOR */
+.sep{display:flex;align-items:center;gap:9px;margin:13px 0;animation:slideUp .45s var(--smooth) both .16s}
+.sep-l{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(212,168,67,.14),transparent)}
+.sep-t{font-size:.63rem;color:var(--t4);letter-spacing:.10em}
+
+/* INPUTS — from uploaded: clear glass input style */
+.field{margin-bottom:11px;animation:slideUp .45s var(--smooth) both}
+.field:nth-child(1){animation-delay:.18s}.field:nth-child(2){animation-delay:.21s}.field:nth-child(3){animation-delay:.24s}
+.flbl{display:block;font-size:.64rem;font-weight:500;color:var(--t3);letter-spacing:.09em;text-transform:uppercase;margin-bottom:4px}
+.frow{position:relative}
+.finp{
+  width:100%;padding:10px 13px;
+  background:rgba(0,0,0,.22);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.12);border-radius:10px;
+  color:var(--t1);font-family:'Outfit',sans-serif;font-size:.86rem;
+  outline:none;box-shadow:inset 0 2px 6px rgba(0,0,0,.45);
+  transition:all .2s var(--smooth);-webkit-appearance:none}
+.finp::placeholder{color:rgba(255,255,255,.22)}
+/* from uploaded: input:focus accent glow */
+.finp:focus{background:rgba(212,168,67,.04);border-color:rgba(212,168,67,.45);box-shadow:0 0 0 3px rgba(212,168,67,.07),inset 0 2px 6px rgba(0,0,0,.45)}
+.eye-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--t4);font-size:.78rem;padding:3px;transition:color .14s}
+.eye-btn:hover{color:var(--t2)}
+.forgot{display:block;text-align:right;font-size:.65rem;color:var(--t3);text-decoration:none;margin:-2px 0 13px;transition:color .14s;cursor:pointer}
+.forgot:hover{color:var(--g100)}
+
+/* GOLD CTA */
+.btn-gold{
+  width:100%;padding:11px;border:none;border-radius:11px;cursor:pointer;
+  font-family:'Outfit',sans-serif;font-size:.86rem;font-weight:700;letter-spacing:.06em;
+  color:#150c00;background:linear-gradient(132deg,#F4CE68 0%,#D4A843 44%,#E9B62C 72%,#F0CC72 100%);background-size:200% 100%;
+  box-shadow:0 3px 18px rgba(212,168,67,.34),inset 0 1px 0 rgba(255,255,255,.18);
+  transition:all .18s var(--smooth);animation:slideUp .45s var(--smooth) both .30s}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 7px 26px rgba(212,168,67,.46);background-position:-30% 0}
+.btn-gold:active{transform:none}.btn-gold:disabled{opacity:.48;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* GUEST BTN */
+.btn-guest{width:100%;padding:9px 13px;display:flex;align-items:center;justify-content:center;gap:7px;border-radius:10px;cursor:pointer;font-family:'Noto Sans Myanmar',sans-serif;font-size:.76rem;font-weight:500;color:var(--t3);background:transparent;border:1px solid rgba(212,168,67,.08);transition:all .18s var(--smooth);margin-top:10px;animation:slideUp .45s var(--smooth) both .34s}
+.btn-guest:hover{color:var(--t2);background:rgba(212,168,67,.04);border-color:rgba(212,168,67,.15)}
+
+/* MESSAGES */
+.msg{margin-top:10px;padding:9px 12px;border-radius:9px;font-size:.76rem;line-height:1.55;display:none}
+.msg.on{display:block;animation:slideUp .2s var(--smooth) both}
+.msg-err{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.24);color:#fca5a5}
+.msg-ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.24);color:#6ee7b7}
+.msg-info{background:rgba(212,168,67,.08);border:1px solid rgba(212,168,67,.20);color:var(--g100)}
+
+.cfooter{text-align:center;margin-top:16px;font-size:.70rem;color:var(--t4);animation:slideUp .45s var(--smooth) both .38s}
+.cfooter a{color:var(--g200);text-decoration:none;font-weight:600;transition:color .14s;cursor:pointer}
+.cfooter a:hover{color:var(--g100)}
+.back-btn{display:inline-flex;align-items:center;gap:4px;font-size:.70rem;color:var(--t3);cursor:pointer;background:none;border:none;padding:0 0 14px;font-family:'Outfit',sans-serif;transition:color .14s}
+.back-btn:hover{color:var(--g100)}
+
+/* SPINNER */
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(21,12,0,.22);border-top-color:#150c00;border-radius:50%;animation:spinA .65s linear infinite;vertical-align:middle;margin-right:5px}
+.spin-lt{border-color:rgba(255,255,255,.15);border-top-color:rgba(255,255,255,.82)}
+@keyframes spinA{to{transform:rotate(360deg)}}
+
+/* ════ PROFILE VIEW ════ */
+#view-profile .gcard{max-width:440px;animation:glassPopUp .50s var(--spring) both}
+
+.pro-header{display:flex;flex-direction:column;align-items:center;padding:26px 24px 18px;border-bottom:1px solid rgba(212,168,67,.07);position:relative}
+.play-btn{position:absolute;top:14px;right:14px;padding:7px 14px;border:none;border-radius:9px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.72rem;font-weight:700;color:#150c00;letter-spacing:.04em;background:linear-gradient(132deg,#F4CE68,#D4A843);box-shadow:0 3px 12px rgba(212,168,67,.30);transition:all .16s var(--smooth)}
+.play-btn:hover{transform:translateY(-1px);box-shadow:0 5px 20px rgba(212,168,67,.45)}
+
+.av-wrap{position:relative;width:78px;height:78px;cursor:pointer;margin-bottom:10px}
+.av-img{width:78px;height:78px;border-radius:50%;object-fit:cover;border:2px solid rgba(212,168,67,.40);box-shadow:0 0 20px rgba(212,168,67,.22),0 4px 15px rgba(0,0,0,.50);transition:transform .2s;background:rgba(212,168,67,.08)}
+.av-wrap:hover .av-img{transform:scale(1.04)}
+.av-badge{position:absolute;bottom:2px;right:2px;width:22px;height:22px;border-radius:50%;background:rgba(212,168,67,.85);display:flex;align-items:center;justify-content:center;font-size:.68rem;box-shadow:0 2px 6px rgba(0,0,0,.5);border:1.5px solid rgba(255,255,255,.15);cursor:pointer}
+
+.pro-name-txt{font-size:1.05rem;font-weight:700;color:var(--t1);margin-bottom:4px;text-align:center}
+.pro-code-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:99px;background:rgba(212,168,67,.07);border:1px solid rgba(212,168,67,.18);font-size:.68rem;font-family:'Outfit',sans-serif;font-weight:700;color:var(--g200);letter-spacing:.08em;cursor:pointer;transition:background .16s}
+.pro-code-pill:hover{background:rgba(212,168,67,.12)}
+.pro-email{font-size:.64rem;color:var(--t3);margin-top:4px}
+.btn-logout{position:absolute;top:14px;left:14px;padding:6px 12px;border:1px solid rgba(239,68,68,.22);border-radius:9px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.70rem;font-weight:600;color:rgba(252,165,165,.72);background:rgba(239,68,68,.06);transition:all .16s var(--smooth)}
+.btn-logout:hover{color:#fca5a5;background:rgba(239,68,68,.10);border-color:rgba(239,68,68,.38)}
+
+/* edit name */
+.enr{display:none;align-items:center;gap:6px;margin-bottom:4px}
+.eni{background:rgba(0,0,0,.25);border:1px solid rgba(212,168,67,.28);border-radius:8px;color:var(--t1);font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;padding:4px 10px;outline:none;width:140px;text-align:center}
+.eni:focus{border-color:rgba(212,168,67,.55);box-shadow:0 0 0 2px rgba(212,168,67,.08)}
+.eic{background:none;border:none;cursor:pointer;color:var(--t3);font-size:.78rem;transition:color .14s}
+.eic:hover{color:var(--g100)}
+.dnr{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+
+/* profile section tabs */
+.ptabs{display:flex;border-bottom:1px solid rgba(212,168,67,.07)}
+.ptab{flex:1;padding:10px 0;background:none;border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.76rem;font-weight:600;color:var(--t3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .16s var(--smooth)}
+.ptab.on{color:var(--g100);border-bottom-color:var(--g200)}
+.psec{display:none;padding:16px 20px 20px}.psec.on{display:block}
+
+/* friends */
+.af-row{display:flex;gap:8px;margin-bottom:14px}
+.af-inp{flex:1;padding:9px 12px;background:rgba(0,0,0,.22);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.10);border-radius:10px;color:var(--t1);font-family:'Outfit',sans-serif;font-size:.82rem;outline:none;box-shadow:inset 0 2px 5px rgba(0,0,0,.4);transition:border-color .16s;text-transform:uppercase;letter-spacing:.06em}
+.af-inp::placeholder{text-transform:none;letter-spacing:normal;color:rgba(255,255,255,.20)}
+.af-inp:focus{border-color:rgba(212,168,67,.40);box-shadow:0 0 0 2px rgba(212,168,67,.06),inset 0 2px 5px rgba(0,0,0,.4)}
+.btn-add{padding:0 14px;border:none;border-radius:10px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:700;color:#150c00;background:linear-gradient(132deg,#F4CE68,#D4A843);box-shadow:0 2px 10px rgba(212,168,67,.26);transition:all .16s var(--smooth);white-space:nowrap}
+.btn-add:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(212,168,67,.38)}.btn-add:disabled{opacity:.48;cursor:not-allowed;transform:none}
+
+.fri-empty{text-align:center;padding:22px 0;font-size:.76rem;color:var(--t4)}
+.fscroll{max-height:260px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(212,168,67,.16) transparent}
+.fscroll::-webkit-scrollbar{width:3px}.fscroll::-webkit-scrollbar-thumb{background:rgba(212,168,67,.16);border-radius:2px}
+.sec-ttl{font-size:.67rem;font-weight:600;color:var(--t3);letter-spacing:.09em;text-transform:uppercase;margin-bottom:9px;padding-left:2px}
+
+/* friend item */
+.fri{display:flex;align-items:center;gap:10px;padding:9px 11px;margin-bottom:7px;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.055);transition:background .14s}
+.fri:hover{background:rgba(255,255,255,.042)}
+.fav{width:35px;height:35px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(212,168,67,.22);flex-shrink:0;background:rgba(212,168,67,.07)}
+.fav-fb{width:35px;height:35px;border-radius:50%;background:rgba(212,168,67,.07);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;border:1.5px solid rgba(212,168,67,.16)}
+.finfo{flex:1;min-width:0}
+.fnm{font-size:.80rem;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fcd{font-size:.60rem;color:var(--t3);letter-spacing:.05em}
+.fst{display:flex;align-items:center;gap:4px;margin-top:2px}
+/* breathe-dot from uploaded */
+.dot-on{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok);animation:breathe-dot 1.5s ease-in-out infinite alternate}
+.dot-off{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.18)}
+@keyframes breathe-dot{0%{transform:scale(.8);opacity:.5;box-shadow:0 0 4px var(--ok)}100%{transform:scale(1.3);opacity:1;box-shadow:0 0 12px var(--ok)}}
+.fst-txt{font-size:.61rem;color:var(--t3)}
+.fbts{display:flex;gap:5px;flex-shrink:0}
+.fbtn{padding:4px 9px;border-radius:7px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.65rem;font-weight:600;transition:all .14s var(--smooth);border:1px solid}
+.fb-acc{color:#6ee7b7;border-color:rgba(16,185,129,.24);background:rgba(16,185,129,.07)}.fb-acc:hover{background:rgba(16,185,129,.14)}
+.fb-rem{color:#fca5a5;border-color:rgba(239,68,68,.22);background:rgba(239,68,68,.06)}.fb-rem:hover{background:rgba(239,68,68,.12)}
+.fb-can{color:var(--t3);border-color:rgba(255,255,255,.09);background:rgba(255,255,255,.03)}.fb-can:hover{color:var(--t2)}
+.fpend{display:inline-block;padding:2px 7px;border-radius:5px;font-size:.59rem;font-weight:600;background:rgba(212,168,67,.09);border:1px solid rgba(212,168,67,.18);color:var(--g200)}
+
+/* OVERLAY */
+#overlay{display:none;position:fixed;inset:0;z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(6,5,14,.88);backdrop-filter:blur(30px)}
+#overlay.on{display:flex;animation:fadeIn .25s var(--smooth) both}
+.ov-ring{width:66px;height:66px;border-radius:50%;background:rgba(16,185,129,.07);border:1.5px solid rgba(16,185,129,.40);display:flex;align-items:center;justify-content:center;font-size:1.65rem;box-shadow:0 0 28px rgba(16,185,129,.24);animation:glassPopUp .40s var(--spring) both}
+.ov-ttl{font-family:'Cinzel Decorative',serif;font-size:.95rem;color:var(--ok);letter-spacing:.06em}
+.ov-sub{font-family:'Noto Sans Myanmar',sans-serif;font-size:.72rem;color:var(--t3)}
+
+/* TOAST — from uploaded #custom-toast */
+#toast{position:fixed;bottom:-60px;left:50%;transform:translateX(-50%);background:rgba(14,11,22,.92);border:1px solid rgba(212,168,67,.26);color:var(--t1);padding:9px 20px;border-radius:30px;font-size:.78rem;font-weight:600;z-index:9999;opacity:0;transition:all .3s var(--smooth);box-shadow:0 4px 20px rgba(0,0,0,.55),0 0 12px rgba(212,168,67,.10);backdrop-filter:blur(15px);white-space:nowrap;pointer-events:none}
+
+@keyframes slideUp{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@media(max-width:420px){.cin,.pro-header,.psec{padding-left:18px;padding-right:18px}}
+</style>
+</head>
+<body>
+<div class="mesh" aria-hidden="true"><div class="mo mo1"></div><div class="mo mo2"></div><div class="mo mo3"></div></div>
+<main class="page">
+
+<!-- AUTH VIEW -->
+<div class="view" id="view-auth">
+<div class="gcard"><div class="cin">
+  <div class="lhead"><div class="ltitle">မြန်မာ ကျားကွက်</div><div class="lsub">MULTIPLAYER · PREMIUM</div></div>
+  <div class="tabs" id="atabs">
+    <button class="tab on" id="t-in" onclick="setTab('in')">Sign In</button>
+    <button class="tab" id="t-up" onclick="setTab('up')">Sign Up</button>
+  </div>
+  <!-- SIGN IN -->
+  <div class="panel on" id="pn-in">
+    <button class="btn-google" id="gg-in" onclick="googleAuth()"><svg class="gico" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Gmail / Google နှင့် Sign In</button>
+    <div class="sep"><div class="sep-l"></div><span class="sep-t">EMAIL</span><div class="sep-l"></div></div>
+    <div class="field"><label class="flbl">Email</label><input class="finp" id="in-em" type="email" placeholder="your@email.com" autocomplete="email"></div>
+    <div class="field"><label class="flbl">Password</label><div class="frow"><input class="finp" id="in-pw" type="password" placeholder="••••••••" autocomplete="current-password" style="padding-right:36px"><button class="eye-btn" type="button" onclick="tpw('in-pw',this)">👁</button></div></div>
+    <span class="forgot" onclick="showReset()">Password မေ့သွားလား?</span>
+    <button class="btn-gold" id="btn-in" onclick="doSignIn()">Sign In</button>
+    <div class="msg" id="msg-in"></div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(212,168,67,.06)"><button class="btn-guest" onclick="doGuest()"><span>👤</span>Guest ကစားမည် (Account မလိုပါ)</button></div>
+  </div>
+  <!-- SIGN UP -->
+  <div class="panel" id="pn-up">
+    <button class="btn-google" id="gg-up" onclick="googleAuth()"><svg class="gico" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Gmail / Google နှင့် Sign Up</button>
+    <div class="sep"><div class="sep-l"></div><span class="sep-t">EMAIL</span><div class="sep-l"></div></div>
+    <div class="field"><label class="flbl">Username</label><input class="finp" id="up-nm" type="text" placeholder="ကစားသူ အမည်" autocomplete="username"></div>
+    <div class="field"><label class="flbl">Email</label><input class="finp" id="up-em" type="email" placeholder="your@email.com" autocomplete="email"></div>
+    <div class="field"><label class="flbl">Password</label><div class="frow"><input class="finp" id="up-pw" type="password" placeholder="6 လုံးနှင့်အထက်" autocomplete="new-password" style="padding-right:36px"><button class="eye-btn" type="button" onclick="tpw('up-pw',this)">👁</button></div></div>
+    <button class="btn-gold" id="btn-up" onclick="doSignUp()">Account ဖွင့်မည်</button>
+    <div class="msg" id="msg-up"></div>
+  </div>
+  <!-- RESET -->
+  <div class="panel" id="pn-reset">
+    <button class="back-btn" onclick="showP('pn-in');showTabs()">← Sign In သို့ ပြန်မည်</button>
+    <div class="field"><label class="flbl">Email</label><input class="finp" id="rs-em" type="email" placeholder="your@email.com"></div>
+    <button class="btn-gold" id="btn-rs" onclick="doReset()">Reset Link ပို့ပေးပါ</button>
+    <div class="msg" id="msg-rs"></div>
+  </div>
+  <div class="cfooter" id="af">Account မရှိသေး?&nbsp;<a onclick="setTab('up')">Sign Up</a></div>
+</div></div>
+</div>
+
+<!-- PROFILE VIEW -->
+<div class="view" id="view-profile">
+<div class="gcard" style="max-width:440px">
+  <div class="pro-header">
+    <button class="btn-logout" onclick="doLogout()">Log Out</button>
+    <button class="play-btn" onclick="goGame()">▶ &nbsp;ကစားမည်</button>
+    <div class="av-wrap" onclick="document.getElementById('avi').click()">
+      <img class="av-img" id="pro-av" src="" alt="👤">
+      <div class="av-badge" title="ပုံပြောင်းရန်">✎</div>
+    </div>
+    <input type="file" id="avi" accept="image/*" style="display:none" onchange="uploadAv(this)">
+    <div class="dnr" id="dnr">
+      <span class="pro-name-txt" id="pnm">–</span>
+      <button class="eic" onclick="startEdit()" title="ပြင်ရန်">✎</button>
+    </div>
+    <div class="enr" id="enr">
+      <input class="eni" id="eni" maxlength="20" placeholder="Username">
+      <button class="eic" onclick="saveEdit()" style="color:var(--ok)">✓</button>
+      <button class="eic" onclick="cancelEdit()">✕</button>
+    </div>
+    <div class="pro-code-pill" id="pcp" onclick="copyCode()" title="Code ကူးရန်">
+      <span>🔑</span><span id="pct">––</span><span style="font-size:.54rem;opacity:.6">ကူးရန်</span>
+    </div>
+    <div class="pro-email" id="pem"></div>
+  </div>
+  <div class="ptabs">
+    <button class="ptab on" id="pt-fri" onclick="setProTab('fri')">👥 သူငယ်ချင်း</button>
+    <button class="ptab" id="pt-req" onclick="setProTab('req')">🔔 ခေါ်ချက်<span id="rbadge"></span></button>
+  </div>
+  <div class="psec on" id="ps-fri">
+    <div class="af-row"><input class="af-inp" id="aci" placeholder="Friend Code ထည့်ပါ" maxlength="8"><button class="btn-add" id="badd" onclick="addFriend()">ထည့်မည်</button></div>
+    <div class="sec-ttl">သူငယ်ချင်းများ</div>
+    <div class="fscroll" id="flist"><div class="fri-empty">သူငယ်ချင်း မရှိသေးပါ</div></div>
+  </div>
+  <div class="psec" id="ps-req">
+    <div class="sec-ttl">ရောက်လာသော ခေါ်ချက်</div>
+    <div class="fscroll" id="rlist"><div class="fri-empty">မရှိသေးပါ</div></div>
+    <div class="sec-ttl" style="margin-top:14px">ပို့ထားသော ခေါ်ချက်</div>
+    <div class="fscroll" id="slist"><div class="fri-empty" style="padding:8px 0">–</div></div>
+  </div>
+</div>
+</div>
+
+</main>
+<div id="toast"></div>
+<div id="overlay"><div class="ov-ring">✓</div><div class="ov-ttl" id="ottl">အောင်မြင်ပါသည်</div><div class="ov-sub" id="osub">ဝင်ရောက်နေပါသည်…</div></div>
+
+<script>
+const SB_URL='https://oxziinvwdhligrbllqbj.supabase.co';
+const SB_KEY='sb_publishable_8uBlwuN8DbyDfccT2uMaNw_9fpqYb6s';
+const GAME='index.html';
+const BASE=window.location.origin+window.location.pathname.replace(/[^/]*$/,'');
+let _sb=null;
+function SB(){if(!_sb)_sb=supabase.createClient(SB_URL,SB_KEY);return _sb;}
+let _user=null,_prof=null,_pch=null,_flist=[];
+const _online=new Set();
+
+/* ══ BOOT ══ */
+(async()=>{
+  try{const{data:{session}}=await SB().auth.getSession();if(session){_user=session.user;await loadProf();showProf();return;}}catch(e){}
+  if(localStorage.getItem('kk_guest')){goGame();return;}
+  showV('view-auth');
+  SB().auth.onAuthStateChange(async(evt,sess)=>{
+    if((evt==='SIGNED_IN'||evt==='TOKEN_REFRESHED')&&sess){_user=sess.user;await loadProf();showProf();}
+    if(evt==='SIGNED_OUT'){_user=null;_prof=null;showV('view-auth');setTab('in');}
+  });
+})();
+
+/* ══ VIEW ══ */
+function showV(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));document.getElementById(id)?.classList.add('on');}
+function showProf(){showV('view-profile');renderProf();loadFriends();startPresence();}
+
+/* ══ AUTH NAV ══ */
+function showP(id){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));document.getElementById(id)?.classList.add('on');}
+function showTabs(){document.getElementById('atabs').style.display='';document.getElementById('af').style.display='';}
+function hideTabs(){document.getElementById('atabs').style.display='none';document.getElementById('af').style.display='none';}
+function setTab(t){showP('pn-'+t);showTabs();['in','up'].forEach(x=>document.getElementById('t-'+x).classList.toggle('on',x===t));document.getElementById('af').innerHTML=t==='in'?'Account မရှိသေး?&nbsp;<a onclick="setTab(\'up\')">Sign Up</a>':'ဝင်ရောက်ဖို့?&nbsp;<a onclick="setTab(\'in\')">Sign In</a>';}
+function showReset(){showP('pn-reset');hideTabs();}
+
+/* ══ GOOGLE ══ */
+const GSVG=`<svg class="gico" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>`;
+async function googleAuth(){
+  ['gg-in','gg-up'].forEach(id=>{const b=document.getElementById(id);if(!b)return;b.disabled=true;b.innerHTML=`<span class="spin spin-lt"></span>ချိတ်ဆက်နေသည်…`;});
+  try{
+    const{error}=await SB().auth.signInWithOAuth({provider:'google',options:{redirectTo:BASE+'auth.html',queryParams:{access_type:'offline',prompt:'select_account'}}});
+    if(error)throw error;
+  }catch(err){
+    ['gg-in','gg-up'].forEach((id,i)=>{const b=document.getElementById(id);if(!b)return;b.disabled=false;b.innerHTML=GSVG+(i===0?'Gmail / Google နှင့် Sign In':'Gmail / Google နှင့် Sign Up');});
+    showMsg('msg-in','err',err.message||'Google ချိတ်ဆက်မှု မအောင်မြင်ပါ');
+  }
+}
+
+/* ══ EMAIL SIGN IN ══ */
+async function doSignIn(){
+  const em=val('in-em'),pw=val('in-pw');
+  if(!em||!pw){showMsg('msg-in','err','Email နှင့် Password ထည့်ပါ');return;}
+  setBtn('btn-in',true,'ဝင်ရောက်နေသည်…');
+  try{
+    const{data,error}=await SB().auth.signInWithPassword({email:em,password:pw});
+    if(error)throw error;
+    _user=data.user;localStorage.removeItem('kk_guest');
+    showMsg('msg-in','ok','✓ အောင်မြင်ပါသည်');
+    await loadProf();showProf();
+  }catch(err){setBtn('btn-in',false,'Sign In');showMsg('msg-in','err',/Invalid|credentials|password/i.test(err.message)?'Email သို့မဟုတ် Password မမှန်ပါ':err.message);}
+}
+
+/* ══ SIGN UP ══ */
+async function doSignUp(){
+  const nm=val('up-nm'),em=val('up-em'),pw=val('up-pw');
+  if(!nm){showMsg('msg-up','err','Username ထည့်ပါ');return;}
+  if(!em){showMsg('msg-up','err','Email ထည့်ပါ');return;}
+  if(pw.length<6){showMsg('msg-up','err','Password 6 လုံးနှင့်အထက်');return;}
+  setBtn('btn-up',true,'Account ဖွင့်နေသည်…');
+  try{
+    const{data,error}=await SB().auth.signUp({email:em,password:pw,options:{data:{username:nm},emailRedirectTo:BASE+'auth.html'}});
+    if(error)throw error;
+    if(data.session){_user=data.user;localStorage.removeItem('kk_guest');await loadProf();showProf();}
+    else{setBtn('btn-up',false,'Account ဖွင့်မည်');showMsg('msg-up','info','📧 Verification email ပို့ပြီးပါပြီ — Email စစ်ဆေးပြီး link နှိပ်ပါ');}
+  }catch(err){setBtn('btn-up',false,'Account ဖွင့်မည်');showMsg('msg-up','err',/already|registered/i.test(err.message)?'ဒီ Email ဖြင့် Account ရှိပြီးပါပြီ':err.message);}
+}
+
+/* ══ RESET ══ */
+async function doReset(){
+  const em=val('rs-em');if(!em){showMsg('msg-rs','err','Email ထည့်ပါ');return;}
+  setBtn('btn-rs',true,'ပို့နေသည်…');
+  try{const{error}=await SB().auth.resetPasswordForEmail(em,{redirectTo:BASE+'auth.html?mode=reset'});if(error)throw error;showMsg('msg-rs','ok','📧 Reset link ကို '+em+' သို့ ပို့ပြီးပါပြီ');}
+  catch(err){showMsg('msg-rs','err',err.message);}
+  finally{setBtn('btn-rs',false,'Reset Link ပို့ပေးပါ');}
+}
+
+/* ══ GUEST ══ */
+async function doGuest(){
+  try{const{data,error}=await SB().auth.signInAnonymously();if(!error&&data?.session)localStorage.setItem('kk_guest','anon');}catch(e){}
+  const gid='G'+Math.random().toString(36).slice(2,8).toUpperCase();
+  localStorage.setItem('kk_guest',gid);localStorage.setItem('kk_guest_name','Guest·'+gid);
+  goGame();
+}
+
+/* ══ LOGOUT ══ */
+async function doLogout(){
+  stopP();localStorage.removeItem('kk_guest');localStorage.removeItem('kk_guest_name');
+  try{await SB().auth.signOut();}catch(e){}
+  _user=null;_prof=null;showV('view-auth');setTab('in');
+}
+
+/* ══ PROFILE ══ */
+async function loadProf(){
+  if(!_user)return;
+  try{
+    let{data}=await SB().from('profiles').select('*').eq('id',_user.id).single();
+    if(!data){
+      const m=_user.user_metadata||{};
+      const nm=m.full_name||m.name||m.username||_user.email?.split('@')[0]||'Player';
+      await SB().from('profiles').upsert({id:_user.id,username:nm,avatar_url:m.avatar_url||null});
+      const r=await SB().from('profiles').select('*').eq('id',_user.id).single();data=r.data;
+    }
+    _prof=data;
+  }catch(e){console.warn('loadProf:',e);}
+}
+
+function renderProf(){
+  if(!_prof&&!_user)return;
+  const nm=_prof?.username||_user?.user_metadata?.full_name||_user?.email?.split('@')[0]||'Player';
+  const code=_prof?.user_code||'––––';
+  const av=_prof?.avatar_url||_user?.user_metadata?.avatar_url||null;
+  document.getElementById('pnm').textContent=nm;
+  document.getElementById('pct').textContent=code;
+  document.getElementById('pem').textContent=_user?.email||'';
+  const img=document.getElementById('pro-av');
+  if(av){img.src=av;img.alt='';img.onerror=()=>{img.src='';img.alt='👤';};}
+  else{img.src='';img.alt='👤';}
+}
+
+/* ══ EDIT NAME ══ */
+function startEdit(){document.getElementById('dnr').style.display='none';const er=document.getElementById('enr');er.style.display='flex';document.getElementById('eni').value=document.getElementById('pnm').textContent;document.getElementById('eni').focus();}
+function cancelEdit(){document.getElementById('enr').style.display='none';document.getElementById('dnr').style.display='flex';}
+async function saveEdit(){
+  const nm=document.getElementById('eni').value.trim();if(!nm||nm.length<2){toast('⚠️ 2 လုံးနှင့်အထက်');return;}
+  try{await SB().from('profiles').update({username:nm,updated_at:new Date().toISOString()}).eq('id',_user.id);_prof.username=nm;document.getElementById('pnm').textContent=nm;toast('✓ Username ပြောင်းပြီးပါပြီ');}
+  catch(e){toast('❌ '+e.message);}
+  cancelEdit();
+}
+
+/* ══ AVATAR UPLOAD ══ */
+async function uploadAv(inp){
+  const f=inp.files?.[0];if(!f)return;
+  if(f.size>2*1024*1024){toast('⚠️ ပုံ 2MB အောက်သာ ဖြစ်ရမည်');return;}
+  toast('📤 ပုံ upload နေသည်…');
+  try{
+    const ext=f.name.split('.').pop().toLowerCase();
+    const path=_user.id+'/avatar.'+ext;
+    const{error:ue}=await SB().storage.from('avatars').upload(path,f,{upsert:true,contentType:f.type});
+    if(ue)throw ue;
+    const{data:{publicUrl}}=SB().storage.from('avatars').getPublicUrl(path);
+    const url=publicUrl+'?t='+Date.now();
+    await SB().from('profiles').update({avatar_url:url,updated_at:new Date().toISOString()}).eq('id',_user.id);
+    _prof.avatar_url=url;
+    const img=document.getElementById('pro-av');img.src=url;img.alt='';
+    toast('✓ ပုံ ပြောင်းပြီးပါပြီ');
+  }catch(e){toast('❌ Upload Error: '+e.message);}
+  inp.value='';
+}
+
+/* ══ COPY CODE ══ */
+function copyCode(){const c=document.getElementById('pct').textContent;navigator.clipboard?.writeText(c).then(()=>toast('✓ Code ကူးပြီး: '+c)).catch(()=>toast('Code: '+c));}
+
+/* ══ PROFILE TABS ══ */
+function setProTab(t){
+  ['fri','req'].forEach(x=>{document.getElementById('pt-'+x)?.classList.toggle('on',x===t);document.getElementById('ps-'+x)?.classList.toggle('on',x===t);});
+  if(t==='req')loadReqs();
+}
+
+/* ══ FRIENDS ══ */
+async function loadFriends(){
+  if(!_user)return;
+  try{
+    const{data,error}=await SB().from('friendships').select(`id,status,requester_id,addressee_id,requester:profiles!requester_id(id,username,avatar_url,user_code),addressee:profiles!addressee_id(id,username,avatar_url,user_code)`).or(`requester_id.eq.${_user.id},addressee_id.eq.${_user.id}`).eq('status','accepted');
+    if(error)throw error;
+    _flist=data||[];renderFriends();
+  }catch(e){console.warn('loadFriends:',e);}
+}
+
+async function loadReqs(){
+  if(!_user)return;
+  try{
+    const{data,error}=await SB().from('friendships').select(`id,status,requester_id,addressee_id,requester:profiles!requester_id(id,username,avatar_url,user_code),addressee:profiles!addressee_id(id,username,avatar_url,user_code)`).or(`requester_id.eq.${_user.id},addressee_id.eq.${_user.id}`).neq('status','accepted');
+    if(error)throw error;
+    const inc=(data||[]).filter(f=>f.addressee_id===_user.id&&f.status==='pending');
+    const out=(data||[]).filter(f=>f.requester_id===_user.id&&f.status==='pending');
+    renderReqs(inc,out);
+  }catch(e){console.warn('loadReqs:',e);}
+}
+
+function renderFriends(){
+  const b=document.getElementById('flist');
+  if(!_flist.length){b.innerHTML='<div class="fri-empty">သူငယ်ချင်း မရှိသေးပါ<br><small style="color:var(--t4);font-size:.62rem">Friend Code ဖြင့် ထည့်ပါ</small></div>';return;}
+  b.innerHTML=_flist.map(f=>{const o=f.requester_id===_user.id?f.addressee:f.requester;return friHTML(f.id,o,_online.has(o.id),'acc');}).join('');
+}
+
+function renderReqs(inc,out){
+  const rb=document.getElementById('rbadge');rb.textContent=inc.length?` (${inc.length})`:'';
+  document.getElementById('rlist').innerHTML=inc.length?inc.map(f=>friHTML(f.id,f.requester,false,'inc')).join(''):'<div class="fri-empty">မရှိသေးပါ</div>';
+  document.getElementById('slist').innerHTML=out.length?out.map(f=>friHTML(f.id,f.addressee,false,'out')).join(''):'<div class="fri-empty" style="padding:8px 0">–</div>';
+}
+
+function friHTML(fid,p,online,type){
+  const av=p.avatar_url?`<img class="fav" src="${xe(p.avatar_url)}" alt="" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div class="fav-fb" style="display:none">👤</div>`:`<div class="fav-fb">👤</div>`;
+  const st=type==='acc'?`<div class="${online?'dot-on':'dot-off'}"></div><span class="fst-txt">${online?'Online':'Offline'}</span>`:`<span class="fpend">${type==='inc'?'⏳ ခေါ်ထားသည်':'📤 Pending'}</span>`;
+  const bt=type==='acc'?`<button class="fbtn fb-rem" onclick="delFri('${fid}')">ဖယ်ရှား</button>`
+    :type==='inc'?`<button class="fbtn fb-acc" onclick="accFri('${fid}')">လက်ခံ</button><button class="fbtn fb-rem" onclick="delFri('${fid}')">ငြင်းမည်</button>`
+    :`<button class="fbtn fb-can" onclick="delFri('${fid}')">ဖျက်မည်</button>`;
+  return `<div class="fri">${av}<div class="finfo"><div class="fnm">${xe(p.username||'–')}</div><div class="fcd">#${xe(p.user_code||'')}</div><div class="fst">${st}</div></div><div class="fbts">${bt}</div></div>`;
+}
+
+async function addFriend(){
+  const code=document.getElementById('aci').value.trim().toUpperCase();
+  if(!code||code.length<4){toast('⚠️ Friend Code ထည့်ပါ');return;}
+  if(_prof&&code===_prof.user_code){toast('⚠️ ကိုယ့် Code မဖြစ်နိုင်ပါ');return;}
+  const btn=document.getElementById('badd');btn.disabled=true;btn.textContent='…';
+  try{
+    const{data:tg,error:te}=await SB().from('profiles').select('id,username').eq('user_code',code).single();
+    if(te||!tg){toast('❌ Code မတွေ့ပါ: '+code);return;}
+    const{data:ex}=await SB().from('friendships').select('id,status').or(`and(requester_id.eq.${_user.id},addressee_id.eq.${tg.id}),and(requester_id.eq.${tg.id},addressee_id.eq.${_user.id})`).maybeSingle();
+    if(ex){toast(ex.status==='accepted'?'ရှိပြီးသား သူငယ်ချင်း':'ခေါ်ချက် ပို့ပြီးပါပြီ');return;}
+    const{error}=await SB().from('friendships').insert({requester_id:_user.id,addressee_id:tg.id,status:'pending'});
+    if(error)throw error;
+    document.getElementById('aci').value='';
+    toast('✓ '+xe(tg.username)+' ထံ ခေါ်ချက် ပို့ပြီးပါပြီ');
+  }catch(e){toast('❌ '+e.message);}
+  finally{btn.disabled=false;btn.textContent='ထည့်မည်';}
+}
+async function accFri(fid){try{await SB().from('friendships').update({status:'accepted'}).eq('id',fid);toast('✓ သူငယ်ချင်း ထည့်ပြီးပါပြီ');await loadFriends();await loadReqs();}catch(e){toast('❌ '+e.message);}}
+async function delFri(fid){try{await SB().from('friendships').delete().eq('id',fid);toast('✓ ပြီးပါပြီ');await loadFriends();await loadReqs();}catch(e){toast('❌ '+e.message);}}
+
+/* ══ PRESENCE ══ */
+function startPresence(){
+  if(!_user||!_prof)return;stopP();
+  _pch=SB().channel('kk-presence',{config:{presence:{key:_user.id}}});
+  _pch
+    .on('presence',{event:'sync'},()=>{
+      const st=_pch.presenceState();const prev=new Set(_online);
+      _online.clear();Object.keys(st).filter(k=>k!==_user.id).forEach(k=>_online.add(k));
+      _online.forEach(uid=>{
+        if(!prev.has(uid)){
+          const f=_flist.find(x=>(x.requester_id===uid||x.addressee_id===uid));
+          if(f){const p=f.requester_id===_user.id?f.addressee:f.requester;notifyOnline(p.username||'Friend');}
+        }
+      });
+      renderFriends();
+    })
+    .on('presence',{event:'join'},({key})=>{
+      _online.add(key);
+      const f=_flist.find(x=>(x.requester_id===key||x.addressee_id===key));
+      if(f){const p=f.requester_id===_user.id?f.addressee:f.requester;notifyOnline(p.username||'Friend');}
+      renderFriends();
+    })
+    .on('presence',{event:'leave'},({key})=>{_online.delete(key);renderFriends();})
+    .subscribe(async(s)=>{if(s==='SUBSCRIBED')await _pch.track({user_id:_user.id,username:_prof?.username||'',online_at:new Date().toISOString()});});
+
+  SB().channel('kk-fri-watch').on('postgres_changes',{event:'INSERT',schema:'public',table:'friendships',filter:`addressee_id=eq.${_user.id}`},async(payload)=>{
+    if(payload.new.status==='pending'){
+      const{data:p}=await SB().from('profiles').select('username').eq('id',payload.new.requester_id).single();
+      notifyReq(p?.username||'Someone');await loadReqs();
+    }
+  }).subscribe();
+}
+function stopP(){if(_pch){SB().removeChannel(_pch);_pch=null;}}
+
+/* ══ NOTIFICATIONS + SOUND ══ */
+function notifyOnline(name){chime(false);toast('🟢 '+name+' Online ဖြစ်လာပါပြီ',3500);}
+function notifyReq(name){chime(true);toast('👤 '+name+' က သူငယ်ချင်း ခေါ်သည်',4000);const b=document.getElementById('rbadge');b.textContent=` (${(parseInt(b.textContent.replace(/\D/g,''))||0)+1})`;}
+
+function chime(req=false){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    if(req){
+      [0,0.18].forEach((d,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.setValueAtTime(i===0?784:988,ctx.currentTime+d);g.gain.setValueAtTime(0,ctx.currentTime+d);g.gain.linearRampToValueAtTime(0.20,ctx.currentTime+d+0.02);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+d+0.35);o.start(ctx.currentTime+d);o.stop(ctx.currentTime+d+0.35);});
+    }else{
+      const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.connect(g);g.connect(ctx.destination);o.frequency.setValueAtTime(880,ctx.currentTime);o.frequency.exponentialRampToValueAtTime(660,ctx.currentTime+0.18);g.gain.setValueAtTime(0.18,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.42);o.start(ctx.currentTime);o.stop(ctx.currentTime+0.42);
+    }
+  }catch(e){}
+}
+
+/* ══ GO GAME ══ */
+function goGame(){document.getElementById('ottl').textContent='အောင်မြင်ပါသည်';document.getElementById('osub').textContent='Game သို့ ဝင်ရောက်နေပါသည်…';document.getElementById('overlay').classList.add('on');setTimeout(()=>{window.location.href=GAME;},900);}
+
+/* ══ UTILS ══ */
+function val(id){return document.getElementById(id)?.value.trim()||'';}
+function setBtn(id,dis,lbl){const b=document.getElementById(id);if(!b)return;b.disabled=dis;b.innerHTML=dis?`<span class="spin"></span>${lbl}`:lbl;}
+function showMsg(id,type,txt){const el=document.getElementById(id);if(!el)return;el.className='msg on msg-'+(type==='err'?'err':type==='ok'?'ok':'info');el.textContent=txt;}
+function tpw(id,btn){const i=document.getElementById(id);if(!i)return;i.type=i.type==='password'?'text':'password';btn.textContent=i.type==='password'?'👁':'🙈';}
+function xe(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+let _tt=null;
+function toast(msg,dur=2800){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.style.opacity='1';t.style.bottom='80px';clearTimeout(_tt);_tt=setTimeout(()=>{t.style.opacity='0';t.style.bottom='-60px';},dur);}
+
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;
+  if(document.getElementById('pn-in')?.classList.contains('on'))doSignIn();
+  else if(document.getElementById('pn-up')?.classList.contains('on'))doSignUp();
+  else if(document.getElementById('pn-reset')?.classList.contains('on'))doReset();
+  else if(document.getElementById('enr')?.style.display!=='none')saveEdit();
+});
+</script>
+</body>
+</html>
