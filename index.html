@@ -4469,7 +4469,6 @@ button {
 
     <!-- Signup form (name required first!) -->
     <div id="auth-signup-form" style="display:none">
-      <input class="linp" id="auth-sname" type="text" placeholder="ကစားသမား အမည် *" maxlength="20" autocomplete="nickname" style="margin-bottom:8px">
       <input class="linp" id="auth-semail" type="email" placeholder="Email..." autocomplete="email" style="margin-bottom:8px">
       <input class="linp" id="auth-spw" type="password" placeholder="Password (6 လုံးဆုံး)..." autocomplete="new-password" onkeydown="if(event.key==='Enter')doEmailSignup()">
       <button class="bgold" style="width:100%;margin-top:8px" onclick="doEmailSignup()">✨ Account ဖန်တီးမည်</button>
@@ -4522,9 +4521,13 @@ button {
 <div class="av-opt" onclick="setSetupAv(this,'🦄')">🦄</div>
 <div class="av-opt" onclick="setSetupAv(this,'🐍')">🐍</div>
 <div class="av-opt" onclick="setSetupAv(this,'🦈')">🦈</div></div>
-      <div class="av-url-row">
-        <input class="linp" id="av-url-inp" type="url" placeholder="Image URL (optional)..." style="margin-bottom:0;font-size:.75rem">
-        <button class="fp-add-btn" onclick="useAvatarUrl()">✓</button>
+      <!-- Upload from phone -->
+      <div style="margin-top:8px">
+        <input type="file" id="setup-photo-inp" accept="image/*" style="display:none" onchange="handleSetupPhotoUpload(this)">
+        <button onclick="document.getElementById('setup-photo-inp').click()" style="width:100%;padding:9px;border:1px dashed rgba(212,168,67,.35);border-radius:10px;background:rgba(212,168,67,.05);color:rgba(212,168,67,.7);font-family:'Outfit',sans-serif;font-size:.78rem;cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(212,168,67,.1)'" onmouseout="this.style.background='rgba(212,168,67,.05)'">
+          📷 ဖုန်းထဲမှ ပုံ ရွေးမည်
+        </button>
+        <div id="setup-upload-prog" style="display:none;text-align:center;font-size:.65rem;color:rgba(212,168,67,.7);font-family:Outfit,sans-serif;margin-top:5px">⏳ ပုံ တင်နေသည်...</div>
       </div>
     </div>
 
@@ -4548,9 +4551,19 @@ button {
     </div>
     <div style="padding:16px 20px">
       <!-- Avatar -->
-      <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:16px">
-        <div id="pm-avatar-el" onclick="document.getElementById('pm-av-picker').style.display=document.getElementById('pm-av-picker').style.display==='none'?'block':'none'" style="width:72px;height:72px;border-radius:50%;font-size:2rem;display:flex;align-items:center;justify-content:center;border:2px solid rgba(212,168,67,.3);background:rgba(212,168,67,.08);cursor:pointer;margin-bottom:6px">🐯</div>
-        <div style="font-size:.65rem;color:rgba(212,168,67,.55);cursor:pointer;font-family:'Outfit',sans-serif" onclick="document.getElementById('pm-av-picker').style.display=document.getElementById('pm-av-picker').style.display==='none'?'block':'none'">✏️ Avatar ပြောင်းမည်</div>
+      <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:14px">
+        <!-- Avatar circle with camera overlay -->
+        <div style="position:relative;margin-bottom:8px" onclick="document.getElementById('modal-photo-inp').click()">
+          <div id="pm-avatar-el" style="width:80px;height:80px;border-radius:50%;font-size:2.2rem;display:flex;align-items:center;justify-content:center;border:2px solid rgba(212,168,67,.35);background:rgba(212,168,67,.08);cursor:pointer;overflow:hidden;transition:all .2s">🐯</div>
+          <div style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#8A6410,#D4A843);display:flex;align-items:center;justify-content:center;font-size:.75rem;border:2px solid rgba(6,3,0,.9);cursor:pointer">📷</div>
+        </div>
+        <input type="file" id="modal-photo-inp" accept="image/*" capture="user" style="display:none" onchange="handleModalPhotoUpload(this)">
+        <div id="modal-upload-prog" style="display:none;font-size:.63rem;color:rgba(212,168,67,.75);font-family:Outfit,sans-serif;margin-bottom:4px">⏳ ပုံ တင်နေသည်...</div>
+        <!-- Upload / Emoji toggle buttons -->
+        <div style="display:flex;gap:6px">
+          <button onclick="document.getElementById('modal-photo-inp').click()" style="padding:5px 12px;border:1px solid rgba(212,168,67,.3);border-radius:8px;background:rgba(212,168,67,.08);color:rgba(212,168,67,.8);font-size:.68rem;cursor:pointer;font-family:'Outfit',sans-serif">📷 ဖုန်းထဲမှ</button>
+          <button onclick="var p=document.getElementById('pm-av-picker');p.style.display=p.style.display==='none'?'block':'none'" style="padding:5px 12px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:rgba(255,255,255,.03);color:var(--text-3);font-size:.68rem;cursor:pointer;font-family:'Outfit',sans-serif">😊 Emoji</button>
+        </div>
       </div>
       <div id="pm-av-picker" style="display:none;margin-bottom:14px">
         <div class="av-picker-grid"><div class="av-opt" onclick="setModalAv(this,'🐯')">🐯</div>
@@ -4577,10 +4590,7 @@ button {
 <div class="av-opt" onclick="setModalAv(this,'🦄')">🦄</div>
 <div class="av-opt" onclick="setModalAv(this,'🐍')">🐍</div>
 <div class="av-opt" onclick="setModalAv(this,'🦈')">🦈</div></div>
-        <div class="av-url-row" style="margin-top:8px">
-          <input class="linp" id="pm-av-url" type="url" placeholder="Image URL..." style="margin-bottom:0;font-size:.75rem">
-          <button class="fp-add-btn" onclick="usePmAvatarUrl()">✓</button>
-        </div>
+
       </div>
       <!-- Name -->
       <div class="llbl" style="font-size:.62rem;margin-bottom:5px">👤 နာမည်</div>
@@ -7706,11 +7716,9 @@ window.doEmailLogin = async function() {
    EMAIL SIGNUP (name required)
 ═══════════════════════════════════════ */
 window.doEmailSignup = async function() {
-  var name  = (document.getElementById('auth-sname')  || {}).value || '';
   var email = (document.getElementById('auth-semail') || {}).value || '';
   var pw    = (document.getElementById('auth-spw')    || {}).value || '';
-  name = name.trim(); email = email.trim(); pw = pw.trim();
-  if (!name)  { setStatus('auth-status', '⚠️ ကစားသမား အမည် ထည့်ပါ', 'err'); return; }
+  email = email.trim(); pw = pw.trim(); var name = '';
   if (!email) { setStatus('auth-status', '⚠️ Email ထည့်ပါ', 'err'); return; }
   if (pw.length < 6) { setStatus('auth-status', '⚠️ Password အနည်းဆုံး 6 လုံး ထည့်ပါ', 'err'); return; }
   _pendingName = name;
@@ -8361,6 +8369,201 @@ window.showFriendRequestPopup = function(fromId, fromName, reqId) {
 })();
 
 </script>
+
+
+/* ══════════════════════════════════════════════════════
+   PHOTO UPLOAD — Supabase Storage + Base64 fallback
+   Supabase Setup: Storage → New Bucket
+     Name: avatars
+     Public: ON ✅
+══════════════════════════════════════════════════════ */
+
+/* Core: compress + upload photo, returns public URL */
+async function _uploadPhotoToSupabase(file) {
+  return new Promise(function(resolve) {
+    // Compress via canvas (max 400x400, quality 0.85)
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onload = async function() {
+        var MAX = 400;
+        var w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          var ratio = Math.min(MAX/w, MAX/h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+        // Try Supabase Storage
+        try {
+          var uid = (_authUser && _authUser.id) ? _authUser.id : MY_PLAYER_ID;
+          var path = uid + '_' + Date.now() + '.jpg';
+          // Convert dataUrl to blob
+          var arr = dataUrl.split(','), mime = arr[0].match(/:(.*?);/)[1];
+          var bstr = atob(arr[1]), n = bstr.length;
+          var u8arr = new Uint8Array(n);
+          while (n--) u8arr[n] = bstr.charCodeAt(n);
+          var blob = new Blob([u8arr], { type: mime });
+
+          var upR = await SB().storage.from('avatars').upload(path, blob, {
+            cacheControl: '3600', upsert: true, contentType: 'image/jpeg'
+          });
+          if (!upR.error) {
+            var pubR = SB().storage.from('avatars').getPublicUrl(path);
+            var url = pubR.data && pubR.data.publicUrl ? pubR.data.publicUrl : null;
+            if (url) { resolve(url); return; }
+          }
+        } catch(e) { console.warn('Supabase upload non-fatal:', e); }
+
+        // Fallback: base64 data URL (stored in profile, visible locally)
+        resolve(dataUrl);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/* Validate file */
+function _validatePhoto(file) {
+  if (!file) return '⚠️ ဖိုင် မရွေးရသေးပါ';
+  if (!file.type.startsWith('image/')) return '⚠️ ပုံဖိုင်သာ တင်နိုင်သည်';
+  if (file.size > 10 * 1024 * 1024) return '⚠️ ဖိုင်ကြီးလွန်းသည် (10MB ထက် မပိုပါနှင့်)';
+  return null;
+}
+
+/* Apply avatar everywhere */
+function _applyAvatarEverywhere(url) {
+  // Profile state
+  if (_userProfile) {
+    _userProfile.avatar_url = url;
+    if (!url.startsWith('data:')) _userProfile.avatar = url;
+    upsertProfile(_userProfile);
+  }
+  // All avatar elements
+  function setAv(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = '<img src="' + url + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
+  }
+  setAv('fp-my-avatar');
+  setAv('lp-avatar-el');
+  setAv('pm-avatar-el');
+  setAv('psetup-av-preview');
+
+  // Broadcast to friends (they see your new photo in real-time)
+  if (typeof _globalCh !== 'undefined' && _globalCh) {
+    try {
+      _globalCh.track({
+        playerId: MY_PLAYER_ID,
+        name: _userProfile ? _userProfile.display_name : (myName || 'ကစားသမား'),
+        avatarUrl: url,
+        status: 'lobby',
+        roomId: null,
+        ts: Date.now()
+      });
+    } catch(e) {}
+  }
+  if (typeof toast === 'function') toast('✅ Profile photo တင်ပြီးပါပြီ!');
+  if (typeof vibrate === 'function') vibrate([40, 15, 60]);
+}
+
+/* Profile SETUP screen upload */
+window.handleSetupPhotoUpload = async function(inp) {
+  if (!inp || !inp.files || !inp.files[0]) return;
+  var err = _validatePhoto(inp.files[0]);
+  if (err) { if (typeof toast === 'function') toast(err); return; }
+  var prog = document.getElementById('setup-upload-prog');
+  if (prog) prog.style.display = 'block';
+  try {
+    var url = await _uploadPhotoToSupabase(inp.files[0]);
+    _pendingAv = url;
+    // Show preview on avatar circle
+    var prev = document.getElementById('psetup-av-preview');
+    if (prev) prev.innerHTML = '<img src="' + url + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
+    // Deselect emoji grid
+    document.querySelectorAll('#av-picker .av-opt').forEach(function(o) { o.classList.remove('sel'); });
+    if (typeof toast === 'function') toast('✅ ပုံ ရွေးပြီးပါပြီ — နာမည်ထည့်ပြီး Save ပါ');
+  } catch(e) {
+    if (typeof toast === 'function') toast('❌ ပုံ တင်မရပါ — ထပ်ကြိုးစားပါ');
+  } finally {
+    if (prog) prog.style.display = 'none';
+    inp.value = '';
+  }
+};
+
+/* Profile MODAL upload */
+window.handleModalPhotoUpload = async function(inp) {
+  if (!inp || !inp.files || !inp.files[0]) return;
+  var err = _validatePhoto(inp.files[0]);
+  if (err) { if (typeof toast === 'function') toast(err); return; }
+  var prog = document.getElementById('modal-upload-prog');
+  if (prog) prog.style.display = 'block';
+  try {
+    var url = await _uploadPhotoToSupabase(inp.files[0]);
+    _pendingAvModal = url;
+    // Show in modal avatar
+    var el = document.getElementById('pm-avatar-el');
+    if (el) el.innerHTML = '<img src="' + url + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
+    // Close emoji picker if open
+    var picker = document.getElementById('pm-av-picker');
+    if (picker) picker.style.display = 'none';
+    if (typeof toast === 'function') toast('✅ ပုံ ရွေးပြီးပါပြီ — Save နှိပ်ပါ');
+  } catch(e) {
+    if (typeof toast === 'function') toast('❌ ပုံ တင်မရပါ — ထပ်ကြိုးစားပါ');
+  } finally {
+    if (prog) prog.style.display = 'none';
+    inp.value = '';
+  }
+};
+
+/* Friends panel avatar upload (📷 button on fp-my-avatar) */
+window.handleAvatarUpload = async function(inp) {
+  if (!inp || !inp.files || !inp.files[0]) return;
+  var err = _validatePhoto(inp.files[0]);
+  if (err) { if (typeof toast === 'function') toast(err); return; }
+  var prog = document.getElementById('fp-upload-progress');
+  if (prog) prog.style.display = 'block';
+  try {
+    var url = await _uploadPhotoToSupabase(inp.files[0]);
+    _applyAvatarEverywhere(url);
+  } catch(e) {
+    if (typeof toast === 'function') toast('❌ ပုံ တင်မရပါ');
+  } finally {
+    if (prog) prog.style.display = 'none';
+    inp.value = '';
+  }
+};
+
+/* Patch saveProfileChanges to also apply photo */
+(function() {
+  var _origSPC = window.saveProfileChanges;
+  window.saveProfileChanges = async function() {
+    if (_origSPC) await _origSPC.apply(this, arguments);
+    // If modal photo was chosen, apply it everywhere
+    if (_pendingAvModal && (_pendingAvModal.startsWith('http') || _pendingAvModal.startsWith('data:'))) {
+      _applyAvatarEverywhere(_pendingAvModal);
+    }
+  };
+})();
+
+/* Patch doCreateProfile to apply photo on first setup */
+(function() {
+  var _origDCP = window.doCreateProfile;
+  window.doCreateProfile = async function() {
+    if (_origDCP) await _origDCP.apply(this, arguments);
+    // If setup photo was chosen (data url or http), broadcast it
+    if (_pendingAv && (_pendingAv.startsWith('http') || _pendingAv.startsWith('data:'))) {
+      setTimeout(function() { _applyAvatarEverywhere(_pendingAv); }, 300);
+    }
+  };
+})();
+
 
 </body>
 </html>
