@@ -4436,31 +4436,8 @@ button {
 </head>
 <body>
 
-<script>
-/* DEBUG - remove after testing */
-var _dbgEl = null;
-function dbg(msg) {
-  if (!_dbgEl) _dbgEl = document.getElementById('dbg-log');
-  var d = document.getElementById('dbg');
-  if (d) d.classList.add('on');
-  var t = new Date().toLocaleTimeString();
-  if (_dbgEl) _dbgEl.innerHTML += '<div>['+t+'] '+msg+'</div>';
-  console.log('[DBG] '+msg);
-}
-// Show debug with 3-tap
-var _tapCount = 0;
-document.addEventListener('click', function(e){
-  _tapCount++;
-  if(_tapCount >= 3){
-    _tapCount = 0;
-    var d = document.getElementById('dbg');
-    if(d) d.classList.toggle('on');
-  }
-  setTimeout(function(){_tapCount=0;}, 1000);
-});
-</script>
+
 <canvas id="mm-bg"></canvas>
-<div id="dbg" class="on"><span id="dbg-close" onclick="document.getElementById('dbg').classList.remove('on')">✕</span><div id="dbg-log"></div></div>
 <div id="noti-container"></div>
 
 <div id="auth-loading">
@@ -4548,10 +4525,7 @@ document.addEventListener('click', function(e){
       👤 &nbsp;Guest အနေဖြင့် ဆက်မည် <small style="opacity:.55">(မသိမ်းနိုင်ပါ)</small>
     </button>
 
-    <!-- A2HS hint -->
-    <div id="a2hs-hint" style="display:none;margin-top:10px;padding:8px 12px;border:1px solid rgba(45,212,191,.2);border-radius:10px;background:rgba(20,184,166,.06);font-size:.63rem;color:rgba(45,212,191,.65);font-family:Outfit,sans-serif;line-height:1.6;text-align:center">
-      📲 Chrome → ⋮ → <b>Add to Home screen</b><br>App icon ရမည် — Google Login ကောင်းစွာ အလုပ်လုပ်မည်
-    </div>
+
   </div>
 </div>
 
@@ -6269,7 +6243,7 @@ async function applyRemote(st){
       $s('huff-piece-lbl',_hpVl);
       $('hn').classList.add('on');
       setTimeout(()=>$('hn').classList.remove('on'),4000);
-      sysChat(`\u{1F4A8} မစားမိသောကြောင့် ${_hpVl} ဖမ်းကောက်ခဲ့သည်`);
+      sysChat(`💨 မစားမိသောကြောင့် ${_hpVl} ဖမ်းကောက်ခဲ့သည်`);
       /* BUG FIX: Check game-over after huff — if the huffed piece was the last one,
          _hr was previously hardcoded over:false which caused the game to never end. */
       const{bc:_hbc,wc:_hwc}=cnt();
@@ -7210,7 +7184,7 @@ function startGlobalPresence(){
   });
   _globalCh.on('broadcast',{event:'kk_freq_acc'},({payload})=>{
     if(payload&&payload.toId===MY_PLAYER_ID){
-      if(typeof toast==='function')toast('\u{1F389} '+(payload.fromName||payload.fromId)+' — Friend ကောင်းဆိုသည်ကို လက်ခံပြီး!');
+      if(typeof toast==='function')toast('🎉 '+(payload.fromName||payload.fromId)+' — Friend တောင်းဆိုမှုကို လက်ခံပြီ!');
       if(typeof vibrate==='function')vibrate([60,30,60]);
     }
   });
@@ -7260,15 +7234,15 @@ function renderFriendsList(){
   const sumEl=document.getElementById('fp-online-summary');
   const txtEl=document.getElementById('fp-online-txt');
   if(sumEl)sumEl.style.display=friends.length>0?'flex':'none';
-  if(txtEl&&friends.length>0)txtEl.textContent=oc+' ဥး Online — '+(friends.length-oc)+' ဥး Offline';
-  if(friends.length===0){container.innerHTML='<div class="fl-empty">\u{1F465} သူငယ်ချင်း မရှိသေးပဪ်<br><small style="opacity:.5">ID ဖြင့် ထဎ့ပဪ ↑</small></div>';return;}
+  if(txtEl&&friends.length>0)txtEl.textContent=oc+' ဦး Online — '+(friends.length-oc)+' ဦး Offline';
+  if(friends.length===0){container.innerHTML='<div class="fl-empty">👥 သူငယ်ချင်း မရှိသေးပါ<br><small style="opacity:.5">ID ဖြင့် ထည့်ပါ ↑</small></div>';return;}
   const sorted=[...friends].sort((a,b)=>((_onlinePlayers[b.id]?1:0)-(_onlinePlayers[a.id]?1:0)));
   container.innerHTML=sorted.map(f=>{
     const ol=_onlinePlayers[f.id];
     if(ol?.name&&ol.name!==f.name)updateFriendName(f.id,ol.name);
     const dn=ol?.name||f.name||f.id;
     const sc=ol?(ol.status==='playing'?'fi-playing':'fi-online'):'fi-offline';
-    const st=ol?(ol.status==='playing'?'\u{1F3AE} ကစားနေသည်':ol.status==='waiting'?'⏳ ကစားဖော စာှေ်နေသည်':'\u{1F7E2} Online'):'⚫ Offline';
+    const st=ol?(ol.status==='playing'?'🎮 ကစားနေသည်':ol.status==='waiting'?'⏳ ကစားဖော စာှေ်နေသည်':'🟢 Online'):'⚫ Offline';
     const jh=(ol?.status==='waiting'&&ol?.roomId)?'<button class="fi-join" onclick="joinFriendRoom(\''+ol.roomId+'\')">&#x26A1; Join</button>':'';
     return '<div class="friend-item '+sc+'"><div class="fi-avatar">'+(function(){var av=ol&&(ol.avatarUrl||ol.avatar_url);if(av&&(av.startsWith('http')||av.startsWith('data:'))){return '<img src="'+av+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';}return (dn[0]||'?').toUpperCase();})()+'</div><div class="fi-info"><div class="fi-name">'+_esc(dn)+'</div><div class="fi-uid">'+f.id+'</div><div class="fi-status">'+st+'</div></div><div class="fi-actions">'+jh+'<button class="fi-remove" onclick="confirmRemoveFriend(\''+f.id+'\')">&#x2715;</button></div></div>';
   }).join('');
@@ -7277,21 +7251,21 @@ function renderFriendsList(){
 window.doAddFriend=function(){
   const inp=document.getElementById('add-friend-inp');if(!inp)return;
   const raw=inp.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
-  if(!raw||raw.length<4){if(typeof toast==='function')toast('⚠️ Player ID မှန်ကန်ဖို စစဆေးပဪb');return;}
-  if(raw===MY_PLAYER_ID){if(typeof toast==='function')toast('⚠️ ကိုယ် ID မထဎ့နိုင်ပဪb');return;}
+  if(!raw||raw.length<4){if(typeof toast==='function')toast('⚠️ Player ID မှန်ကန်ဖို စစ်ဆေးပါ');return;}
+  if(raw===MY_PLAYER_ID){if(typeof toast==='function')toast('⚠️ ကိုယ့် ID မထည့်နိုင်ပါ');return;}
   const fl=getFriends();
   if(fl.some(f=>f.id===raw)){if(typeof toast==='function')toast('ℹ️ သူငယ်ချင်း ရှိနှင်ပြီးဖြစ်သည်');return;}
   const ol=_onlinePlayers[raw];const name=ol?.name||raw;
   addFriendLocal(raw,name);inp.value='';
   if(ol)_sendBcast('kk_freq',{fromId:MY_PLAYER_ID,fromName:document.getElementById('inp-name')?.value.trim()||myName||'Player',toId:raw});
   renderFriendsList();_refreshFriendBadge();
-  if(typeof toast==='function')toast('✅ '+_esc(name)+' ထဎ့ပြီးပဪb်'+(ol?' \u{1F7E2}':' (Offline)'));
+  if(typeof toast==='function')toast('✅ '+_esc(name)+' ထည့်ပြီးပါပြီ'+(ol?' 🟢':' (Offline)'));
   if(typeof vibrate==='function')vibrate([40,20,60]);
 };
 
 window.confirmRemoveFriend=function(id){
   const f=getFriends().find(x=>x.id===id);
-  if(confirm(_esc(f?.name||id)+' ကို ဖျက်မည်လား?')){removeFriendById(id);renderFriendsList();_refreshFriendBadge();if(typeof toast==='function')toast('\u{1F5D1}️ ဖျက်ပြီးပဪb်');}
+  if(confirm(_esc(f?.name||id)+' ကို ဖျက်မည်လား?')){removeFriendById(id);renderFriendsList();_refreshFriendBadge();if(typeof toast==='function')toast('🗑️ ဖျက်ပြီးပါပြီ');}
 };
 
 window.joinFriendRoom=function(code){
@@ -7351,7 +7325,7 @@ window.acceptFriendRequest=function(){
   if(added){
     _sendBcast('kk_freq_acc',{fromId:MY_PLAYER_ID,fromName:document.getElementById('inp-name')?.value.trim()||myName||'Player',toId:fromId});
     renderFriendsList();_refreshFriendBadge();
-    if(typeof toast==='function')toast('\u{1F91D} '+_esc(fromName||fromId)+' Friend ထဎ့ပြီးပဪb်!');
+    if(typeof toast==='function')toast('🤝 '+_esc(fromName||fromId)+' Friend ထည့်ပြီးပါပြီ!');
     if(typeof vibrate==='function')vibrate([40,20,40,20,80]);
   }else{if(typeof toast==='function')toast('ℹ️ သူငယ်ချင်း ရှိနှင်ပြီးဖြစ်သည်');}
   dismissFriendRequest();
@@ -7452,7 +7426,10 @@ function _applyNewAvatar(url) {
   function setAv(id) {
     var el = document.getElementById(id);
     if (!el) return;
-    el.innerHTML = '<img src="' + url + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
+    var _i=document.createElement('img');_i.src=url;
+    _i.style.cssText='width:100%;height:100%;border-radius:50%;object-fit:cover';
+    _i.onerror=function(){this.parentElement.textContent='🐯';};
+    el.innerHTML='';el.appendChild(_i);
   }
   setAv('fp-my-avatar');
   setAv('lp-avatar-el');
@@ -7486,7 +7463,10 @@ function _applyNewAvatar(url) {
     if (myAv) {
       var av = _userProfile ? (_userProfile.avatar_url || _userProfile.avatar) : null;
       if (av && (av.startsWith('http') || av.startsWith('data:'))) {
-        myAv.innerHTML = '<img src="' + av + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
+        var _i=document.createElement('img');_i.src=av;
+        _i.style.cssText='width:100%;height:100%;border-radius:50%;object-fit:cover';
+        _i.onerror=function(){this.parentElement.textContent='🐯';};
+        el.innerHTML='';el.appendChild(_i);
       } else {
         myAv.textContent = av || '🐯';
       }
@@ -7498,33 +7478,66 @@ function _applyNewAvatar(url) {
 </script>
 
 <script>
-/* ══════════════════════════════════════════════════════
-   AUTH SYSTEM — Clean Rewrite
-   မည်သည့် Bug မျှ မပါ
-══════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   AUTH SYSTEM — Production Grade
+   Race-condition safe · Session-persistent · Error-resilient
+══════════════════════════════════════════════════════════════ */
 
 /* ── State ── */
-var _authUser    = null;
-var _userProfile = null;
-var _isGuest     = false;
-var _pendingAv   = null;
+var _authUser       = null;
+var _userProfile    = null;
+var _isGuest        = false;
+var _pendingAv      = null;
 var _pendingAvModal = null;
-var _pendingName = '';
 
-/* ── Status helper ── */
+/* internal guards */
+var _authInited     = false;  /* set true once INITIAL_SESSION resolved */
+var _authInFlight   = false;  /* set true while initAuth() is running */
+var _listenerBound  = false;  /* set true once onAuthStateChange registered */
+var _handlingUser   = null;   /* uid currently being processed → skip duplicate */
+
+/* ── Tiny helpers ── */
 function setStatus(id, msg, type) {
   var el = document.getElementById(id);
   if (!el) return;
-  el.textContent = msg;
-  el.className = 'auth-status' + (msg ? (' ' + (type||'info')) : '');
+  el.textContent = msg || '';
+  el.className = 'auth-status' + (msg ? ' ' + (type || 'info') : '');
+}
+function _hideSplash() {
+  var s = document.getElementById('auth-loading');
+  if (s) s.classList.add('gone');
+}
+function _sbReady() {
+  return typeof SB === 'function' &&
+         typeof supabase !== 'undefined' &&
+         typeof supabase.createClient === 'function';
 }
 
-/* ── Render avatar ── */
+/* ── Button-state helpers ── */
+function _setBusy(mode) {
+  /* mode: 'login'|'signup'|'' ('' = idle) */
+  var busy = !!mode;
+  var bl = document.getElementById('btn-login');
+  var bs = document.getElementById('btn-signup');
+  var bg = document.getElementById('btn-google');
+  if (bl) { bl.disabled = busy; if (!busy || mode==='login')  bl.textContent = mode==='login'  ? '⏳ ဝင်နေသည်...'    : '🔑 Login ဝင်မည်'; }
+  if (bs) { bs.disabled = busy; if (!busy || mode==='signup') bs.textContent = mode==='signup' ? '⏳ ဖန်တီးနေသည်...' : '✨ Account ဖန်တီးမည်'; }
+  if (bg) bg.disabled = busy;
+}
+function _idleButtons() { _setBusy(''); }
+
+/* ── Render avatar safely ── */
 function renderAv(el, av) {
   if (!el) return;
   if (av && (av.startsWith('http') || av.startsWith('data:'))) {
-    el.innerHTML = '<img src="' + av + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.parentElement.textContent=\'🐯\'">';
+    var img = document.createElement('img');
+    img.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover';
+    img.onerror = function() { el.textContent = '🐯'; };
+    img.src = av;
+    el.innerHTML = '';
+    el.appendChild(img);
   } else {
+    el.innerHTML = '';
     el.textContent = av || '🐯';
   }
 }
@@ -7544,24 +7557,25 @@ function applyProfileToLobby(p) {
   renderAv(document.getElementById('lp-avatar-el'), p.avatar_url || p.avatar);
   var ln = document.getElementById('lp-name-el');
   if (ln) ln.textContent = p.display_name || 'ကစားသမား';
-  var lp2 = document.getElementById('lp-pid-el');
-  if (lp2) lp2.textContent = p.player_id || MY_PLAYER_ID;
-  ['pid-display','fp-pid-val','pm-pid-val'].forEach(function(id){
+  var lp = document.getElementById('lp-pid-el');
+  if (lp) lp.textContent = p.player_id || MY_PLAYER_ID;
+  ['pid-display','fp-pid-val','pm-pid-val'].forEach(function(id) {
     var e = document.getElementById(id);
     if (e) e.textContent = p.player_id || MY_PLAYER_ID;
   });
   if (typeof updateGlobalPresence === 'function') updateGlobalPresence('lobby', null);
 }
 
-/* ── DB operations ── */
-async function loadProfileFromDB(uid) {
+/* ── DB helpers ── */
+async function _loadProfile(uid) {
+  /* Try Supabase first, fall back to localStorage cache */
   try {
     var r = await SB().from('profiles').select('*').eq('id', uid).single();
     if (!r.error && r.data) {
       try { localStorage.setItem('kk_prof_' + uid, JSON.stringify(r.data)); } catch(e) {}
       return r.data;
     }
-  } catch(e) {}
+  } catch(e) { console.warn('[Auth] DB load failed:', e.message); }
   try {
     var c = localStorage.getItem('kk_prof_' + uid);
     if (c) return JSON.parse(c);
@@ -7570,133 +7584,248 @@ async function loadProfileFromDB(uid) {
 }
 
 async function upsertProfile(p) {
+  /* Save to localStorage first (instant), then DB (async) */
   try {
     var s = Object.assign({}, p);
     if (s.avatar_url && s.avatar_url.startsWith('data:') && s.avatar_url.length > 50000) s.avatar_url = null;
     localStorage.setItem('kk_prof_' + p.id, JSON.stringify(s));
   } catch(e) {}
-  try {
-    await SB().from('profiles').upsert(p, { onConflict: 'id' });
-  } catch(e) {}
+  try { await SB().from('profiles').upsert(p, { onConflict: 'id' }); } catch(e) {
+    console.warn('[Auth] DB upsert failed (non-fatal):', e.message);
+  }
 }
 
-/* ── Auto-create profile (first login) ── */
-async function autoCreateProfile(user) {
-  var meta = user.user_metadata || {};
+function _buildProfile(user) {
+  var meta = (user.user_metadata) || {};
   var name = meta.full_name || meta.name || (user.email || '').split('@')[0] || 'ကစားသမား';
   var av   = meta.avatar_url || meta.picture || '🐯';
-  var p = {
-    id: user.id,
-    player_id: MY_PLAYER_ID,
+  return {
+    id:           user.id,
+    player_id:    MY_PLAYER_ID,
     display_name: name,
-    avatar: av.startsWith('http') ? '🐯' : av,
-    avatar_url: av.startsWith('http') ? av : null,
-    games_played: 0, wins: 0,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    avatar:       av.startsWith('http') ? '🐯' : av,
+    avatar_url:   av.startsWith('http') ? av : null,
+    games_played: 0,
+    wins:         0,
+    created_at:   new Date().toISOString(),
+    updated_at:   new Date().toISOString()
   };
-  try { localStorage.setItem('kk_prof_' + user.id, JSON.stringify(p)); } catch(e) {}
-  upsertProfile(p);
-  return p;
 }
 
-/* ── Handle signed-in user ── */
-async function onUserSignedIn(user) {
-  _authUser = user;
-  // Save session backup for Brave
+/* ── Session backup (survives Brave Shields localStorage sweep) ── */
+function _saveBackup(session) {
+  if (!session || !session.access_token) return;
   try {
-    var sess = await SB().auth.getSession();
-    if (sess.data && sess.data.session) {
-      localStorage.setItem('kk_auth_backup', JSON.stringify({
-        access_token:  sess.data.session.access_token,
-        refresh_token: sess.data.session.refresh_token,
-        user_id:       user.id,
-        savedAt:       Date.now()
-      }));
-    }
+    localStorage.setItem('kk_auth_backup', JSON.stringify({
+      at: session.access_token,
+      rt: session.refresh_token,
+      ts: Date.now()
+    }));
   } catch(e) {}
-  // Load or create profile
-  var profile = await loadProfileFromDB(user.id);
-  if (!profile) profile = await autoCreateProfile(user);
-  _userProfile = profile;
-  applyProfileToLobby(profile);
-  showScr('lobby');
-  if (typeof startGlobalPresence === 'function') startGlobalPresence();
-  if (typeof _loadPendingFriendRequests === 'function') _loadPendingFriendRequests();
-  // Hide splash
-  var sp = document.getElementById('auth-loading');
-  if (sp) sp.classList.add('gone');
+}
+
+async function _restoreBackup() {
+  try {
+    var raw = localStorage.getItem('kk_auth_backup');
+    if (!raw) return null;
+    var bk = JSON.parse(raw);
+    if (!bk || !bk.at || !bk.rt) { localStorage.removeItem('kk_auth_backup'); return null; }
+    if (Date.now() - bk.ts > 30 * 86400000) { localStorage.removeItem('kk_auth_backup'); return null; }
+    var r = await SB().auth.setSession({ access_token: bk.at, refresh_token: bk.rt });
+    if (r.error) { localStorage.removeItem('kk_auth_backup'); return null; }
+    return r.data ? r.data.session : null;
+  } catch(e) {
+    try { localStorage.removeItem('kk_auth_backup'); } catch(re) {}
+    return null;
+  }
+}
+
+/* ── Guest session ── */
+function _tryRestoreGuest() {
+  try {
+    var g = JSON.parse(localStorage.getItem('kk_guest_v1') || 'null');
+    if (!g || !g.name) return false;
+    _isGuest = true;
+    myName = g.name;
+    _userProfile = { display_name: g.name, avatar: g.avatar || '👤', avatar_url: g.avatar_url || null, player_id: MY_PLAYER_ID };
+    applyProfileToLobby(_userProfile);
+    _hideSplash();
+    showScr('lobby');
+    if (typeof startGlobalPresence === 'function') startGlobalPresence();
+    return true;
+  } catch(e) { return false; }
+}
+
+/* ── Core: handle a verified user ── */
+async function _handleUser(user, session) {
+  if (!user || !user.id) return;
+  /* Deduplicate: if already handling this exact user, skip */
+  if (_handlingUser === user.id) return;
+  _handlingUser = user.id;
+  _isGuest = false;
+  _authUser = user;
+  setStatus('auth-status', '');
+  _idleButtons();
+  _saveBackup(session);
+
+  try {
+    var profile = await _loadProfile(user.id);
+    if (!profile) {
+      profile = _buildProfile(user);
+      /* Save to cache immediately; DB upsert is async non-blocking */
+      try { localStorage.setItem('kk_prof_' + user.id, JSON.stringify(profile)); } catch(e) {}
+      upsertProfile(profile).catch(function(){});
+    }
+    _userProfile = profile;
+    applyProfileToLobby(profile);
+    _hideSplash();
+    showScr('lobby');
+    if (typeof startGlobalPresence === 'function') startGlobalPresence();
+    if (typeof _loadPendingFriendRequests === 'function') _loadPendingFriendRequests();
+  } catch(e) {
+    console.error('[Auth] _handleUser failed:', e);
+    _handlingUser = null;
+    _hideSplash();
+    _idleButtons();
+    showScr('auth');
+    setStatus('auth-status', '❌ Profile load မလုပ်နိုင်ပါ — ပြန်ဝင်ကြည့်ပါ', 'err');
+  }
+}
+
+/* ── Bind auth state listener (once only) ── */
+function _bindListener() {
+  if (_listenerBound) return;
+  _listenerBound = true;
+
+  SB().auth.onAuthStateChange(function(event, session) {
+    /* All processing is deferred to avoid blocking the Supabase internals */
+    setTimeout(async function() {
+      try {
+        if (event === 'SIGNED_IN') {
+          if (session && session.user) {
+            _saveBackup(session);
+            await _handleUser(session.user, session);
+          }
+        } else if (event === 'TOKEN_REFRESHED') {
+          if (session && session.user) {
+            _authUser = session.user;
+            _saveBackup(session);
+            if (!_userProfile) await _handleUser(session.user, session);
+          }
+        } else if (event === 'INITIAL_SESSION') {
+          /* Only act if initAuth() hasn't already resolved this */
+          if (!_authInited) {
+            if (session && session.user) {
+              _authInited = true;
+              await _handleUser(session.user, session);
+            } else {
+              _authInited = true;
+              _hideSplash();
+              if (!_tryRestoreGuest()) showScr('auth');
+            }
+          }
+        } else if (event === 'SIGNED_OUT') {
+          _authUser     = null;
+          _userProfile  = null;
+          _isGuest      = false;
+          _handlingUser = null;
+          try { localStorage.removeItem('kk_auth_backup'); } catch(e) {}
+          _hideSplash();
+          _idleButtons();
+          showScr('auth');
+          setStatus('auth-status', '');
+        }
+      } catch(e) {
+        console.error('[Auth] onAuthStateChange handler error:', e);
+        _hideSplash();
+        _idleButtons();
+        if (!_authInited) { _authInited = true; showScr('auth'); }
+      }
+    }, 0);
+  });
 }
 
 /* ══════════════════════════════════════════
-   INIT AUTH — Entry point
+   INIT AUTH — called once on boot
 ══════════════════════════════════════════ */
 async function initAuth() {
-  dbg("initAuth started");
-  // Cannot run from file:// — must be on HTTPS
+  if (_authInFlight || _authInited) return;
+
+  /* Retry until Supabase SDK is loaded */
+  if (!_sbReady()) {
+    setTimeout(initAuth, 300);
+    return;
+  }
+
   if (window.location.protocol === 'file:') {
-    var sp = document.getElementById('auth-loading');
-    if (sp) sp.classList.add('gone');
+    _hideSplash();
+    showScr('auth');
     setStatus('auth-status', '⚠️ GitHub URL မှ ဖွင့်ပါ: nytherisq-debug.github.io/MMKyarrKwat', 'err');
     return;
   }
-  try {
-    if (typeof SB !== 'function') { dbg("SB not ready, retry"); setTimeout(initAuth, 300); return; }
 
-    // Handle OAuth redirect (Google)
+  _authInFlight = true;
+
+  try {
+    /* Register state listener before doing anything else */
+    _bindListener();
+
+    /* Handle OAuth redirect if present (Google return) */
     var hash   = window.location.hash || '';
     var search = window.location.search || '';
-    if (hash.includes('access_token') || hash.includes('refresh_token') || search.includes('code=')) {
-      try { window.history.replaceState({}, '', window.location.pathname); } catch(e) {}
-      await new Promise(function(r){ setTimeout(r, 500); });
+    var isRedirect = hash.includes('access_token') || search.includes('code=') || search.includes('error=');
+    if (isRedirect) {
+      setStatus('auth-status', '⏳ Google login ကို အတည်ပြုနေသည်...', 'info');
+      /* Give Supabase time to process the URL tokens */
+      await new Promise(function(res){ setTimeout(res, 800); });
+      try {
+        var clean = new URL(window.location.href);
+        clean.hash = '';
+        ['code','type','error','error_code','error_description'].forEach(function(k){ clean.searchParams.delete(k); });
+        window.history.replaceState({}, document.title, clean.pathname + (clean.search || ''));
+      } catch(e) {}
     }
 
-    // Restore backup session (for Brave)
-    try {
-      var bk = JSON.parse(localStorage.getItem('kk_auth_backup') || 'null');
-      if (bk && bk.access_token && bk.refresh_token && (Date.now() - (bk.savedAt||0) < 30*24*60*60*1000)) {
-        var hasSb = Object.keys(localStorage).some(function(k){ return k.includes('sb-oxziinvwdhligrbllqbj'); });
-        if (!hasSb) {
-          try { await SB().auth.setSession({ access_token: bk.access_token, refresh_token: bk.refresh_token }); } catch(e) {}
-        }
-      }
-    } catch(e) {}
+    /* Check for an active session */
+    var sr = await SB().auth.getSession();
+    var cur = sr && sr.data ? sr.data.session : null;
 
-    // Register auth state listener
-    SB().auth.onAuthStateChange(function(event, session) {
-      dbg('AUTH EVENT: ' + event + ' user=' + (session && session.user ? session.user.email : 'none'));
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (session && session.user) {
-          onUserSignedIn(session.user);
-        }
-      } else if (event === 'INITIAL_SESSION') {
-        if (session && session.user) {
-          onUserSignedIn(session.user);
-        } else {
-          var sp = document.getElementById('auth-loading');
-          if (sp) sp.classList.add('gone');
-          if (!_tryRestoreGuest()) showScr('auth');
-        }
-      } else if (event === 'SIGNED_OUT') {
-        _authUser = null; _userProfile = null; _isGuest = false;
-        showScr('auth');
-      }
-    });
-
-    // Check current session
-    var sess = await SB().auth.getSession();
-    var sp = document.getElementById('auth-loading');
-    if (!sess.data || !sess.data.session) {
-      if (sp) sp.classList.add('gone');
-      if (!_tryRestoreGuest()) showScr('auth');
+    /* On redirect, retry once more after a beat */
+    if (!cur && isRedirect) {
+      await new Promise(function(res){ setTimeout(res, 400); });
+      var sr2 = await SB().auth.getSession();
+      cur = sr2 && sr2.data ? sr2.data.session : null;
     }
-    // else INITIAL_SESSION fires above
+
+    if (cur && cur.user) {
+      _authInited = true;
+      await _handleUser(cur.user, cur);
+      return;
+    }
+
+    /* Try to restore from our own backup (Brave anti-tracking workaround) */
+    var restored = await _restoreBackup();
+    if (restored && restored.user) {
+      _authInited = true;
+      await _handleUser(restored.user, restored);
+      return;
+    }
+
+    /* No session — show auth or restore guest */
+    _authInited = true;
+    _hideSplash();
+    if (!_tryRestoreGuest()) showScr('auth');
+    setStatus('auth-status', '');
 
   } catch(e) {
-    console.error('initAuth error:', e);
-    var sp2 = document.getElementById('auth-loading');
-    if (sp2) sp2.classList.add('gone');
-    if (!_tryRestoreGuest()) showScr('auth');
+    console.error('[Auth] initAuth failed:', e);
+    _authInited = true;
+    _hideSplash();
+    _idleButtons();
+    showScr('auth');
+    setStatus('auth-status', '❌ Authentication စတင်မရပါ — Reload လုပ်ပါ', 'err');
+  } finally {
+    _authInFlight = false;
   }
 }
 
@@ -7704,8 +7833,10 @@ async function initAuth() {
    AUTH TAB SWITCH
 ══════════════════════════════════════════ */
 window.switchAuthTab = function(tab) {
-  document.getElementById('tab-login')?.classList.toggle('sel', tab === 'login');
-  document.getElementById('tab-signup')?.classList.toggle('sel', tab === 'signup');
+  var tl = document.getElementById('tab-login');
+  var ts = document.getElementById('tab-signup');
+  if (tl) tl.classList.toggle('sel', tab === 'login');
+  if (ts) ts.classList.toggle('sel', tab === 'signup');
   var lf = document.getElementById('auth-login-form');
   var sf = document.getElementById('auth-signup-form');
   if (lf) lf.style.display = tab === 'login' ? '' : 'none';
@@ -7717,15 +7848,13 @@ window.switchAuthTab = function(tab) {
    GOOGLE OAUTH
 ══════════════════════════════════════════ */
 window.signInWithGoogle = function() {
-  if (window.location.protocol === 'file:') {
-    setStatus('auth-status', '⚠️ GitHub URL မှ ဖွင့်ပါ', 'err'); return;
-  }
+  if (!_sbReady()) { setStatus('auth-status', '⚠️ Supabase မတက်လာသေးပါ — ခဏစောင့်ပါ', 'err'); return; }
   setStatus('auth-status', '⏳ Google ဆက်သွယ်နေသည်...', 'info');
   SB().auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: 'https://nytherisq-debug.github.io/MMKyarrKwat/' }
   }).then(function(r) {
-    if (r.error) setStatus('auth-status', '❌ ' + r.error.message, 'err');
+    if (r && r.error) setStatus('auth-status', '❌ ' + r.error.message, 'err');
   }).catch(function(e) {
     setStatus('auth-status', '❌ Google မချိတ်ဆက်နိုင်ပါ', 'err');
   });
@@ -7735,30 +7864,42 @@ window.signInWithGoogle = function() {
    EMAIL LOGIN
 ══════════════════════════════════════════ */
 window.doEmailLogin = async function() {
-  dbg('doEmailLogin called');
-  var email = ((document.getElementById('auth-email')||{}).value||'').trim();
-  var pw    = ((document.getElementById('auth-pw')||{}).value||'').trim();
-  if (!email) { setStatus('auth-status','⚠️ Email ထည့်ပါ','err'); return; }
-  if (!pw)    { setStatus('auth-status','⚠️ Password ထည့်ပါ','err'); return; }
-  var btn = document.getElementById('btn-login');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ ဝင်နေသည်...'; }
-  setStatus('auth-status','');
+  var email = ((document.getElementById('auth-email') || {}).value || '').trim();
+  var pw    = ((document.getElementById('auth-pw')    || {}).value || '').trim();
+  if (!email) { setStatus('auth-status', '⚠️ Email ထည့်ပါ', 'err'); return; }
+  if (!pw)    { setStatus('auth-status', '⚠️ Password ထည့်ပါ', 'err'); return; }
+  if (!_sbReady()) { setStatus('auth-status', '⚠️ Supabase မတက်လာသေးပါ — ထပ်ကြိုးစားပါ', 'err'); return; }
+  _setBusy('login');
+  setStatus('auth-status', '');
   try {
-    dbg('signInWithPassword calling...');
     var r = await SB().auth.signInWithPassword({ email: email, password: pw });
-    dbg('signInWithPassword result: '+(r.error?'ERROR:'+r.error.message:'OK user='+r.data?.user?.email));
     if (r.error) {
-      var msg = r.error.message;
-      if (msg.includes('Invalid') || msg.includes('credentials') || msg.includes('invalid login')) msg = '❌ Email / Password မမှန်ပါ';
-      else if (msg.includes('Email not confirmed')) msg = '❌ Email Confirm မလုပ်ရသေးပါ — Inbox စစ်ပါ';
-      else msg = '❌ ' + msg;
-      setStatus('auth-status', msg, 'err');
+      var m = r.error.message.toLowerCase();
+      var msg = m.includes('invalid') || m.includes('credentials') ? 'Email / Password မမှန်ပါ'
+              : m.includes('not confirmed')                        ? 'Email ကို Confirm လုပ်ပါ — Inbox စစ်ပါ'
+              : r.error.message;
+      setStatus('auth-status', '❌ ' + msg, 'err');
+      return;
     }
-    // Success → onAuthStateChange(SIGNED_IN) → onUserSignedIn → lobby
+    /* Success: onAuthStateChange(SIGNED_IN) will fire and _handleUser will run.
+       But we also handle the direct result to avoid any race where the event fires
+       before our listener or gets swallowed. */
+    var sess = r.data && r.data.session ? r.data.session : null;
+    var user = sess ? sess.user : (r.data ? r.data.user : null);
+    if (sess && user) {
+      await _handleUser(user, sess);
+    } else {
+      /* Fallback: query the session explicitly */
+      var sr = await SB().auth.getSession();
+      var s2 = sr && sr.data ? sr.data.session : null;
+      if (s2 && s2.user) await _handleUser(s2.user, s2);
+      else setStatus('auth-status', '⚠️ Session မရပါ — Page reload ပြီး ပြန်ဝင်ပါ', 'err');
+    }
   } catch(e) {
+    console.error('[Auth] doEmailLogin error:', e);
     setStatus('auth-status', '❌ ချိတ်ဆက်မရပါ — Internet စစ်ပါ', 'err');
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '🔑 Login ဝင်မည်'; }
+    _idleButtons();
   }
 };
 
@@ -7766,29 +7907,43 @@ window.doEmailLogin = async function() {
    EMAIL SIGNUP
 ══════════════════════════════════════════ */
 window.doEmailSignup = async function() {
-  var email = ((document.getElementById('auth-semail')||{}).value||'').trim();
-  var pw    = ((document.getElementById('auth-spw')||{}).value||'').trim();
-  if (!email) { setStatus('auth-status','⚠️ Email ထည့်ပါ','err'); return; }
-  if (pw.length < 6) { setStatus('auth-status','⚠️ Password အနည်းဆုံး 6 လုံး ထည့်ပါ','err'); return; }
-  var btn = document.getElementById('btn-signup');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ ဖန်တီးနေသည်...'; }
-  setStatus('auth-status','⏳ Account ဖန်တီးနေသည်...','info');
+  var email = ((document.getElementById('auth-semail') || {}).value || '').trim();
+  var pw    = ((document.getElementById('auth-spw')    || {}).value || '').trim();
+  if (!email)        { setStatus('auth-status', '⚠️ Email ထည့်ပါ', 'err'); return; }
+  if (pw.length < 6) { setStatus('auth-status', '⚠️ Password အနည်းဆုံး 6 လုံး ထည့်ပါ', 'err'); return; }
+  if (!_sbReady()) { setStatus('auth-status', '⚠️ Supabase မတက်လာသေးပါ — ထပ်ကြိုးစားပါ', 'err'); return; }
+  _setBusy('signup');
+  setStatus('auth-status', '⏳ Account ဖန်တီးနေသည်...', 'info');
   try {
     var r = await SB().auth.signUp({ email: email, password: pw });
     if (r.error) {
-      var emsg = r.error.message;
-      if (emsg.includes('already registered') || emsg.includes('already been registered')) emsg = 'ဒီ Email ရှိနှင့်ပြီ — Login tab ကနေ ဝင်ပါ';
-      setStatus('auth-status', '❌ ' + emsg, 'err');
-    } else if (r.data && r.data.user) {
-      if (!r.data.session) {
-        setStatus('auth-status', '📧 Email Inbox စစ်ပြီး Confirmation link နှိပ်ပါ', 'ok');
-      }
-      // session exists → SIGNED_IN fires → lobby
+      var m = r.error.message.toLowerCase();
+      var msg = (m.includes('already registered') || m.includes('already been registered'))
+                ? 'ဒီ Email ရှိနှင့်ပြီ — Login tab ကနေ ဝင်ပါ'
+                : r.error.message;
+      setStatus('auth-status', '❌ ' + msg, 'err');
+      return;
+    }
+    var sess = r.data && r.data.session ? r.data.session : null;
+    var user = sess ? sess.user : (r.data ? r.data.user : null);
+
+    if (sess && user) {
+      /* Email confirmation is OFF → instant session */
+      await _handleUser(user, sess);
+    } else if (user && !sess) {
+      /* Email confirmation is ON */
+      var le = document.getElementById('auth-email');
+      if (le && !le.value) le.value = email;
+      switchAuthTab('login');
+      setStatus('auth-status', '📧 Email Inbox စစ်ပြီး Confirmation link နှိပ်ပါ — ပြီးရင် Login ဝင်ပါ', 'ok');
+    } else {
+      setStatus('auth-status', '⚠️ Account ဖန်တီးမည်ဆိုသော်လည်း session မရပါ — Login ဝင်ကြည့်ပါ', 'err');
     }
   } catch(e) {
-    setStatus('auth-status', '❌ ' + e.message, 'err');
+    console.error('[Auth] doEmailSignup error:', e);
+    setStatus('auth-status', '❌ ' + (e.message || 'Sign Up မအောင်မြင်ပါ'), 'err');
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '✨ Account ဖန်တီးမည်'; }
+    _idleButtons();
   }
 };
 
@@ -7796,53 +7951,34 @@ window.doEmailSignup = async function() {
    FORGOT PASSWORD
 ══════════════════════════════════════════ */
 window.doForgotPassword = async function() {
-  var email = ((document.getElementById('auth-email')||{}).value||'').trim();
-  if (!email) { setStatus('auth-status','⚠️ Email ထည့်ပြီးမှ နှိပ်ပါ','err'); return; }
-  setStatus('auth-status','⏳ Reset link ပို့နေသည်...','info');
+  var email = ((document.getElementById('auth-email') || {}).value || '').trim();
+  if (!email) { setStatus('auth-status', '⚠️ Email ထည့်ပြီးမှ နှိပ်ပါ', 'err'); return; }
+  setStatus('auth-status', '⏳ Reset link ပို့နေသည်...', 'info');
   try {
-    var r = await SB().auth.resetPasswordForEmail(email, { redirectTo: 'https://nytherisq-debug.github.io/MMKyarrKwat/' });
-    if (r.error) setStatus('auth-status','❌ '+r.error.message,'err');
-    else setStatus('auth-status','✅ Email စစ်ဆေးပါ — Reset link ပို့ပြီ','ok');
-  } catch(e) { setStatus('auth-status','❌ '+e.message,'err'); }
+    var r = await SB().auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://nytherisq-debug.github.io/MMKyarrKwat/'
+    });
+    if (r.error) setStatus('auth-status', '❌ ' + r.error.message, 'err');
+    else setStatus('auth-status', '✅ Reset link ပို့ပြီ — Email စစ်ပါ', 'ok');
+  } catch(e) {
+    setStatus('auth-status', '❌ Reset link မပို့နိုင်ပါ', 'err');
+  }
 };
 
 /* ══════════════════════════════════════════
    GUEST MODE
 ══════════════════════════════════════════ */
-function _tryRestoreGuest() {
-  try {
-    var g = JSON.parse(localStorage.getItem('kk_guest_v1')||'null');
-    if (g && g.name) { return _applyGuestProfile(); }
-  } catch(e) {}
-  return false;
-}
-
-function _applyGuestProfile() {
-  try {
-    var g = JSON.parse(localStorage.getItem('kk_guest_v1')||'null');
-    if (!g || !g.name) return false;
-    _isGuest = true;
-    myName = g.name;
-    _userProfile = { display_name: g.name, avatar: g.avatar||'👤', avatar_url: g.avatar_url||null, player_id: MY_PLAYER_ID };
-    applyProfileToLobby(_userProfile);
-    return true;
-  } catch(e) { return false; }
-}
-
 window.continueAsGuest = function() {
-  _isGuest = true;
   var g = null;
-  try { g = JSON.parse(localStorage.getItem('kk_guest_v1')||'null'); } catch(e) {}
-  myName = (g && g.name) ? g.name : ('Guest ' + Math.floor(Math.random()*9000+1000));
-  try {
-    localStorage.setItem('kk_guest_v1', JSON.stringify({
-      name: myName, avatar: (g&&g.avatar)||'👤',
-      avatar_url: (g&&g.avatar_url)||null,
-      player_id: MY_PLAYER_ID, savedAt: Date.now()
-    }));
-  } catch(e) {}
-  _userProfile = { display_name: myName, avatar: (g&&g.avatar)||'👤', avatar_url: null, player_id: MY_PLAYER_ID };
+  try { g = JSON.parse(localStorage.getItem('kk_guest_v1') || 'null'); } catch(e) {}
+  var name = (g && g.name) ? g.name : ('Guest ' + Math.floor(Math.random() * 9000 + 1000));
+  _isGuest = true;
+  myName   = name;
+  var gd = { name: name, avatar: (g && g.avatar) || '👤', avatar_url: (g && g.avatar_url) || null, player_id: MY_PLAYER_ID, savedAt: Date.now() };
+  try { localStorage.setItem('kk_guest_v1', JSON.stringify(gd)); } catch(e) {}
+  _userProfile = { display_name: name, avatar: gd.avatar, avatar_url: gd.avatar_url, player_id: MY_PLAYER_ID };
   applyProfileToLobby(_userProfile);
+  _hideSplash();
   showScr('lobby');
   if (typeof startGlobalPresence === 'function') startGlobalPresence();
 };
@@ -7853,14 +7989,57 @@ window.continueAsGuest = function() {
 window.doSignOut = async function() {
   if (!confirm('Sign Out ထွက်မည်လား?')) return;
   if (typeof closeProfileModal === 'function') closeProfileModal();
-  _authUser = null; _userProfile = null; _isGuest = false;
+  _authUser     = null;
+  _userProfile  = null;
+  _isGuest      = false;
+  _handlingUser = null;
+  /* Reset init guards so user can log back in */
+  _authInited   = false;
+  _authInFlight = false;
   try { await SB().auth.signOut({ scope: 'local' }); } catch(e) {}
   try {
     Object.keys(localStorage).filter(function(k){
-      return k.startsWith('kk_prof_') || k.includes('sb-oxziinvwdhligrbllqbj') || k === 'kk_auth_backup' || k === 'kk_guest_v1';
+      return k.startsWith('kk_prof_') ||
+             k.indexOf('sb-oxziinvwdhligrbllqbj') !== -1 ||
+             k === 'kk_auth_backup' ||
+             k === 'kk_guest_v1';
     }).forEach(function(k){ localStorage.removeItem(k); });
   } catch(e) {}
+  _idleButtons();
+  _hideSplash();
   showScr('auth');
+  setStatus('auth-status', '');
+};
+
+/* ══════════════════════════════════════════
+   PROFILE SETUP (first-time)
+══════════════════════════════════════════ */
+window.doCreateProfile = async function() {
+  var name = ((document.getElementById('psetup-name') || {}).value || '').trim();
+  if (!name) { setStatus('psetup-status', '⚠️ အမည် ထည့်ပါ', 'err'); return; }
+  if (!_authUser) { setStatus('psetup-status', '❌ Login ဝင်ထားခြင်း မရှိပါ', 'err'); return; }
+  setStatus('psetup-status', '⏳ သိမ်းဆည်းနေသည်...', 'info');
+  var av = _pendingAv || '🐯';
+  var p = {
+    id: _authUser.id, player_id: MY_PLAYER_ID, display_name: name,
+    avatar:     (av.startsWith('http') || av.startsWith('data:')) ? '🐯' : av,
+    avatar_url: (av.startsWith('http') || av.startsWith('data:')) ? av  : null,
+    games_played: 0, wins: 0,
+    created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+  };
+  await upsertProfile(p);
+  _userProfile = p;
+  applyProfileToLobby(p);
+  showScr('lobby');
+  if (typeof startGlobalPresence === 'function') startGlobalPresence();
+};
+
+window.setSetupAv = function(el, em) {
+  document.querySelectorAll('#av-picker .av-opt').forEach(function(o){ o.classList.remove('sel'); });
+  el.classList.add('sel');
+  _pendingAv = em;
+  var prev = document.getElementById('psetup-av-preview');
+  if (prev) prev.textContent = em;
 };
 
 /* ══════════════════════════════════════════
@@ -7869,19 +8048,14 @@ window.doSignOut = async function() {
 window.openProfileModal = function() {
   var modal = document.getElementById('profile-modal');
   if (!modal) return;
-  var p = _userProfile || {};
   _pendingAvModal = null;
-  var ni = document.getElementById('pm-name-inp');
-  if (ni) ni.value = p.display_name || myName || '';
-  var pv = document.getElementById('pm-pid-val');
-  if (pv) pv.textContent = MY_PLAYER_ID;
-  var ei = document.getElementById('pm-email-disp');
-  if (ei) ei.value = _isGuest ? 'Guest Mode' : ((_authUser && _authUser.email) || '');
-  var av = document.getElementById('pm-avatar-el');
-  if (av) renderAv(av, p.avatar_url || p.avatar || '🐯');
-  var picker = document.getElementById('pm-av-picker');
-  if (picker) picker.style.display = 'none';
-  setStatus('pm-status','');
+  var p  = _userProfile;
+  var ni = document.getElementById('pm-name-inp');  if (ni) ni.value = p ? (p.display_name || '') : (myName || '');
+  var pv = document.getElementById('pm-pid-val');   if (pv) pv.textContent = p ? (p.player_id || MY_PLAYER_ID) : MY_PLAYER_ID;
+  var ei = document.getElementById('pm-email-disp'); if (ei) ei.value = _isGuest ? 'Guest Mode' : (_authUser ? _authUser.email : '');
+  var av = document.getElementById('pm-avatar-el'); if (av && p) renderAv(av, p.avatar_url || p.avatar);
+  var pk = document.getElementById('pm-av-picker'); if (pk) pk.style.display = 'none';
+  setStatus('pm-status', '');
   modal.style.display = 'flex';
 };
 
@@ -7895,98 +8069,82 @@ window.setModalAv = function(el, em) {
   el.classList.add('sel');
   _pendingAvModal = em;
   var av = document.getElementById('pm-avatar-el');
-  if (av) { av.textContent = em; av.style.backgroundImage = ''; }
-};
-
-window.togglePmAvPicker = function() {
-  var p = document.getElementById('pm-av-picker');
-  if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
+  if (av) av.textContent = em;
 };
 
 window.saveProfileChanges = async function() {
-  var name = ((document.getElementById('pm-name-inp')||{}).value||'').trim();
-  if (!name) { setStatus('pm-status','⚠️ အမည် ထည့်ပါ','err'); return; }
+  var name = ((document.getElementById('pm-name-inp') || {}).value || '').trim();
+  if (!name) { setStatus('pm-status', '⚠️ အမည် ထည့်ပါ', 'err'); return; }
   var newAv = _pendingAvModal || (_userProfile ? (_userProfile.avatar_url || _userProfile.avatar) : '🐯');
-  setStatus('pm-status','⏳ သိမ်းဆည်းနေသည်...','info');
-  if (_authUser && !_isGuest && _userProfile) {
-    var up = Object.assign({}, _userProfile, {
-      display_name: name,
-      avatar: (newAv && (newAv.startsWith('http')||newAv.startsWith('data:'))) ? _userProfile.avatar : (newAv||'🐯'),
-      avatar_url: (newAv && (newAv.startsWith('http')||newAv.startsWith('data:'))) ? newAv : null,
+  setStatus('pm-status', '⏳ သိမ်းဆည်းနေသည်...', 'info');
+  myName = name;
+  var isImg = newAv && (newAv.startsWith('http') || newAv.startsWith('data:'));
+  if (_authUser && !_isGuest) {
+    var up = Object.assign({}, _userProfile || {}, {
+      id: _authUser.id, player_id: MY_PLAYER_ID, display_name: name,
+      avatar:     isImg ? (_userProfile ? _userProfile.avatar : '🐯') : (newAv || '🐯'),
+      avatar_url: isImg ? newAv : null,
       updated_at: new Date().toISOString()
     });
-    _userProfile = up;
     await upsertProfile(up);
-  }
-  if (_isGuest) {
+    _userProfile = up;
+  } else if (_isGuest) {
     try {
-      var gs = JSON.parse(localStorage.getItem('kk_guest_v1')||'{}');
-      gs.name = name; if (newAv) { if (newAv.startsWith('http')||newAv.startsWith('data:')) gs.avatar_url=newAv; else gs.avatar=newAv; }
-      localStorage.setItem('kk_guest_v1', JSON.stringify(gs));
+      var gd = JSON.parse(localStorage.getItem('kk_guest_v1') || '{}');
+      gd.name = name; if (newAv) gd.avatar = newAv;
+      localStorage.setItem('kk_guest_v1', JSON.stringify(gd));
     } catch(e) {}
+    if (_userProfile) _userProfile.display_name = name;
   }
-  myName = name;
-  if (_userProfile) { _userProfile.display_name = name; if (newAv && _pendingAvModal) { _userProfile.avatar_url = newAv.startsWith('http')||newAv.startsWith('data:') ? newAv : null; _userProfile.avatar = newAv; } }
-  applyProfileToLobby(_userProfile || { display_name: name, avatar: newAv, player_id: MY_PLAYER_ID });
-  setStatus('pm-status','✅ သိမ်းဆည်းပြီးပါပြီ!','ok');
-  setTimeout(function(){ window.closeProfileModal(); setStatus('pm-status',''); }, 900);
+  var ln = document.getElementById('lp-name-el'); if (ln) ln.textContent = name;
+  renderAv(document.getElementById('lp-avatar-el'), newAv);
+  var ni = document.getElementById('inp-name'); if (ni) ni.value = name;
+  setStatus('pm-status', '✅ သိမ်းဆည်းပြီးပါပြီ!', 'ok');
   if (typeof updateGlobalPresence === 'function') updateGlobalPresence('lobby', null);
+  setTimeout(function(){ closeProfileModal(); setStatus('pm-status', ''); }, 800);
 };
 
 /* ══════════════════════════════════════════
-   GAME STATS
+   GAME STAT TRACKING + ROOM PATCHES
 ══════════════════════════════════════════ */
-async function _recordGameResult(won) {
-  if (!_authUser || !_userProfile) return;
-  _userProfile.games_played = (_userProfile.games_played||0) + 1;
-  if (won) _userProfile.wins = (_userProfile.wins||0) + 1;
-  _userProfile.updated_at = new Date().toISOString();
-  await upsertProfile(_userProfile);
-}
-
-/* ══════════════════════════════════════════
-   PATCH GAME FUNCTIONS
-══════════════════════════════════════════ */
-(function(){
-  var _cR = window.createRoom, _jR = window.joinRoom, _dL = window.doLeave, _sW = window.showWin;
-  window.createRoom = async function(){
-    if (_userProfile) { myName = _userProfile.display_name||myName; var ni=document.getElementById('inp-name'); if(ni)ni.value=myName; }
-    if (_cR) await _cR.apply(this,arguments);
-    setTimeout(function(){ if(window.roomId && typeof updateGlobalPresence==='function') updateGlobalPresence('waiting',window.roomId); },800);
-  };
-  window.joinRoom = async function(){
-    if (_userProfile) { myName = _userProfile.display_name||myName; var ni=document.getElementById('inp-name'); if(ni)ni.value=myName; }
-    if (_jR) await _jR.apply(this,arguments);
-    setTimeout(function(){ if(window.roomId && typeof updateGlobalPresence==='function') updateGlobalPresence('playing',window.roomId); },1000);
-  };
-  window.doLeave = async function(){
-    if (typeof updateGlobalPresence==='function') updateGlobalPresence('lobby',null);
-    if (_dL) await _dL.apply(this,arguments);
-  };
-  window.showWin = function(won){
-    if (!aiMode && !spectatorMode) _recordGameResult(won);
-    if (_sW) return _sW.apply(this,arguments);
-  };
-})();
-
-/* ══════════════════════════════════════════
-   BOOT
-══════════════════════════════════════════ */
-(function(){
-  function tryInit(){
-    if (typeof SB==='function' && typeof supabase!=='undefined') {
-      initAuth();
-    } else {
-      setTimeout(tryInit,300);
+(function() {
+  var _oSW = window.showWin;
+  window.showWin = function(won) {
+    if (!aiMode && !spectatorMode && _authUser && _userProfile) {
+      _userProfile.games_played = (_userProfile.games_played || 0) + 1;
+      if (won) _userProfile.wins = (_userProfile.wins || 0) + 1;
+      _userProfile.updated_at = new Date().toISOString();
+      upsertProfile(_userProfile).catch(function(){});
     }
-  }
-  if (document.readyState==='loading') {
-    document.addEventListener('DOMContentLoaded', tryInit);
-  } else {
-    setTimeout(tryInit, 400);
-  }
+    if (_oSW) _oSW.apply(this, arguments);
+  };
+
+  var _oCR = window.createRoom;
+  window.createRoom = async function() {
+    if (_userProfile) myName = _userProfile.display_name || myName;
+    var ni = document.getElementById('inp-name'); if (ni && myName) ni.value = myName;
+    if (_oCR) await _oCR.apply(this, arguments);
+  };
+
+  var _oJR = window.joinRoom;
+  window.joinRoom = async function() {
+    if (_userProfile) myName = _userProfile.display_name || myName;
+    var ni = document.getElementById('inp-name'); if (ni && myName) ni.value = myName;
+    if (_oJR) await _oJR.apply(this, arguments);
+  };
 })();
 
+/* ══════════════════════════════════════════
+   BOOT — call initAuth once DOM + Supabase ready
+══════════════════════════════════════════ */
+(function() {
+  function boot() { initAuth(); }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    setTimeout(boot, 100);
+  }
+})();
 
 </script>
 
@@ -8427,7 +8585,10 @@ function _applyAvatarEverywhere(url) {
   function setAv(id) {
     var el = document.getElementById(id);
     if (!el) return;
-    el.innerHTML = '<img src="' + url + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
+    var _i=document.createElement('img');_i.src=url;
+    _i.style.cssText='width:100%;height:100%;border-radius:50%;object-fit:cover';
+    _i.onerror=function(){this.parentElement.textContent='🐯';};
+    el.innerHTML='';el.appendChild(_i);
   }
   setAv('fp-my-avatar');
   setAv('lp-avatar-el');
@@ -8561,17 +8722,7 @@ window.handleAvatarUpload = async function(inp) {
 /* Brave warning removed — GSI popup used instead */
 
 
-/* Show "Add to Home Screen" hint if not in standalone mode */
-(function() {
-  var isStandalone = window.matchMedia('(display-mode: standalone)').matches
-    || window.navigator.standalone === true;
-  if (!isStandalone) {
-    setTimeout(function() {
-      var h = document.getElementById('a2hs-hint');
-      if (h) h.style.display = 'block';
-    }, 1500);
-  }
-})();
+
 </script>
 </body>
 </html>
