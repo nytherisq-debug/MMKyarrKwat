@@ -121,7 +121,7 @@
     info.innerHTML=`<div class="_sg-nm">${xe(nm)}</div><div class="_sg-badge${isGuest?' guest':''}">${isGuest?'👤 GUEST':'✦ SIGNED IN'}</div>`;
     const btn=document.createElement('button');btn.className='_sg-btn';
     btn.textContent=isGuest?'Sign In':'Profile';
-    btn.onclick=()=>{window.location.href=AUTH;};
+    btn.onclick=()=>{ window.location.href = isGuest ? AUTH+'?mode=signin' : AUTH; };
     w.append(avEl,info,btn);
     const lbl=document.querySelector('.llbl');
     if(lbl)lbl.parentNode.insertBefore(w,lbl);
@@ -150,7 +150,10 @@
     pp?tr.insertBefore(chip,pp):tr.prepend(chip);
   }
 
-  window._sgProfile=function(){window.location.href=AUTH;};
+  window._sgProfile=function(){
+    const isG = !_user && !!localStorage.getItem('kk_guest');
+    window.location.href = isG ? AUTH+'?mode=signin' : AUTH;
+  };
   window._sgLogout=async function(){
     stopP();localStorage.removeItem('kk_guest');localStorage.removeItem('kk_guest_name');
     try{await SB().auth.signOut();}catch(e){}
