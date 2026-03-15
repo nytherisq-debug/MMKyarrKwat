@@ -332,9 +332,28 @@ const _online=new Set();
 
 /* ══ BOOT ══ */
 (async()=>{
+  const params = new URLSearchParams(window.location.search);
+  const forceSignIn = params.get('mode') === 'signin';
+
+  /* force sign-in → clear guest session, show auth */
+  if(forceSignIn){
+    localStorage.removeItem('kk_guest');
+    localStorage.removeItem('kk_guest_name');
+    showV('view-auth'); setTab('in');
+    /* clean URL */
+    history.replaceState({},'',window.location.pathname);
+    return;
+  }
+
+  /* check Supabase session */
   try{const{data:{session}}=await SB().auth.getSession();if(session){_user=session.user;await loadProf();showProf();return;}}catch(e){}
-  if(localStorage.getItem('kk_guest')){goGame();return;}
+
+  /* guest session → show guest profile */
+  if(localStorage.getItem('kk_guest')){ showGuestProf(); return; }
+
+  /* no session → show auth */
   showV('view-auth');
+
   SB().auth.onAuthStateChange(async(evt,sess)=>{
     if((evt==='SIGNED_IN'||evt==='TOKEN_REFRESHED')&&sess){_user=sess.user;await loadProf();showProf();}
     if(evt==='SIGNED_OUT'){_user=null;_prof=null;showV('view-auth');setTab('in');}
@@ -344,6 +363,52 @@ const _online=new Set();
 /* ══ VIEW ══ */
 function showV(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));document.getElementById(id)?.classList.add('on');}
 function showProf(){showV('view-profile');renderProf();loadFriends();startPresence();}
+
+/* ══ GUEST PROFILE VIEW ══ */
+function showGuestProf(){
+  const gid  = localStorage.getItem('kk_guest') || '';
+  const gnm  = localStorage.getItem('kk_guest_name') || ('Guest·'+gid.slice(0,6));
+  showV('view-profile');
+
+  /* fill profile fields with guest data */
+  document.getElementById('pnm').textContent = gnm;
+  document.getElementById('pct').textContent = gid.slice(0,8)||'GUEST';
+  document.getElementById('pem').textContent = 'Guest Mode — ဒေတာ မသိမ်းပါ';
+
+  /* avatar fallback */
+  const img = document.getElementById('pro-av');
+  img.src=''; img.alt='👤';
+
+  /* hide edit + upload for guest */
+  const editBtn = document.querySelector('.eic');
+  if(editBtn) editBtn.style.display='none';
+  const avBadge = document.querySelector('.av-badge');
+  if(avBadge) avBadge.style.display='none';
+
+  /* change Log Out → Sign In */
+  const logoutBtn = document.querySelector('.btn-logout');
+  if(logoutBtn){
+    logoutBtn.textContent='Sign In';
+    logoutBtn.style.color='rgba(240,204,114,.80)';
+    logoutBtn.style.borderColor='rgba(212,168,67,.28)';
+    logoutBtn.style.background='rgba(212,168,67,.06)';
+    logoutBtn.onclick=()=>{ window.location.href='auth.html?mode=signin'; };
+  }
+
+  /* hide friends section for guest */
+  const ptabs=document.querySelector('.ptabs');
+  if(ptabs) ptabs.style.display='none';
+  const psecFri=document.getElementById('ps-fri');
+  if(psecFri) psecFri.style.display='none';
+  const psecReq=document.getElementById('ps-req');
+  if(psecReq) psecReq.style.display='none';
+
+  /* show guest notice */
+  const pem=document.getElementById('pem');
+  if(pem){
+    pem.innerHTML='<span style="color:rgba(180,140,255,.70);font-size:.68rem;margin-top:4px;display:block">👤 Guest Mode — <a onclick="window.location.href=\'auth.html?mode=signin\'" style="color:var(--g200);cursor:pointer;text-decoration:underline">Sign Up လုပ်ရန်</a></span>';
+  }
+}
 
 /* ══ AUTH NAV ══ */
 function showP(id){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));document.getElementById(id)?.classList.add('on');}
@@ -413,9 +478,12 @@ async function doGuest(){
 
 /* ══ LOGOUT ══ */
 async function doLogout(){
-  stopP();localStorage.removeItem('kk_guest');localStorage.removeItem('kk_guest_name');
+  stopP();
+  localStorage.removeItem('kk_guest');
+  localStorage.removeItem('kk_guest_name');
   try{await SB().auth.signOut();}catch(e){}
-  _user=null;_prof=null;showV('view-auth');setTab('in');
+  _user=null;_prof=null;
+  window.location.replace('auth.html?mode=signin');
 }
 
 /* ══ PROFILE ══ */
