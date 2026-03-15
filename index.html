@@ -4420,6 +4420,8 @@ button {
 .noti-btn-dec:hover { background: rgba(239,68,68,.1); color: #ef4444; }
 
 </style>
+<meta name="google-signin-client_id" content="143473069573-h5quefjh8qsabdpodug6559qhdvchd4f.apps.googleusercontent.com">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 <canvas id="mm-bg"></canvas>
@@ -4485,52 +4487,38 @@ button {
 <!-- ══════════════════════════════════════════
      PROFILE SETUP SCREEN (first-time)
 ══════════════════════════════════════════ -->
-<div id="profile-setup" class="scr" style="align-items:center;justify-content:center;overflow-y:auto;background:rgba(3,1,10,.95);backdrop-filter:blur(16px)">
+<div id="profile-setup" class="scr" style="align-items:center;justify-content:center;overflow-y:auto;background:rgba(3,1,10,.96);backdrop-filter:blur(16px)">
   <div class="psetup-box">
     <div class="psetup-icon">🎮</div>
     <div class="psetup-title">Profile တည်ဆောက်မည်</div>
-    <div class="psetup-sub">Avatar နှင့် နာမည် ရွေးချယ်ပြီး<br>ကစားပွဲ စတင်နိုင်ပါပြီ</div>
+    <div class="psetup-sub">Avatar ရွေးပြီး နာမည် ထည့်ပါ</div>
 
-    <div class="psetup-av-wrap">
-      <div class="psetup-av" id="psetup-av-preview" onclick="document.getElementById('av-picker').style.display=document.getElementById('av-picker').style.display==='none'?'block':'none'">🐯</div>
-      <div class="psetup-av-hint">နှိပ်ပြီး ပြောင်းနိုင်သည်</div>
-    </div>
-
-    <div id="av-picker" style="display:none;margin-bottom:12px">
-      <div class="av-picker-grid"><div class="av-opt" onclick="setSetupAv(this,'🐯')">🐯</div>
-<div class="av-opt" onclick="setSetupAv(this,'🦁')">🦁</div>
-<div class="av-opt" onclick="setSetupAv(this,'🐻')">🐻</div>
-<div class="av-opt" onclick="setSetupAv(this,'🐼')">🐼</div>
-<div class="av-opt" onclick="setSetupAv(this,'🐸')">🐸</div>
-<div class="av-opt" onclick="setSetupAv(this,'🦊')">🦊</div>
-<div class="av-opt" onclick="setSetupAv(this,'🐺')">🐺</div>
-<div class="av-opt" onclick="setSetupAv(this,'🦅')">🦅</div>
-<div class="av-opt" onclick="setSetupAv(this,'🦋')">🦋</div>
-<div class="av-opt" onclick="setSetupAv(this,'🐉')">🐉</div>
-<div class="av-opt" onclick="setSetupAv(this,'⚔️')">⚔️</div>
-<div class="av-opt" onclick="setSetupAv(this,'🛡️')">🛡️</div>
-<div class="av-opt" onclick="setSetupAv(this,'👑')">👑</div>
-<div class="av-opt" onclick="setSetupAv(this,'🔥')">🔥</div>
-<div class="av-opt" onclick="setSetupAv(this,'⚡')">⚡</div>
-<div class="av-opt" onclick="setSetupAv(this,'🌙')">🌙</div>
-<div class="av-opt" onclick="setSetupAv(this,'🎯')">🎯</div>
-<div class="av-opt" onclick="setSetupAv(this,'🎮')">🎮</div>
-<div class="av-opt" onclick="setSetupAv(this,'💎')">💎</div>
-<div class="av-opt" onclick="setSetupAv(this,'🏆')">🏆</div>
-<div class="av-opt" onclick="setSetupAv(this,'🌟')">🌟</div>
-<div class="av-opt" onclick="setSetupAv(this,'🦄')">🦄</div>
-<div class="av-opt" onclick="setSetupAv(this,'🐍')">🐍</div>
-<div class="av-opt" onclick="setSetupAv(this,'🦈')">🦈</div></div>
-      <!-- Upload from phone -->
-      <div style="margin-top:8px">
-        <input type="file" id="setup-photo-inp" accept="image/*" style="display:none" onchange="handleSetupPhotoUpload(this)">
-        <button onclick="document.getElementById('setup-photo-inp').click()" style="width:100%;padding:9px;border:1px dashed rgba(212,168,67,.35);border-radius:10px;background:rgba(212,168,67,.05);color:rgba(212,168,67,.7);font-family:'Outfit',sans-serif;font-size:.78rem;cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(212,168,67,.1)'" onmouseout="this.style.background='rgba(212,168,67,.05)'">
-          🖼️ Gallery မှ ပုံ ရွေးမည်
-        </button>
-        <div id="setup-upload-prog" style="display:none;text-align:center;font-size:.65rem;color:rgba(212,168,67,.7);font-family:Outfit,sans-serif;margin-top:5px">⏳ ပုံ တင်နေသည်...</div>
+    <!-- Avatar section -->
+    <div id="psetup-status-photo" style="display:none;font-size:.65rem;color:rgba(212,168,67,.8);font-family:Outfit,sans-serif;text-align:center;margin-bottom:6px">⏳ ပုံ တင်နေသည်...</div>
+    
+    <!-- Big avatar preview + upload button -->
+    <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:14px">
+      <div style="position:relative;margin-bottom:10px">
+        <div id="psetup-av-preview" style="width:80px;height:80px;border-radius:50%;border:2px solid rgba(212,168,67,.4);background:rgba(212,168,67,.1);display:flex;align-items:center;justify-content:center;font-size:2.4rem;overflow:hidden;box-shadow:0 0 20px rgba(212,168,67,.2)">🐯</div>
       </div>
+      <!-- Two buttons side by side -->
+      <div style="display:flex;gap:8px">
+        <button onclick="document.getElementById('setup-photo-inp').click()" style="padding:7px 14px;border:1px solid rgba(212,168,67,.35);border-radius:10px;background:rgba(212,168,67,.08);color:rgba(212,168,67,.85);font-family:'Outfit',sans-serif;font-size:.78rem;cursor:pointer;transition:all .18s">
+          🖼️ Gallery မှ ရွေး
+        </button>
+        <button onclick="var p=document.getElementById('av-picker');p.style.display=p.style.display==='none'?'block':'none'" style="padding:7px 14px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.04);color:var(--text-3);font-family:'Outfit',sans-serif;font-size:.78rem;cursor:pointer;transition:all .18s">
+          😊 Emoji
+        </button>
+      </div>
+      <input type="file" id="setup-photo-inp" accept="image/*" style="display:none" onchange="handleSetupPhotoUpload(this)">
     </div>
 
+    <!-- Emoji grid (hidden by default) -->
+    <div id="av-picker" style="display:none;margin-bottom:14px">
+      <div class="av-picker-grid"><div class="av-opt" onclick="setSetupAv(this,'🐯')">🐯</div><div class="av-opt" onclick="setSetupAv(this,'🦁')">🦁</div><div class="av-opt" onclick="setSetupAv(this,'🐻')">🐻</div><div class="av-opt" onclick="setSetupAv(this,'🐼')">🐼</div><div class="av-opt" onclick="setSetupAv(this,'🐸')">🐸</div><div class="av-opt" onclick="setSetupAv(this,'🦊')">🦊</div><div class="av-opt" onclick="setSetupAv(this,'🐺')">🐺</div><div class="av-opt" onclick="setSetupAv(this,'🦅')">🦅</div><div class="av-opt" onclick="setSetupAv(this,'🦋')">🦋</div><div class="av-opt" onclick="setSetupAv(this,'🐉')">🐉</div><div class="av-opt" onclick="setSetupAv(this,'⚔️')">⚔️</div><div class="av-opt" onclick="setSetupAv(this,'🛡️')">🛡️</div><div class="av-opt" onclick="setSetupAv(this,'👑')">👑</div><div class="av-opt" onclick="setSetupAv(this,'🔥')">🔥</div><div class="av-opt" onclick="setSetupAv(this,'⚡')">⚡</div><div class="av-opt" onclick="setSetupAv(this,'🌙')">🌙</div><div class="av-opt" onclick="setSetupAv(this,'🎯')">🎯</div><div class="av-opt" onclick="setSetupAv(this,'🎮')">🎮</div><div class="av-opt" onclick="setSetupAv(this,'💎')">💎</div><div class="av-opt" onclick="setSetupAv(this,'🏆')">🏆</div><div class="av-opt" onclick="setSetupAv(this,'🌟')">🌟</div><div class="av-opt" onclick="setSetupAv(this,'🦄')">🦄</div><div class="av-opt" onclick="setSetupAv(this,'🐍')">🐍</div><div class="av-opt" onclick="setSetupAv(this,'🦈')">🦈</div></div>
+    </div>
+
+    <!-- Name input -->
     <div class="psetup-lbl">👤 နာမည် ထည့်ပါ</div>
     <input class="linp" id="psetup-name" type="text" placeholder="အမည်ထည့်ပါ..." maxlength="20" autocomplete="nickname" onkeydown="if(event.key==='Enter')doCreateProfile()">
 
@@ -4538,6 +4526,7 @@ button {
     <div class="auth-status" id="psetup-status"></div>
   </div>
 </div>
+
 
 <!-- ══════════════════════════════════════════
      PROFILE EDIT MODAL
@@ -7591,7 +7580,7 @@ async function initAuth() {
     var _cachedUid = null;
     try {
       // Check if Supabase has a locally stored session
-      var _lsKey = Object.keys(localStorage).find(function(k){ return k.includes('auth-token') || k.includes('supabase.auth'); });
+      var _lsKey = Object.keys(localStorage).find(function(k){ return k.includes('sb-oxziinvwdhligrbllqbj-auth-token') || k.includes('supabase.auth.token'); });
       if (_lsKey) {
         var _lsVal = JSON.parse(localStorage.getItem(_lsKey) || '{}');
         var _cachedUser = _lsVal.user || (_lsVal.currentSession && _lsVal.currentSession.user);
@@ -7699,30 +7688,118 @@ window.switchAuthTab = function(tab) {
 /* ═══════════════════════════════════════
    GOOGLE OAUTH
 ═══════════════════════════════════════ */
-window.signInWithGoogle = function() {
-  setStatus('auth-status', '⏳ Google ဆက်သွယ်နေသည်...', 'info');
-  // Warn if running from file:// (won't work for OAuth)
-  if (window.location.protocol === 'file:') {
-    setStatus('auth-status', '⚠️ Google Login — Browser မှ GitHub URL ဖြင့် ဝင်ပါ (file:// မသုံးပါနှင့်)', 'err');
+/* ════════════════════════════════════════════════════
+   GOOGLE SIGN-IN — One Tap / Popup (NO REDIRECT)
+   Uses Google Identity Services → id_token → Supabase
+   User never leaves this browser tab!
+   
+   Setup needed:
+   1. Google Cloud Console → Create OAuth 2.0 Client ID
+      Application type: Web application
+      Authorized JavaScript origins: https://nytherisq-debug.github.io
+      Authorized redirect URIs: (not needed for this flow)
+   2. Copy the Client ID below
+   3. Supabase Dashboard → Auth → Providers → Google
+      Enable Google, paste Client ID & Secret
+════════════════════════════════════════════════════ */
+var GOOGLE_CLIENT_ID = '143473069573-h5quefjh8qsabdpodug6559qhdvchd4f.apps.googleusercontent.com';
+
+var _gsiReady = false;
+var _gsiCallback = null;
+
+function _initGSI() {
+  if (!window.google || !window.google.accounts) {
+    setTimeout(_initGSI, 300);
     return;
   }
-  // Use current page URL as redirect (strips hash/query params for clean redirect)
-  // Exact GitHub Pages URL — must match Supabase Redirect URLs setting
-  var redirectUrl = window.location.href.includes('nytherisq-debug.github.io')
-    ? 'https://nytherisq-debug.github.io/MMKyarrKwat/'
-    : (window.location.origin + window.location.pathname);
-  SB().auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: redirectUrl,
-      skipBrowserRedirect: false
-    }
-  }).then(function(r) {
-    if (r.error) setStatus('auth-status', '❌ ' + r.error.message, 'err');
-  }).catch(function(e) {
-    setStatus('auth-status', '❌ Google မချိတ်ဆက်နိုင်ပါ', 'err');
+  _gsiReady = true;
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: _handleGoogleCredential,
+    auto_select: false,
+    cancel_on_tap_outside: true,
+    context: 'signin',
+    ux_mode: 'popup'
   });
+}
+
+async function _handleGoogleCredential(response) {
+  if (!response || !response.credential) {
+    setStatus('auth-status', '❌ Google အကောင့် မရရှိပါ', 'err');
+    return;
+  }
+  setStatus('auth-status', '⏳ Account စစ်ဆေးနေသည်...', 'info');
+  try {
+    var r = await SB().auth.signInWithIdToken({
+      provider: 'google',
+      token: response.credential
+    });
+    if (r.error) {
+      setStatus('auth-status', '❌ ' + r.error.message, 'err');
+    }
+    // Success: onAuthStateChange fires automatically
+  } catch(e) {
+    setStatus('auth-status', '❌ ' + e.message, 'err');
+  }
+}
+
+window.signInWithGoogle = function() {
+  if (window.location.protocol === 'file:') {
+    setStatus('auth-status', '⚠️ GitHub URL မှ ဖွင့်ပါ (file:// မသုံးပါ)', 'err');
+    return;
+  }
+  if (!GOOGLE_CLIENT_ID) {
+    // Fallback to redirect if no Client ID set yet
+    setStatus('auth-status', '⏳ Google ဆက်သွယ်နေသည်...', 'info');
+    var redirectUrl = window.location.href.includes('nytherisq-debug.github.io')
+      ? 'https://nytherisq-debug.github.io/MMKyarrKwat/'
+      : (window.location.origin + window.location.pathname);
+    SB().auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: redirectUrl, skipBrowserRedirect: false }
+    }).then(function(r) {
+      if (r.error) setStatus('auth-status', '❌ ' + r.error.message, 'err');
+    }).catch(function(e) {
+      setStatus('auth-status', '❌ Google မချိတ်ဆက်နိုင်ပါ', 'err');
+    });
+    return;
+  }
+  setStatus('auth-status', '⏳ Google ဆက်သွယ်နေသည်...', 'info');
+  if (!_gsiReady) {
+    setStatus('auth-status', '⏳ Google ပြင်ဆင်နေသည်... ထပ်ကြိုးစားပါ', 'info');
+    _initGSI();
+    return;
+  }
+  try {
+    google.accounts.id.prompt(function(notification) {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        // One Tap not available, use renderButton popup
+        google.accounts.id.renderButton(
+          document.getElementById('g-btn-wrap'),
+          { theme:'filled_black', size:'large', width:320, text:'signin_with' }
+        );
+        var wrap = document.getElementById('g-btn-wrap');
+        if (wrap) {
+          wrap.style.display = 'block';
+          wrap.querySelector('div[role="button"]')?.click();
+          setTimeout(function(){ wrap.style.display = 'none'; }, 2000);
+        }
+        setStatus('auth-status', '', '');
+      }
+    });
+  } catch(e) {
+    setStatus('auth-status', '❌ Google popup မဖွင့်နိုင်ပါ: ' + e.message, 'err');
+  }
 };
+
+// Initialize GSI when script loads
+(function(){ 
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _initGSI);
+  } else {
+    setTimeout(_initGSI, 200);
+  }
+})();
 
 /* ═══════════════════════════════════════
    EMAIL LOGIN
@@ -8521,19 +8598,28 @@ window.handleSetupPhotoUpload = async function(inp) {
   if (!inp || !inp.files || !inp.files[0]) return;
   var err = _validatePhoto(inp.files[0]);
   if (err) { if (typeof toast === 'function') toast(err); return; }
-  var prog = document.getElementById('setup-upload-prog');
+  var prog = document.getElementById('psetup-status-photo');
   if (prog) prog.style.display = 'block';
   try {
     var url = await _uploadPhotoToSupabase(inp.files[0]);
     _pendingAv = url;
-    // Show preview on avatar circle
+    // Show preview — set innerHTML with img
     var prev = document.getElementById('psetup-av-preview');
-    if (prev) prev.innerHTML = '<img src="' + url + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
-    // Deselect emoji grid
+    if (prev) {
+      prev.innerHTML = '';
+      var img = document.createElement('img');
+      img.src = url;
+      img.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover;display:block';
+      prev.appendChild(img);
+    }
+    // Close emoji picker, deselect
+    var picker = document.getElementById('av-picker');
+    if (picker) picker.style.display = 'none';
     document.querySelectorAll('#av-picker .av-opt').forEach(function(o) { o.classList.remove('sel'); });
-    if (typeof toast === 'function') toast('✅ ပုံ ရွေးပြီးပါပြီ — နာမည်ထည့်ပြီး Save ပါ');
+    if (typeof toast === 'function') toast('✅ ပုံ ရွေးပြီးပါပြီ!');
   } catch(e) {
-    if (typeof toast === 'function') toast('❌ ပုံ တင်မရပါ — ထပ်ကြိုးစားပါ');
+    console.error('Photo upload error:', e);
+    if (typeof toast === 'function') toast('❌ ပုံ တင်မရပါ: ' + e.message);
   } finally {
     if (prog) prog.style.display = 'none';
     inp.value = '';
@@ -8550,15 +8636,20 @@ window.handleModalPhotoUpload = async function(inp) {
   try {
     var url = await _uploadPhotoToSupabase(inp.files[0]);
     _pendingAvModal = url;
-    // Show in modal avatar
     var el = document.getElementById('pm-avatar-el');
-    if (el) el.innerHTML = '<img src="' + url + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
-    // Close emoji picker if open
+    if (el) {
+      el.innerHTML = '';
+      var img = document.createElement('img');
+      img.src = url;
+      img.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover;display:block';
+      el.appendChild(img);
+    }
     var picker = document.getElementById('pm-av-picker');
     if (picker) picker.style.display = 'none';
     if (typeof toast === 'function') toast('✅ ပုံ ရွေးပြီးပါပြီ — Save နှိပ်ပါ');
   } catch(e) {
-    if (typeof toast === 'function') toast('❌ ပုံ တင်မရပါ — ထပ်ကြိုးစားပါ');
+    console.error('Modal photo error:', e);
+    if (typeof toast === 'function') toast('❌ ပုံ တင်မရပါ: ' + e.message);
   } finally {
     if (prog) prog.style.display = 'none';
     inp.value = '';
@@ -8608,5 +8699,8 @@ window.handleAvatarUpload = async function(inp) {
 })();
 
 
+
+/* Brave warning removed — GSI popup used instead */
+
 </body>
-</html>
+   </html>
