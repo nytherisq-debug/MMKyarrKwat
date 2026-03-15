@@ -4425,10 +4425,42 @@ button {
 }
 .noti-btn-dec:hover { background: rgba(239,68,68,.1); color: #ef4444; }
 
+
+#dbg{position:fixed;bottom:0;left:0;right:0;z-index:99999;
+  background:rgba(0,0,0,.92);color:#0f0;font-family:monospace;
+  font-size:.65rem;padding:6px 10px;max-height:120px;overflow-y:auto;
+  border-top:1px solid #0f0;display:none}
+#dbg.on{display:block}
+#dbg-close{position:absolute;top:4px;right:8px;cursor:pointer;color:#f00;font-size:.8rem}
 </style>
 </head>
 <body>
+
+<script>
+/* DEBUG - remove after testing */
+var _dbgEl = null;
+function dbg(msg) {
+  if (!_dbgEl) _dbgEl = document.getElementById('dbg-log');
+  var d = document.getElementById('dbg');
+  if (d) d.classList.add('on');
+  var t = new Date().toLocaleTimeString();
+  if (_dbgEl) _dbgEl.innerHTML += '<div>['+t+'] '+msg+'</div>';
+  console.log('[DBG] '+msg);
+}
+// Show debug with 3-tap
+var _tapCount = 0;
+document.addEventListener('click', function(e){
+  _tapCount++;
+  if(_tapCount >= 3){
+    _tapCount = 0;
+    var d = document.getElementById('dbg');
+    if(d) d.classList.toggle('on');
+  }
+  setTimeout(function(){_tapCount=0;}, 1000);
+});
+</script>
 <canvas id="mm-bg"></canvas>
+<div id="dbg" class="on"><span id="dbg-close" onclick="document.getElementById('dbg').classList.remove('on')">✕</span><div id="dbg-log"></div></div>
 <div id="noti-container"></div>
 
 <div id="auth-loading">
@@ -7600,8 +7632,16 @@ async function onUserSignedIn(user) {
    INIT AUTH — Entry point
 ══════════════════════════════════════════ */
 async function initAuth() {
+  dbg("initAuth started");
+  // Cannot run from file:// — must be on HTTPS
+  if (window.location.protocol === 'file:') {
+    var sp = document.getElementById('auth-loading');
+    if (sp) sp.classList.add('gone');
+    setStatus('auth-status', '⚠️ GitHub URL မှ ဖွင့်ပါ: nytherisq-debug.github.io/MMKyarrKwat', 'err');
+    return;
+  }
   try {
-    if (typeof SB !== 'function') { setTimeout(initAuth, 300); return; }
+    if (typeof SB !== 'function') { dbg("SB not ready, retry"); setTimeout(initAuth, 300); return; }
 
     // Handle OAuth redirect (Google)
     var hash   = window.location.hash || '';
@@ -7624,6 +7664,7 @@ async function initAuth() {
 
     // Register auth state listener
     SB().auth.onAuthStateChange(function(event, session) {
+      dbg('AUTH EVENT: ' + event + ' user=' + (session && session.user ? session.user.email : 'none'));
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session && session.user) {
           onUserSignedIn(session.user);
@@ -7632,7 +7673,6 @@ async function initAuth() {
         if (session && session.user) {
           onUserSignedIn(session.user);
         } else {
-          // No session - check guest then show auth
           var sp = document.getElementById('auth-loading');
           if (sp) sp.classList.add('gone');
           if (!_tryRestoreGuest()) showScr('auth');
@@ -7695,6 +7735,7 @@ window.signInWithGoogle = function() {
    EMAIL LOGIN
 ══════════════════════════════════════════ */
 window.doEmailLogin = async function() {
+  dbg('doEmailLogin called');
   var email = ((document.getElementById('auth-email')||{}).value||'').trim();
   var pw    = ((document.getElementById('auth-pw')||{}).value||'').trim();
   if (!email) { setStatus('auth-status','⚠️ Email ထည့်ပါ','err'); return; }
@@ -7703,7 +7744,9 @@ window.doEmailLogin = async function() {
   if (btn) { btn.disabled = true; btn.textContent = '⏳ ဝင်နေသည်...'; }
   setStatus('auth-status','');
   try {
+    dbg('signInWithPassword calling...');
     var r = await SB().auth.signInWithPassword({ email: email, password: pw });
+    dbg('signInWithPassword result: '+(r.error?'ERROR:'+r.error.message:'OK user='+r.data?.user?.email));
     if (r.error) {
       var msg = r.error.message;
       if (msg.includes('Invalid') || msg.includes('credentials') || msg.includes('invalid login')) msg = '❌ Email / Password မမှန်ပါ';
@@ -8305,8 +8348,7 @@ window.showFriendRequestPopup = function(fromId, fromName, reqId) {
 })();
 
 </script>
-
-
+<script>
 /* ══════════════════════════════════════════════════════
    PHOTO UPLOAD — Supabase Storage + Base64 fallback
    Supabase Setup: Storage → New Bucket
@@ -8530,6 +8572,6 @@ window.handleAvatarUpload = async function(inp) {
     }, 1500);
   }
 })();
-
+</script>
 </body>
 </html>
