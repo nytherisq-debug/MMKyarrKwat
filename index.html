@@ -7511,251 +7511,12 @@ var _pendingAv   = null;
 var _pendingAvModal = null;
 var _pendingName = '';
 
-var AUTH_INIT_MAX_RETRIES = 20;
-var AUTH_INIT_RETRY_MS    = 300;
-var _authInitAttempts     = 0;
-var _authInitRetryTimer   = null;
-var _authInitInFlight     = false;
-var _authInitialized      = false;
-var _authListenerBound    = false;
-var _authListenerSub      = null;
-var _authHandlingPromise  = null;
-var _lastHandledAuthKey   = '';
-var _lastHandledAuthAt    = 0;
-
 /* ── Status helper ── */
 function setStatus(id, msg, type) {
   var el = document.getElementById(id);
   if (!el) return;
-  el.textContent = msg || '';
-  el.className = 'auth-status' + (msg ? (' ' + (type || 'info')) : '');
-}
-
-function hideAuthLoading() {
-  var sp = document.getElementById('auth-loading');
-  if (sp) sp.classList.add('gone');
-}
-
-function showAuthScreenWithStatus(msg, type) {
-  hideAuthLoading();
-  resetAuthUi();
-  showScr('auth');
-  setStatus('auth-status', msg || '', type || 'err');
-}
-
-function canUseSupabaseAuth() {
-  return typeof window.SB === 'function' &&
-         typeof window.supabase !== 'undefined' &&
-         !!window.supabase &&
-         typeof window.supabase.createClient === 'function';
-}
-
-function hasAuthRedirectParams() {
-  var hash = window.location.hash || '';
-  var search = window.location.search || '';
-  return hash.indexOf('access_token') !== -1 ||
-         hash.indexOf('refresh_token') !== -1 ||
-         search.indexOf('code=') !== -1 ||
-         search.indexOf('error=') !== -1;
-}
-
-function cleanupAuthRedirectUrl() {
-  try {
-    var u = new URL(window.location.href);
-    u.hash = '';
-    [
-      'code',
-      'type',
-      'error',
-      'error_code',
-      'error_description',
-      'provider_token',
-      'provider_refresh_token'
-    ].forEach(function(key) {
-      u.searchParams.delete(key);
-    });
-    window.history.replaceState({}, document.title, u.pathname + (u.search || ''));
-  } catch (e) {
-    console.error('[AUTH] Failed to clean OAuth redirect URL:', e);
-  }
-}
-
-function logAuthError(context, err, userMsg, type) {
-  console.error('[AUTH] ' + context + ':', err);
-  if (userMsg) setStatus('auth-status', userMsg, type || 'err');
-}
-
-function setBtnSafe(id, disabled, text) {
-  try {
-    var btn = document.getElementById(id);
-    if (!btn) return;
-    btn.disabled = !!disabled;
-    if (typeof text === 'string') btn.textContent = text;
-  } catch (e) {
-    console.error('[AUTH] Failed to update button "' + id + '":', e);
-  }
-}
-
-function setAuthBusy(mode) {
-  var busy = !!mode;
-  setBtnSafe('btn-login', busy, mode === 'login' ? '⏳ ဝင်နေသည်...' : '🔑 Login ဝင်မည်');
-  setBtnSafe('btn-signup', busy, mode === 'signup' ? '⏳ ဖန်တီးနေသည်...' : '✨ Account ဖန်တီးမည်');
-  try {
-    var g = document.getElementById('btn-google');
-    if (g) g.disabled = busy;
-  } catch (e) {
-    console.error('[AUTH] Failed to update Google button:', e);
-  }
-}
-
-function resetAuthUi() {
-  setAuthBusy('');
-}
-
-function clearAuthInitRetry() {
-  if (_authInitRetryTimer) {
-    clearTimeout(_authInitRetryTimer);
-    _authInitRetryTimer = null;
-  }
-}
-
-function scheduleAuthInitRetry(reason) {
-  if (_authInitialized) return;
-  clearAuthInitRetry();
-  _authInitAttempts += 1;
-  dbg('initAuth retry #' + _authInitAttempts + ' — ' + reason);
-  if (_authInitAttempts > AUTH_INIT_MAX_RETRIES) {
-    console.error('[AUTH] Supabase init failed after max retries. Last reason:', reason);
-    _authInitInFlight = false;
-    showAuthScreenWithStatus('❌ Supabase auth မတက်လာပါ — Page reload လုပ်ပါ သို့မဟုတ် Internet စစ်ပါ', 'err');
-    return;
-  }
-  setStatus('auth-status', '⏳ Authentication ကို စတင်နေသည်... (' + _authInitAttempts + '/' + AUTH_INIT_MAX_RETRIES + ')', 'info');
-  _authInitRetryTimer = setTimeout(function() {
-    _authInitRetryTimer = null;
-    initAuth();
-  }, AUTH_INIT_RETRY_MS);
-}
-
-function makeAuthSessionKey(user, session) {
-  var uid = user && user.id ? user.id : 'nouser';
-  var token = session && session.access_token ? String(session.access_token).slice(-16) : 'nosession';
-  return uid + '::' + token;
-}
-
-async function persistAuthBackupFromSession(user, session) {
-  try {
-    var activeSession = session || null;
-    if (!activeSession) {
-      var sessRes = await SB().auth.getSession();
-      if (sessRes && sessRes.data && sessRes.data.session) activeSession = sessRes.data.session;
-    }
-    if (!activeSession || !activeSession.access_token || !activeSession.refresh_token || !user || !user.id) return;
-    localStorage.setItem('kk_auth_backup', JSON.stringify({
-      access_token:  activeSession.access_token,
-      refresh_token: activeSession.refresh_token,
-      user_id:       user.id,
-      savedAt:       Date.now()
-    }));
-  } catch (e) {
-    console.error('[AUTH] Failed to persist kk_auth_backup:', e);
-  }
-}
-
-async function handleSignedIn(user, session, source) {
-  if (!user || !user.id) return false;
-  var key = makeAuthSessionKey(user, session);
-  if (_authHandlingPromise && _lastHandledAuthKey === key) {
-    dbg('handleSignedIn joined existing promise from ' + source);
-    return _authHandlingPromise;
-  }
-  if (_lastHandledAuthKey === key &&
-      _authUser && _authUser.id === user.id &&
-      _userProfile &&
-      (Date.now() - _lastHandledAuthAt) < 5000) {
-    dbg('handleSignedIn deduped duplicate auth event from ' + source);
-    hideAuthLoading();
-    showScr('lobby');
-    return true;
-  }
-
-  _lastHandledAuthKey = key;
-  _lastHandledAuthAt = Date.now();
-  _authHandlingPromise = (async function() {
-    dbg('handleSignedIn processing from ' + source + ' user=' + (user.email || user.id));
-    await onUserSignedIn(user, session);
-    return true;
-  })();
-
-  try {
-    return await _authHandlingPromise;
-  } catch (e) {
-    _lastHandledAuthKey = '';
-    throw e;
-  } finally {
-    _authHandlingPromise = null;
-  }
-}
-
-function bindAuthStateListener() {
-  if (_authListenerBound) return;
-  try {
-    var reg = SB().auth.onAuthStateChange(function(event, session) {
-      dbg('AUTH EVENT: ' + event + ' user=' + (session && session.user ? session.user.email : 'none'));
-      Promise.resolve().then(async function() {
-        if (event === 'SIGNED_IN') {
-          if (session && session.user) {
-            await handleSignedIn(session.user, session, 'listener:SIGNED_IN');
-          }
-          return;
-        }
-
-        if (event === 'TOKEN_REFRESHED') {
-          if (session && session.user) {
-            _authUser = session.user;
-            await persistAuthBackupFromSession(session.user, session);
-            if (!_userProfile) {
-              await handleSignedIn(session.user, session, 'listener:TOKEN_REFRESHED');
-            }
-          }
-          return;
-        }
-
-        if (event === 'INITIAL_SESSION') {
-          if (session && session.user) {
-            await handleSignedIn(session.user, session, 'listener:INITIAL_SESSION');
-          } else if (!_authInitInFlight) {
-            hideAuthLoading();
-            if (!_tryRestoreGuest()) showScr('auth');
-          }
-          return;
-        }
-
-        if (event === 'SIGNED_OUT') {
-          _authUser = null;
-          _userProfile = null;
-          _isGuest = false;
-          _lastHandledAuthKey = '';
-          _lastHandledAuthAt = 0;
-          try { localStorage.removeItem('kk_auth_backup'); } catch (e) {
-            console.error('[AUTH] Failed to clear kk_auth_backup on sign-out:', e);
-          }
-          hideAuthLoading();
-          resetAuthUi();
-          showScr('auth');
-          setStatus('auth-status', '');
-        }
-      }).catch(function(e) {
-        console.error('[AUTH] onAuthStateChange handler failed:', e);
-        showAuthScreenWithStatus('⚠️ Login state update မအောင်မြင်ပါ — ပြန်ဝင်ကြည့်ပါ', 'err');
-      });
-    });
-    _authListenerSub = (reg && reg.data && reg.data.subscription) ? reg.data.subscription : reg;
-    _authListenerBound = true;
-  } catch (e) {
-    logAuthError('Failed to bind auth listener', e, '❌ Authentication listener မစတင်နိုင်ပါ', 'err');
-    throw e;
-  }
+  el.textContent = msg;
+  el.className = 'auth-status' + (msg ? (' ' + (type||'info')) : '');
 }
 
 /* ── Render avatar ── */
@@ -7797,24 +7558,14 @@ async function loadProfileFromDB(uid) {
   try {
     var r = await SB().from('profiles').select('*').eq('id', uid).single();
     if (!r.error && r.data) {
-      try {
-        localStorage.setItem('kk_prof_' + uid, JSON.stringify(r.data));
-      } catch (e) {
-        console.warn('[AUTH] Failed to cache profile in localStorage:', e);
-      }
+      try { localStorage.setItem('kk_prof_' + uid, JSON.stringify(r.data)); } catch(e) {}
       return r.data;
     }
-    if (r.error) console.warn('[AUTH] loadProfileFromDB returned error:', r.error);
-  } catch (e) {
-    console.warn('[AUTH] loadProfileFromDB failed:', e);
-  }
-
+  } catch(e) {}
   try {
     var c = localStorage.getItem('kk_prof_' + uid);
     if (c) return JSON.parse(c);
-  } catch (e) {
-    console.warn('[AUTH] Failed to read cached profile:', e);
-  }
+  } catch(e) {}
   return null;
 }
 
@@ -7823,14 +7574,10 @@ async function upsertProfile(p) {
     var s = Object.assign({}, p);
     if (s.avatar_url && s.avatar_url.startsWith('data:') && s.avatar_url.length > 50000) s.avatar_url = null;
     localStorage.setItem('kk_prof_' + p.id, JSON.stringify(s));
-  } catch (e) {
-    console.warn('[AUTH] Failed to persist local profile cache:', e);
-  }
+  } catch(e) {}
   try {
     await SB().from('profiles').upsert(p, { onConflict: 'id' });
-  } catch (e) {
-    console.warn('[AUTH] Failed to upsert profile:', e);
-  }
+  } catch(e) {}
 }
 
 /* ── Auto-create profile (first login) ── */
@@ -7844,204 +7591,112 @@ async function autoCreateProfile(user) {
     display_name: name,
     avatar: av.startsWith('http') ? '🐯' : av,
     avatar_url: av.startsWith('http') ? av : null,
-    games_played: 0,
-    wins: 0,
+    games_played: 0, wins: 0,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   };
-  try {
-    localStorage.setItem('kk_prof_' + user.id, JSON.stringify(p));
-  } catch (e) {
-    console.warn('[AUTH] Failed to cache auto-created profile:', e);
-  }
+  try { localStorage.setItem('kk_prof_' + user.id, JSON.stringify(p)); } catch(e) {}
   upsertProfile(p);
   return p;
 }
 
-function buildFallbackProfile(user) {
-  var meta = (user && user.user_metadata) || {};
-  var name = meta.full_name || meta.name || (user && user.email ? user.email.split('@')[0] : '') || 'ကစားသမား';
-  var av   = meta.avatar_url || meta.picture || '🐯';
-  return {
-    id: user && user.id ? user.id : ('guest-' + Date.now()),
-    player_id: MY_PLAYER_ID,
-    display_name: name,
-    avatar: av && !String(av).startsWith('http') ? av : '🐯',
-    avatar_url: av && String(av).startsWith('http') ? av : null,
-    games_played: 0,
-    wins: 0,
-    updated_at: new Date().toISOString()
-  };
-}
-
 /* ── Handle signed-in user ── */
-async function onUserSignedIn(user, session) {
-  _isGuest = false;
+async function onUserSignedIn(user) {
   _authUser = user;
-  setStatus('auth-status', '');
-
+  // Save session backup for Brave
   try {
-    await persistAuthBackupFromSession(user, session);
-  } catch (e) {
-    console.error('[AUTH] persistAuthBackupFromSession failed:', e);
-  }
-
-  try {
-    var profile = await loadProfileFromDB(user.id);
-    if (!profile) profile = await autoCreateProfile(user);
-    if (!profile) profile = buildFallbackProfile(user);
-    _userProfile = profile;
-    applyProfileToLobby(profile);
-    showScr('lobby');
-    if (typeof startGlobalPresence === 'function') startGlobalPresence();
-    if (typeof _loadPendingFriendRequests === 'function') _loadPendingFriendRequests();
-    hideAuthLoading();
-  } catch (e) {
-    console.error('[AUTH] onUserSignedIn failed:', e);
-    hideAuthLoading();
-    resetAuthUi();
-    showScr('auth');
-    setStatus('auth-status', '❌ Profile ကို load မလုပ်နိုင်ပါ — ပြန်ဝင်ကြည့်ပါ', 'err');
-    throw e;
-  }
-}
-
-async function restoreSessionFromBackup() {
-  var raw = null;
-  try {
-    raw = localStorage.getItem('kk_auth_backup');
-  } catch (e) {
-    logAuthError('Failed to read kk_auth_backup', e, '⚠️ Saved login ကို ဖတ်မရပါ — Login ပြန်ဝင်ပါ', 'err');
-    return null;
-  }
-
-  if (!raw) return null;
-
-  var bk = null;
-  try {
-    bk = JSON.parse(raw);
-  } catch (e) {
-    logAuthError('Failed to parse kk_auth_backup', e, '⚠️ Saved login data ပျက်နေသည် — Login ပြန်ဝင်ပါ', 'err');
-    try { localStorage.removeItem('kk_auth_backup'); } catch (removeErr) {
-      console.error('[AUTH] Failed to clear corrupt kk_auth_backup:', removeErr);
+    var sess = await SB().auth.getSession();
+    if (sess.data && sess.data.session) {
+      localStorage.setItem('kk_auth_backup', JSON.stringify({
+        access_token:  sess.data.session.access_token,
+        refresh_token: sess.data.session.refresh_token,
+        user_id:       user.id,
+        savedAt:       Date.now()
+      }));
     }
-    return null;
-  }
-
-  if (!bk || !bk.access_token || !bk.refresh_token) {
-    console.warn('[AUTH] kk_auth_backup missing token fields:', bk);
-    setStatus('auth-status', '⚠️ Saved login data မပြည့်စုံပါ — Login ပြန်ဝင်ပါ', 'err');
-    try { localStorage.removeItem('kk_auth_backup'); } catch (e) {
-      console.error('[AUTH] Failed to clear incomplete kk_auth_backup:', e);
-    }
-    return null;
-  }
-
-  if ((Date.now() - (bk.savedAt || 0)) > 30 * 24 * 60 * 60 * 1000) {
-    try { localStorage.removeItem('kk_auth_backup'); } catch (e) {
-      console.error('[AUTH] Failed to clear expired kk_auth_backup:', e);
-    }
-    return null;
-  }
-
-  setStatus('auth-status', '⏳ Saved login ကို restore လုပ်နေသည်...', 'info');
-  try {
-    var restored = await SB().auth.setSession({
-      access_token: bk.access_token,
-      refresh_token: bk.refresh_token
-    });
-
-    if (restored && restored.error) {
-      logAuthError('SB().auth.setSession returned error', restored.error, '⚠️ Saved login restore မအောင်မြင်ပါ — Login ပြန်ဝင်ပါ', 'err');
-      try { localStorage.removeItem('kk_auth_backup'); } catch (e) {
-        console.error('[AUTH] Failed to clear failed kk_auth_backup:', e);
-      }
-      return null;
-    }
-
-    return restored && restored.data ? restored.data.session : null;
-  } catch (e) {
-    logAuthError('restoreSessionFromBackup failed', e, '⚠️ Saved login restore မအောင်မြင်ပါ — Login ပြန်ဝင်ပါ', 'err');
-    try { localStorage.removeItem('kk_auth_backup'); } catch (clearErr) {
-      console.error('[AUTH] Failed to clear bad kk_auth_backup:', clearErr);
-    }
-    return null;
-  }
+  } catch(e) {}
+  // Load or create profile
+  var profile = await loadProfileFromDB(user.id);
+  if (!profile) profile = await autoCreateProfile(user);
+  _userProfile = profile;
+  applyProfileToLobby(profile);
+  showScr('lobby');
+  if (typeof startGlobalPresence === 'function') startGlobalPresence();
+  if (typeof _loadPendingFriendRequests === 'function') _loadPendingFriendRequests();
+  // Hide splash
+  var sp = document.getElementById('auth-loading');
+  if (sp) sp.classList.add('gone');
 }
 
 /* ══════════════════════════════════════════
    INIT AUTH — Entry point
 ══════════════════════════════════════════ */
 async function initAuth() {
-  dbg('initAuth started');
-
-  if (_authInitialized || _authInitInFlight) {
-    dbg('initAuth skipped — already initialized or in flight');
-    return;
-  }
-
+  dbg("initAuth started");
+  // Cannot run from file:// — must be on HTTPS
   if (window.location.protocol === 'file:') {
-    hideAuthLoading();
-    showScr('auth');
+    var sp = document.getElementById('auth-loading');
+    if (sp) sp.classList.add('gone');
     setStatus('auth-status', '⚠️ GitHub URL မှ ဖွင့်ပါ: nytherisq-debug.github.io/MMKyarrKwat', 'err');
     return;
   }
-
-  if (!canUseSupabaseAuth()) {
-    scheduleAuthInitRetry('Supabase client not ready');
-    return;
-  }
-
-  _authInitInFlight = true;
-  clearAuthInitRetry();
-
   try {
-    bindAuthStateListener();
+    if (typeof SB !== 'function') { dbg("SB not ready, retry"); setTimeout(initAuth, 300); return; }
 
-    var hadRedirect = hasAuthRedirectParams();
-    if (hadRedirect) {
-      dbg('OAuth redirect detected');
-      setStatus('auth-status', '⏳ Login callback ကို အတည်ပြုနေသည်...', 'info');
-      await new Promise(function(resolve) { setTimeout(resolve, 650); });
-      cleanupAuthRedirectUrl();
+    // Handle OAuth redirect (Google)
+    var hash   = window.location.hash || '';
+    var search = window.location.search || '';
+    if (hash.includes('access_token') || hash.includes('refresh_token') || search.includes('code=')) {
+      try { window.history.replaceState({}, '', window.location.pathname); } catch(e) {}
+      await new Promise(function(r){ setTimeout(r, 500); });
     }
 
-    var sessRes = await SB().auth.getSession();
-    var currentSession = sessRes && sessRes.data ? sessRes.data.session : null;
+    // Restore backup session (for Brave)
+    try {
+      var bk = JSON.parse(localStorage.getItem('kk_auth_backup') || 'null');
+      if (bk && bk.access_token && bk.refresh_token && (Date.now() - (bk.savedAt||0) < 30*24*60*60*1000)) {
+        var hasSb = Object.keys(localStorage).some(function(k){ return k.includes('sb-oxziinvwdhligrbllqbj'); });
+        if (!hasSb) {
+          try { await SB().auth.setSession({ access_token: bk.access_token, refresh_token: bk.refresh_token }); } catch(e) {}
+        }
+      }
+    } catch(e) {}
 
-    if (!currentSession && hadRedirect) {
-      await new Promise(function(resolve) { setTimeout(resolve, 350); });
-      sessRes = await SB().auth.getSession();
-      currentSession = sessRes && sessRes.data ? sessRes.data.session : null;
+    // Register auth state listener
+    SB().auth.onAuthStateChange(function(event, session) {
+      dbg('AUTH EVENT: ' + event + ' user=' + (session && session.user ? session.user.email : 'none'));
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session && session.user) {
+          onUserSignedIn(session.user);
+        }
+      } else if (event === 'INITIAL_SESSION') {
+        if (session && session.user) {
+          onUserSignedIn(session.user);
+        } else {
+          var sp = document.getElementById('auth-loading');
+          if (sp) sp.classList.add('gone');
+          if (!_tryRestoreGuest()) showScr('auth');
+        }
+      } else if (event === 'SIGNED_OUT') {
+        _authUser = null; _userProfile = null; _isGuest = false;
+        showScr('auth');
+      }
+    });
+
+    // Check current session
+    var sess = await SB().auth.getSession();
+    var sp = document.getElementById('auth-loading');
+    if (!sess.data || !sess.data.session) {
+      if (sp) sp.classList.add('gone');
+      if (!_tryRestoreGuest()) showScr('auth');
     }
+    // else INITIAL_SESSION fires above
 
-    if (currentSession && currentSession.user) {
-      _authInitAttempts = 0;
-      _authInitialized = true;
-      await handleSignedIn(currentSession.user, currentSession, 'init:getSession');
-      return;
-    }
-
-    var restoredSession = await restoreSessionFromBackup();
-    if (restoredSession && restoredSession.user) {
-      _authInitAttempts = 0;
-      _authInitialized = true;
-      await handleSignedIn(restoredSession.user, restoredSession, 'init:backup');
-      return;
-    }
-
-    _authInitAttempts = 0;
-    _authInitialized = true;
-    hideAuthLoading();
+  } catch(e) {
+    console.error('initAuth error:', e);
+    var sp2 = document.getElementById('auth-loading');
+    if (sp2) sp2.classList.add('gone');
     if (!_tryRestoreGuest()) showScr('auth');
-    setStatus('auth-status', '');
-  } catch (e) {
-    logAuthError('initAuth error', e, '❌ Authentication စတင်မရပါ — Page reload လုပ်ပြီး ပြန်ကြိုးစားပါ', 'err');
-    hideAuthLoading();
-    resetAuthUi();
-    showScr('auth');
-  } finally {
-    _authInitInFlight = false;
   }
 }
 
@@ -8063,105 +7718,47 @@ window.switchAuthTab = function(tab) {
 ══════════════════════════════════════════ */
 window.signInWithGoogle = function() {
   if (window.location.protocol === 'file:') {
-    setStatus('auth-status', '⚠️ GitHub URL မှ ဖွင့်ပါ', 'err');
-    return;
-  }
-  if (!canUseSupabaseAuth()) {
-    setStatus('auth-status', '⚠️ Supabase မတက်လာသေးပါ — ခဏစောင့်ပြီး ပြန်ကြိုးစားပါ', 'err');
-    return;
+    setStatus('auth-status', '⚠️ GitHub URL မှ ဖွင့်ပါ', 'err'); return;
   }
   setStatus('auth-status', '⏳ Google ဆက်သွယ်နေသည်...', 'info');
   SB().auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: 'https://nytherisq-debug.github.io/MMKyarrKwat/' }
   }).then(function(r) {
-    if (r && r.error) setStatus('auth-status', '❌ ' + r.error.message, 'err');
+    if (r.error) setStatus('auth-status', '❌ ' + r.error.message, 'err');
   }).catch(function(e) {
-    console.error('[AUTH] Google OAuth failed:', e);
     setStatus('auth-status', '❌ Google မချိတ်ဆက်နိုင်ပါ', 'err');
   });
 };
-
-function normalizeLoginErrorMessage(msg) {
-  var raw = String(msg || '');
-  var low = raw.toLowerCase();
-  if (low.indexOf('invalid') !== -1 || low.indexOf('credentials') !== -1 || low.indexOf('invalid login') !== -1) {
-    return '❌ Email / Password မမှန်ပါ';
-  }
-  if (low.indexOf('email not confirmed') !== -1) {
-    return '❌ Email Confirm မလုပ်ရသေးပါ — Inbox စစ်ပါ';
-  }
-  if (low.indexOf('network') !== -1 || low.indexOf('fetch') !== -1) {
-    return '❌ ချိတ်ဆက်မရပါ — Internet စစ်ပါ';
-  }
-  return '❌ ' + (raw || 'Login မအောင်မြင်ပါ');
-}
-
-function normalizeSignupErrorMessage(msg) {
-  var raw = String(msg || '');
-  var low = raw.toLowerCase();
-  if (low.indexOf('already registered') !== -1 || low.indexOf('already been registered') !== -1) {
-    return '❌ ဒီ Email ရှိနှင့်ပြီ — Login tab ကနေ ဝင်ပါ';
-  }
-  if (low.indexOf('weak password') !== -1) {
-    return '❌ Password ပိုမိုခိုင်မာအောင် ထည့်ပါ';
-  }
-  if (low.indexOf('network') !== -1 || low.indexOf('fetch') !== -1) {
-    return '❌ ချိတ်ဆက်မရပါ — Internet စစ်ပါ';
-  }
-  return '❌ ' + (raw || 'Sign Up မအောင်မြင်ပါ');
-}
 
 /* ══════════════════════════════════════════
    EMAIL LOGIN
 ══════════════════════════════════════════ */
 window.doEmailLogin = async function() {
   dbg('doEmailLogin called');
-  var email = ((document.getElementById('auth-email') || {}).value || '').trim();
-  var pw    = ((document.getElementById('auth-pw') || {}).value || '').trim();
-
-  if (!email) { setStatus('auth-status', '⚠️ Email ထည့်ပါ', 'err'); return; }
-  if (!pw)    { setStatus('auth-status', '⚠️ Password ထည့်ပါ', 'err'); return; }
-  if (!canUseSupabaseAuth()) {
-    setStatus('auth-status', '⚠️ Supabase မတက်လာသေးပါ — ခဏစောင့်ပြီး ပြန်ကြိုးစားပါ', 'err');
-    return;
-  }
-
-  setAuthBusy('login');
-  setStatus('auth-status', '⏳ Login ဝင်နေသည်...', 'info');
-
+  var email = ((document.getElementById('auth-email')||{}).value||'').trim();
+  var pw    = ((document.getElementById('auth-pw')||{}).value||'').trim();
+  if (!email) { setStatus('auth-status','⚠️ Email ထည့်ပါ','err'); return; }
+  if (!pw)    { setStatus('auth-status','⚠️ Password ထည့်ပါ','err'); return; }
+  var btn = document.getElementById('btn-login');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ ဝင်နေသည်...'; }
+  setStatus('auth-status','');
   try {
     dbg('signInWithPassword calling...');
     var r = await SB().auth.signInWithPassword({ email: email, password: pw });
-    dbg('signInWithPassword result: ' + (r && r.error ? ('ERROR:' + r.error.message) : ('OK user=' + (r && r.data && r.data.user ? r.data.user.email : 'none'))));
-
-    if (r && r.error) {
-      setStatus('auth-status', normalizeLoginErrorMessage(r.error.message), 'err');
-      return;
+    dbg('signInWithPassword result: '+(r.error?'ERROR:'+r.error.message:'OK user='+r.data?.user?.email));
+    if (r.error) {
+      var msg = r.error.message;
+      if (msg.includes('Invalid') || msg.includes('credentials') || msg.includes('invalid login')) msg = '❌ Email / Password မမှန်ပါ';
+      else if (msg.includes('Email not confirmed')) msg = '❌ Email Confirm မလုပ်ရသေးပါ — Inbox စစ်ပါ';
+      else msg = '❌ ' + msg;
+      setStatus('auth-status', msg, 'err');
     }
-
-    var directSession = r && r.data ? r.data.session : null;
-    var directUser = directSession && directSession.user ? directSession.user : (r && r.data ? r.data.user : null);
-
-    if (directSession && directUser) {
-      await handleSignedIn(directUser, directSession, 'login:directResult');
-      return;
-    }
-
-    var sess = await SB().auth.getSession();
-    var currentSession = sess && sess.data ? sess.data.session : null;
-    if (currentSession && currentSession.user) {
-      await handleSignedIn(currentSession.user, currentSession, 'login:getSessionFallback');
-      return;
-    }
-
-    console.error('[AUTH] Login returned no usable session:', r);
-    setStatus('auth-status', '⚠️ Login အောင်မြင်ပေမယ့် session မရပါ — Page reload လုပ်ပြီး ပြန်ဝင်ပါ', 'err');
-  } catch (e) {
-    console.error('[AUTH] doEmailLogin catastrophic failure:', e);
-    setStatus('auth-status', normalizeLoginErrorMessage(e && e.message ? e.message : ''), 'err');
+    // Success → onAuthStateChange(SIGNED_IN) → onUserSignedIn → lobby
+  } catch(e) {
+    setStatus('auth-status', '❌ ချိတ်ဆက်မရပါ — Internet စစ်ပါ', 'err');
   } finally {
-    resetAuthUi();
+    if (btn) { btn.disabled = false; btn.textContent = '🔑 Login ဝင်မည်'; }
   }
 };
 
@@ -8169,63 +7766,29 @@ window.doEmailLogin = async function() {
    EMAIL SIGNUP
 ══════════════════════════════════════════ */
 window.doEmailSignup = async function() {
-  dbg('doEmailSignup called');
-  var email = ((document.getElementById('auth-semail') || {}).value || '').trim();
-  var pw    = ((document.getElementById('auth-spw') || {}).value || '').trim();
-
-  if (!email) { setStatus('auth-status', '⚠️ Email ထည့်ပါ', 'err'); return; }
-  if (pw.length < 6) { setStatus('auth-status', '⚠️ Password အနည်းဆုံး 6 လုံး ထည့်ပါ', 'err'); return; }
-  if (!canUseSupabaseAuth()) {
-    setStatus('auth-status', '⚠️ Supabase မတက်လာသေးပါ — ခဏစောင့်ပြီး ပြန်ကြိုးစားပါ', 'err');
-    return;
-  }
-
-  setAuthBusy('signup');
-  setStatus('auth-status', '⏳ Account ဖန်တီးနေသည်...', 'info');
-
+  var email = ((document.getElementById('auth-semail')||{}).value||'').trim();
+  var pw    = ((document.getElementById('auth-spw')||{}).value||'').trim();
+  if (!email) { setStatus('auth-status','⚠️ Email ထည့်ပါ','err'); return; }
+  if (pw.length < 6) { setStatus('auth-status','⚠️ Password အနည်းဆုံး 6 လုံး ထည့်ပါ','err'); return; }
+  var btn = document.getElementById('btn-signup');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ ဖန်တီးနေသည်...'; }
+  setStatus('auth-status','⏳ Account ဖန်တီးနေသည်...','info');
   try {
     var r = await SB().auth.signUp({ email: email, password: pw });
-
-    if (r && r.error) {
-      setStatus('auth-status', normalizeSignupErrorMessage(r.error.message), 'err');
-      return;
-    }
-
-    var directSession = r && r.data ? r.data.session : null;
-    var directUser = directSession && directSession.user ? directSession.user : (r && r.data ? r.data.user : null);
-
-    if (directSession && directUser) {
-      await handleSignedIn(directUser, directSession, 'signup:directResult');
-      return;
-    }
-
-    if (!directSession && directUser) {
-      var identities = Array.isArray(directUser.identities) ? directUser.identities : null;
-      if (identities && identities.length === 0) {
-        setStatus('auth-status', '⚠️ ဒီ Email ရှိပြီးသား ဖြစ်နိုင်သည် — Login tab ကနေ ဝင်ပါ သို့မဟုတ် Password Reset လုပ်ပါ', 'err');
-      } else {
-        var loginEmail = document.getElementById('auth-email');
-        if (loginEmail && !loginEmail.value) loginEmail.value = email;
-        switchAuthTab('login');
-        setStatus('auth-status', '📧 Email Inbox စစ်ပြီး Confirmation link နှိပ်ပါ — ပြီးရင် Login ဝင်ပါ', 'ok');
+    if (r.error) {
+      var emsg = r.error.message;
+      if (emsg.includes('already registered') || emsg.includes('already been registered')) emsg = 'ဒီ Email ရှိနှင့်ပြီ — Login tab ကနေ ဝင်ပါ';
+      setStatus('auth-status', '❌ ' + emsg, 'err');
+    } else if (r.data && r.data.user) {
+      if (!r.data.session) {
+        setStatus('auth-status', '📧 Email Inbox စစ်ပြီး Confirmation link နှိပ်ပါ', 'ok');
       }
-      return;
+      // session exists → SIGNED_IN fires → lobby
     }
-
-    var sess = await SB().auth.getSession();
-    var currentSession = sess && sess.data ? sess.data.session : null;
-    if (currentSession && currentSession.user) {
-      await handleSignedIn(currentSession.user, currentSession, 'signup:getSessionFallback');
-      return;
-    }
-
-    console.error('[AUTH] Signup returned no usable user/session:', r);
-    setStatus('auth-status', '⚠️ Account ဖန်တီးပြီးသော်လည်း session မရပါ — Login ပြန်ဝင်ကြည့်ပါ', 'err');
-  } catch (e) {
-    console.error('[AUTH] doEmailSignup catastrophic failure:', e);
-    setStatus('auth-status', normalizeSignupErrorMessage(e && e.message ? e.message : ''), 'err');
+  } catch(e) {
+    setStatus('auth-status', '❌ ' + e.message, 'err');
   } finally {
-    resetAuthUi();
+    if (btn) { btn.disabled = false; btn.textContent = '✨ Account ဖန်တီးမည်'; }
   }
 };
 
@@ -8233,21 +7796,14 @@ window.doEmailSignup = async function() {
    FORGOT PASSWORD
 ══════════════════════════════════════════ */
 window.doForgotPassword = async function() {
-  var email = ((document.getElementById('auth-email') || {}).value || '').trim();
-  if (!email) { setStatus('auth-status', '⚠️ Email ထည့်ပြီးမှ နှိပ်ပါ', 'err'); return; }
-  if (!canUseSupabaseAuth()) {
-    setStatus('auth-status', '⚠️ Supabase မတက်လာသေးပါ — ခဏစောင့်ပြီး ပြန်ကြိုးစားပါ', 'err');
-    return;
-  }
-  setStatus('auth-status', '⏳ Reset link ပို့နေသည်...', 'info');
+  var email = ((document.getElementById('auth-email')||{}).value||'').trim();
+  if (!email) { setStatus('auth-status','⚠️ Email ထည့်ပြီးမှ နှိပ်ပါ','err'); return; }
+  setStatus('auth-status','⏳ Reset link ပို့နေသည်...','info');
   try {
     var r = await SB().auth.resetPasswordForEmail(email, { redirectTo: 'https://nytherisq-debug.github.io/MMKyarrKwat/' });
-    if (r && r.error) setStatus('auth-status', '❌ ' + r.error.message, 'err');
-    else setStatus('auth-status', '✅ Email စစ်ဆေးပါ — Reset link ပို့ပြီ', 'ok');
-  } catch (e) {
-    console.error('[AUTH] Forgot password failed:', e);
-    setStatus('auth-status', '❌ ' + ((e && e.message) || 'Reset link မပို့နိုင်ပါ'), 'err');
-  }
+    if (r.error) setStatus('auth-status','❌ '+r.error.message,'err');
+    else setStatus('auth-status','✅ Email စစ်ဆေးပါ — Reset link ပို့ပြီ','ok');
+  } catch(e) { setStatus('auth-status','❌ '+e.message,'err'); }
 };
 
 /* ══════════════════════════════════════════
@@ -8255,69 +7811,38 @@ window.doForgotPassword = async function() {
 ══════════════════════════════════════════ */
 function _tryRestoreGuest() {
   try {
-    var g = JSON.parse(localStorage.getItem('kk_guest_v1') || 'null');
-    if (!g || !g.name) return false;
-    if (!_applyGuestProfile()) return false;
-    hideAuthLoading();
-    showScr('lobby');
-    setStatus('auth-status', '');
-    if (typeof startGlobalPresence === 'function') startGlobalPresence();
-    return true;
-  } catch (e) {
-    console.error('[AUTH] Failed to restore guest profile:', e);
-    setStatus('auth-status', '⚠️ Guest profile ကို restore မလုပ်နိုင်ပါ', 'err');
-    return false;
-  }
+    var g = JSON.parse(localStorage.getItem('kk_guest_v1')||'null');
+    if (g && g.name) { return _applyGuestProfile(); }
+  } catch(e) {}
+  return false;
 }
 
 function _applyGuestProfile() {
   try {
-    var g = JSON.parse(localStorage.getItem('kk_guest_v1') || 'null');
+    var g = JSON.parse(localStorage.getItem('kk_guest_v1')||'null');
     if (!g || !g.name) return false;
     _isGuest = true;
     myName = g.name;
-    _userProfile = {
-      display_name: g.name,
-      avatar: g.avatar || '👤',
-      avatar_url: g.avatar_url || null,
-      player_id: MY_PLAYER_ID
-    };
+    _userProfile = { display_name: g.name, avatar: g.avatar||'👤', avatar_url: g.avatar_url||null, player_id: MY_PLAYER_ID };
     applyProfileToLobby(_userProfile);
     return true;
-  } catch (e) {
-    console.error('[AUTH] _applyGuestProfile failed:', e);
-    return false;
-  }
+  } catch(e) { return false; }
 }
 
 window.continueAsGuest = function() {
   _isGuest = true;
   var g = null;
-  try {
-    g = JSON.parse(localStorage.getItem('kk_guest_v1') || 'null');
-  } catch (e) {
-    console.error('[AUTH] Failed to read existing guest profile:', e);
-  }
-  myName = (g && g.name) ? g.name : ('Guest ' + Math.floor(Math.random() * 9000 + 1000));
+  try { g = JSON.parse(localStorage.getItem('kk_guest_v1')||'null'); } catch(e) {}
+  myName = (g && g.name) ? g.name : ('Guest ' + Math.floor(Math.random()*9000+1000));
   try {
     localStorage.setItem('kk_guest_v1', JSON.stringify({
-      name: myName,
-      avatar: (g && g.avatar) || '👤',
-      avatar_url: (g && g.avatar_url) || null,
-      player_id: MY_PLAYER_ID,
-      savedAt: Date.now()
+      name: myName, avatar: (g&&g.avatar)||'👤',
+      avatar_url: (g&&g.avatar_url)||null,
+      player_id: MY_PLAYER_ID, savedAt: Date.now()
     }));
-  } catch (e) {
-    console.error('[AUTH] Failed to save guest profile:', e);
-  }
-  _userProfile = {
-    display_name: myName,
-    avatar: (g && g.avatar) || '👤',
-    avatar_url: (g && g.avatar_url) || null,
-    player_id: MY_PLAYER_ID
-  };
+  } catch(e) {}
+  _userProfile = { display_name: myName, avatar: (g&&g.avatar)||'👤', avatar_url: null, player_id: MY_PLAYER_ID };
   applyProfileToLobby(_userProfile);
-  hideAuthLoading();
   showScr('lobby');
   if (typeof startGlobalPresence === 'function') startGlobalPresence();
 };
@@ -8328,34 +7853,14 @@ window.continueAsGuest = function() {
 window.doSignOut = async function() {
   if (!confirm('Sign Out ထွက်မည်လား?')) return;
   if (typeof closeProfileModal === 'function') closeProfileModal();
-
-  _authUser = null;
-  _userProfile = null;
-  _isGuest = false;
-  _lastHandledAuthKey = '';
-  _lastHandledAuthAt = 0;
-
+  _authUser = null; _userProfile = null; _isGuest = false;
+  try { await SB().auth.signOut({ scope: 'local' }); } catch(e) {}
   try {
-    await SB().auth.signOut({ scope: 'local' });
-  } catch (e) {
-    console.error('[AUTH] signOut failed:', e);
-  }
-
-  try {
-    Object.keys(localStorage).filter(function(k) {
-      return k.startsWith('kk_prof_') ||
-             k.indexOf('sb-oxziinvwdhligrbllqbj') !== -1 ||
-             k === 'kk_auth_backup' ||
-             k === 'kk_guest_v1';
-    }).forEach(function(k) { localStorage.removeItem(k); });
-  } catch (e) {
-    console.error('[AUTH] Failed to clear auth storage on sign-out:', e);
-  }
-
-  resetAuthUi();
-  hideAuthLoading();
+    Object.keys(localStorage).filter(function(k){
+      return k.startsWith('kk_prof_') || k.includes('sb-oxziinvwdhligrbllqbj') || k === 'kk_auth_backup' || k === 'kk_guest_v1';
+    }).forEach(function(k){ localStorage.removeItem(k); });
+  } catch(e) {}
   showScr('auth');
-  setStatus('auth-status', '');
 };
 
 /* ══════════════════════════════════════════
@@ -8468,13 +7973,17 @@ async function _recordGameResult(won) {
    BOOT
 ══════════════════════════════════════════ */
 (function(){
-  function bootAuth() {
-    initAuth();
+  function tryInit(){
+    if (typeof SB==='function' && typeof supabase!=='undefined') {
+      initAuth();
+    } else {
+      setTimeout(tryInit,300);
+    }
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bootAuth, { once: true });
+  if (document.readyState==='loading') {
+    document.addEventListener('DOMContentLoaded', tryInit);
   } else {
-    setTimeout(bootAuth, 400);
+    setTimeout(tryInit, 400);
   }
 })();
 
@@ -9064,5 +8573,931 @@ window.handleAvatarUpload = async function(inp) {
   }
 })();
 </script>
+
+<style>
+/* FINAL APP AUTH + FRIENDS REPAIR PATCH */
+#friends-panel{z-index:1400 !important;display:flex !important;}
+#friends-panel.open,#friends-panel.force-open{pointer-events:all !important;}
+#friends-panel.open .fp-backdrop,#friends-panel.force-open .fp-backdrop{opacity:1 !important;}
+#friends-panel.open .fp-content,#friends-panel.force-open .fp-content{transform:translateY(0) !important;}
+</style>
+<script>
+(function(){
+  var AUTH_STORAGE_KEY = 'sb-oxziinvwdhligrbllqbj-auth-token';
+  var AUTH_STORAGE_MIRROR_KEY = 'kk_sb_auth_mirror_v2';
+  var AUTH_RETURN_URL_KEY = 'kk_auth_expected_return_v2';
+  var AUTH_INIT_MAX_RETRIES = 24;
+  var AUTH_INIT_RETRY_MS = 300;
+  var _authInitAttempts = 0;
+  var _authInitRetryTimer = null;
+  var _authInitInFlight = false;
+  var _authInitialized = false;
+  var _authListenerBound = false;
+  var _authListenerSub = null;
+  var _authHandlingPromise = null;
+  var _authResumeInFlight = false;
+  var _lastHandledAuthKey = '';
+  var _lastHandledAuthAt = 0;
+  var _pendingFriendLoadTimer = null;
+
+  function safeLog(){ try{ console.log.apply(console, arguments); }catch(e){} }
+  function safeWarn(){ try{ console.warn.apply(console, arguments); }catch(e){} }
+  function safeError(){ try{ console.error.apply(console, arguments); }catch(e){} }
+
+  window.setStatus = function(id, msg, type) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg || '';
+    el.className = 'auth-status' + (msg ? (' ' + (type || 'info')) : '');
+  };
+
+  function hideAuthLoading() {
+    var sp = document.getElementById('auth-loading');
+    if (sp) sp.classList.add('gone');
+  }
+
+  function resetAuthUi() {
+    try {
+      var btn = document.getElementById('btn-login');
+      if (btn) { btn.disabled = false; btn.textContent = '🔑 Login ဝင်မည်'; }
+    } catch(e) { safeError('[AUTH] login button reset failed', e); }
+    try {
+      var btn2 = document.getElementById('btn-signup');
+      if (btn2) { btn2.disabled = false; btn2.textContent = '✨ Account ဖန်တီးမည်'; }
+    } catch(e) { safeError('[AUTH] signup button reset failed', e); }
+    try {
+      var g = document.getElementById('btn-google');
+      if (g) g.disabled = false;
+    } catch(e) { safeError('[AUTH] google button reset failed', e); }
+  }
+
+  function setAuthBusy(mode) {
+    try {
+      var loginBtn = document.getElementById('btn-login');
+      if (loginBtn) {
+        loginBtn.disabled = !!mode;
+        loginBtn.textContent = mode === 'login' ? '⏳ ဝင်နေသည်...' : '🔑 Login ဝင်မည်';
+      }
+    } catch(e) { safeError('[AUTH] setAuthBusy login failed', e); }
+    try {
+      var signupBtn = document.getElementById('btn-signup');
+      if (signupBtn) {
+        signupBtn.disabled = !!mode;
+        signupBtn.textContent = mode === 'signup' ? '⏳ ဖန်တီးနေသည်...' : '✨ Account ဖန်တီးမည်';
+      }
+    } catch(e) { safeError('[AUTH] setAuthBusy signup failed', e); }
+    try {
+      var googleBtn = document.getElementById('btn-google');
+      if (googleBtn) googleBtn.disabled = !!mode;
+    } catch(e) { safeError('[AUTH] setAuthBusy google failed', e); }
+  }
+
+  function showAuthScreenWithStatus(msg, type) {
+    hideAuthLoading();
+    resetAuthUi();
+    try { showScr('auth'); } catch(e) {}
+    setStatus('auth-status', msg || '', type || 'err');
+  }
+
+  function canUseSupabaseAuth() {
+    return typeof window.SB === 'function' && typeof window.supabase !== 'undefined' && !!window.supabase && typeof window.supabase.createClient === 'function';
+  }
+
+  function isStandaloneApp() {
+    try {
+      return !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+    } catch(e) {
+      return false;
+    }
+  }
+
+  function readManifestStartUrl() {
+    try {
+      var link = document.querySelector('link[rel="manifest"]');
+      if (!link || !link.getAttribute('href')) return '';
+      var href = link.getAttribute('href');
+      if (href.indexOf('data:application/json,') === 0) {
+        var raw = decodeURIComponent(href.slice('data:application/json,'.length));
+        var json = JSON.parse(raw);
+        return json && json.start_url ? String(json.start_url) : '';
+      }
+      return '';
+    } catch(e) {
+      safeWarn('[AUTH] Failed to read manifest start_url:', e);
+      return '';
+    }
+  }
+
+  function getAuthRedirectUrl(mode) {
+    try {
+      var base = window.location.href;
+      var manifestStart = readManifestStartUrl();
+      if (isStandaloneApp() && manifestStart) base = manifestStart;
+      var u = new URL(base, window.location.origin);
+      u.hash = '';
+      var del = ['code','type','error','error_code','error_description','provider_token','provider_refresh_token','access_token','refresh_token','token_hash','auth_return','auth_mode'];
+      for (var i=0;i<del.length;i++) u.searchParams.delete(del[i]);
+      u.searchParams.set('auth_return', '1');
+      if (mode) u.searchParams.set('auth_mode', mode);
+      return u.toString();
+    } catch(e) {
+      safeWarn('[AUTH] Failed to build redirect URL, using current origin/path:', e);
+      return window.location.origin + window.location.pathname;
+    }
+  }
+
+  function hasAuthRedirectParams() {
+    var hash = window.location.hash || '';
+    var search = window.location.search || '';
+    return hash.indexOf('access_token') !== -1 ||
+           hash.indexOf('refresh_token') !== -1 ||
+           hash.indexOf('token_hash') !== -1 ||
+           search.indexOf('code=') !== -1 ||
+           search.indexOf('error=') !== -1 ||
+           search.indexOf('token_hash=') !== -1 ||
+           search.indexOf('type=recovery') !== -1 ||
+           search.indexOf('type=signup') !== -1 ||
+           search.indexOf('auth_return=1') !== -1;
+  }
+
+  function cleanupAuthRedirectUrl() {
+    try {
+      var u = new URL(window.location.href);
+      u.hash = '';
+      var del = ['code','type','error','error_code','error_description','provider_token','provider_refresh_token','token_hash','access_token','refresh_token','auth_return','auth_mode'];
+      for (var i=0;i<del.length;i++) u.searchParams.delete(del[i]);
+      window.history.replaceState({}, document.title, u.pathname + (u.search || ''));
+    } catch(e) {
+      safeWarn('[AUTH] Failed to clean auth callback URL:', e);
+    }
+  }
+
+  function extractSessionFromRaw(raw) {
+    try {
+      var parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (!parsed) return null;
+      if (parsed.currentSession && parsed.currentSession.access_token && parsed.currentSession.refresh_token) return parsed.currentSession;
+      if (parsed.access_token && parsed.refresh_token) return parsed;
+      if (Array.isArray(parsed)) {
+        for (var i=0;i<parsed.length;i++) {
+          var item = parsed[i];
+          if (item && item.access_token && item.refresh_token) return item;
+          if (item && item.currentSession && item.currentSession.access_token && item.currentSession.refresh_token) return item.currentSession;
+        }
+      }
+    } catch(e) {}
+    return null;
+  }
+
+  function persistBackupFromRaw(raw) {
+    try {
+      var sess = extractSessionFromRaw(raw);
+      if (!sess || !sess.access_token || !sess.refresh_token) return;
+      localStorage.setItem('kk_auth_backup', JSON.stringify({
+        access_token: sess.access_token,
+        refresh_token: sess.refresh_token,
+        user_id: sess.user && sess.user.id ? sess.user.id : null,
+        savedAt: Date.now()
+      }));
+    } catch(e) {
+      safeWarn('[AUTH] Failed to persist backup from raw storage payload:', e);
+    }
+  }
+
+  var kkAuthStorage = {
+    getItem: function(key) {
+      try {
+        var v = window.localStorage.getItem(key);
+        if (v) return v;
+      } catch(e) {
+        safeWarn('[AUTH] localStorage.getItem failed for', key, e);
+      }
+      if (key === AUTH_STORAGE_KEY) {
+        try {
+          var mv = window.localStorage.getItem(AUTH_STORAGE_MIRROR_KEY);
+          if (mv) return mv;
+        } catch(e2) {}
+        try {
+          var sv = window.sessionStorage.getItem(AUTH_STORAGE_MIRROR_KEY);
+          if (sv) return sv;
+        } catch(e3) {}
+      }
+      return null;
+    },
+    setItem: function(key, value) {
+      try { window.localStorage.setItem(key, value); } catch(e) { safeWarn('[AUTH] localStorage.setItem failed for', key, e); }
+      if (key === AUTH_STORAGE_KEY) {
+        try { window.localStorage.setItem(AUTH_STORAGE_MIRROR_KEY, value); } catch(e2) {}
+        try { window.sessionStorage.setItem(AUTH_STORAGE_MIRROR_KEY, value); } catch(e3) {}
+        persistBackupFromRaw(value);
+      }
+    },
+    removeItem: function(key) {
+      try { window.localStorage.removeItem(key); } catch(e) { safeWarn('[AUTH] localStorage.removeItem failed for', key, e); }
+      if (key === AUTH_STORAGE_KEY) {
+        try { window.localStorage.removeItem(AUTH_STORAGE_MIRROR_KEY); } catch(e2) {}
+        try { window.sessionStorage.removeItem(AUTH_STORAGE_MIRROR_KEY); } catch(e3) {}
+      }
+    }
+  };
+
+  window.SB = function() {
+    if (!_sb) {
+      _sb = supabase.createClient(SB_URL, SB_KEY, {
+        auth: {
+          persistSession: true,
+          storageKey: AUTH_STORAGE_KEY,
+          storage: kkAuthStorage,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          flowType: 'implicit'
+        }
+      });
+    }
+    return _sb;
+  };
+
+  function makeAuthSessionKey(user, session) {
+    var uid = user && user.id ? user.id : 'nouser';
+    var token = session && session.access_token ? String(session.access_token).slice(-16) : 'nosession';
+    return uid + '::' + token;
+  }
+
+  async function persistAuthBackupFromSession(user, session) {
+    try {
+      var activeSession = session || null;
+      if (!activeSession) {
+        var sessRes = await SB().auth.getSession();
+        if (sessRes && sessRes.data && sessRes.data.session) activeSession = sessRes.data.session;
+      }
+      if (!activeSession || !activeSession.access_token || !activeSession.refresh_token || !user || !user.id) return;
+      localStorage.setItem('kk_auth_backup', JSON.stringify({
+        access_token: activeSession.access_token,
+        refresh_token: activeSession.refresh_token,
+        user_id: user.id,
+        savedAt: Date.now()
+      }));
+    } catch(e) {
+      safeWarn('[AUTH] Failed to persist kk_auth_backup from session:', e);
+    }
+  }
+
+  function buildFallbackProfile(user) {
+    var meta = user && user.user_metadata ? user.user_metadata : {};
+    var name = meta.full_name || meta.name || (user && user.email ? String(user.email).split('@')[0] : '') || 'ကစားသမား';
+    var av = meta.avatar_url || meta.picture || '🐯';
+    return {
+      id: user && user.id ? user.id : ('guest-' + Date.now()),
+      player_id: typeof MY_PLAYER_ID !== 'undefined' ? MY_PLAYER_ID : 'KK------',
+      display_name: name,
+      avatar: (av && String(av).indexOf('http') !== 0) ? av : '🐯',
+      avatar_url: (av && String(av).indexOf('http') === 0) ? av : null,
+      games_played: 0,
+      wins: 0,
+      updated_at: new Date().toISOString()
+    };
+  }
+
+  async function handleSignedIn(user, session, source) {
+    if (!user || !user.id) return false;
+    var key = makeAuthSessionKey(user, session);
+
+    if (_authHandlingPromise && _lastHandledAuthKey === key) {
+      safeLog('[AUTH] joined existing signed-in handler from', source);
+      return _authHandlingPromise;
+    }
+
+    if (_lastHandledAuthKey === key && _authUser && _authUser.id === user.id && _userProfile && (Date.now() - _lastHandledAuthAt) < 5000) {
+      hideAuthLoading();
+      try { showScr('lobby'); } catch(e) {}
+      return true;
+    }
+
+    _lastHandledAuthKey = key;
+    _lastHandledAuthAt = Date.now();
+    _authHandlingPromise = (async function(){
+      await onUserSignedIn(user, session);
+      return true;
+    })();
+
+    try {
+      return await _authHandlingPromise;
+    } catch(e) {
+      _lastHandledAuthKey = '';
+      throw e;
+    } finally {
+      _authHandlingPromise = null;
+    }
+  }
+
+  function bindAuthStateListener() {
+    if (_authListenerBound) return;
+    try {
+      var reg = SB().auth.onAuthStateChange(function(event, session) {
+        safeLog('[AUTH EVENT]', event, session && session.user ? (session.user.email || session.user.id) : 'none');
+        Promise.resolve().then(async function() {
+          if (event === 'SIGNED_IN') {
+            if (session && session.user) await handleSignedIn(session.user, session, 'listener:SIGNED_IN');
+            return;
+          }
+          if (event === 'TOKEN_REFRESHED') {
+            if (session && session.user) {
+              _authUser = session.user;
+              await persistAuthBackupFromSession(session.user, session);
+              if (!_userProfile) await handleSignedIn(session.user, session, 'listener:TOKEN_REFRESHED');
+            }
+            return;
+          }
+          if (event === 'INITIAL_SESSION') {
+            if (session && session.user) {
+              await handleSignedIn(session.user, session, 'listener:INITIAL_SESSION');
+            } else if (!_authInitInFlight) {
+              hideAuthLoading();
+              resetAuthUi();
+              if (!_tryRestoreGuest()) {
+                try { showScr('auth'); } catch(e) {}
+              }
+            }
+            return;
+          }
+          if (event === 'SIGNED_OUT') {
+            _authUser = null;
+            _userProfile = null;
+            _isGuest = false;
+            _lastHandledAuthKey = '';
+            _lastHandledAuthAt = 0;
+            try { localStorage.removeItem('kk_auth_backup'); } catch(e) {}
+            hideAuthLoading();
+            resetAuthUi();
+            try { showScr('auth'); } catch(e) {}
+            setStatus('auth-status', '');
+          }
+        }).catch(function(err) {
+          safeError('[AUTH] onAuthStateChange handler failed:', err);
+          showAuthScreenWithStatus('⚠️ Login state update မအောင်မြင်ပါ — ပြန်ဝင်ကြည့်ပါ', 'err');
+        });
+      });
+      _authListenerSub = reg && reg.data && reg.data.subscription ? reg.data.subscription : reg;
+      _authListenerBound = true;
+    } catch(e) {
+      safeError('[AUTH] Failed to bind listener:', e);
+      throw e;
+    }
+  }
+
+  async function restoreSessionFromBackup() {
+    var raw = null;
+    try {
+      raw = localStorage.getItem('kk_auth_backup');
+    } catch(e) {
+      safeError('[AUTH] Failed to read kk_auth_backup:', e);
+      setStatus('auth-status', '⚠️ Saved login ကို ဖတ်မရပါ — Login ပြန်ဝင်ပါ', 'err');
+      return null;
+    }
+    if (!raw) return null;
+
+    var bk = null;
+    try {
+      bk = JSON.parse(raw);
+    } catch(e) {
+      safeError('[AUTH] Failed to parse kk_auth_backup:', e);
+      setStatus('auth-status', '⚠️ Saved login data ပျက်နေသည် — Login ပြန်ဝင်ပါ', 'err');
+      try { localStorage.removeItem('kk_auth_backup'); } catch(clearErr) {}
+      return null;
+    }
+
+    if (!bk || !bk.access_token || !bk.refresh_token) {
+      safeWarn('[AUTH] kk_auth_backup missing tokens:', bk);
+      setStatus('auth-status', '⚠️ Saved login data မပြည့်စုံပါ — Login ပြန်ဝင်ပါ', 'err');
+      try { localStorage.removeItem('kk_auth_backup'); } catch(clearErr2) {}
+      return null;
+    }
+
+    if ((Date.now() - (bk.savedAt || 0)) > 30 * 24 * 60 * 60 * 1000) {
+      try { localStorage.removeItem('kk_auth_backup'); } catch(clearErr3) {}
+      return null;
+    }
+
+    setStatus('auth-status', '⏳ Saved login ကို restore လုပ်နေသည်...', 'info');
+
+    try {
+      var restored = await SB().auth.setSession({ access_token: bk.access_token, refresh_token: bk.refresh_token });
+      if (restored && restored.error) {
+        safeError('[AUTH] setSession returned error:', restored.error);
+        setStatus('auth-status', '⚠️ Saved login restore မအောင်မြင်ပါ — Login ပြန်ဝင်ပါ', 'err');
+        try { localStorage.removeItem('kk_auth_backup'); } catch(clearErr4) {}
+        return null;
+      }
+      return restored && restored.data ? restored.data.session : null;
+    } catch(e) {
+      safeError('[AUTH] restoreSessionFromBackup failed:', e);
+      setStatus('auth-status', '⚠️ Saved login restore မအောင်မြင်ပါ — Login ပြန်ဝင်ပါ', 'err');
+      try { localStorage.removeItem('kk_auth_backup'); } catch(clearErr5) {}
+      return null;
+    }
+  }
+
+  function normalizeLoginErrorMessage(msg) {
+    var raw = String(msg || '');
+    var low = raw.toLowerCase();
+    if (low.indexOf('invalid') !== -1 || low.indexOf('credentials') !== -1 || low.indexOf('invalid login') !== -1) return '❌ Email / Password မမှန်ပါ';
+    if (low.indexOf('email not confirmed') !== -1) return '❌ Email Confirm မလုပ်ရသေးပါ — Inbox စစ်ပါ';
+    if (low.indexOf('network') !== -1 || low.indexOf('fetch') !== -1) return '❌ ချိတ်ဆက်မရပါ — Internet စစ်ပါ';
+    return '❌ ' + (raw || 'Login မအောင်မြင်ပါ');
+  }
+
+  function normalizeSignupErrorMessage(msg) {
+    var raw = String(msg || '');
+    var low = raw.toLowerCase();
+    if (low.indexOf('already registered') !== -1 || low.indexOf('already been registered') !== -1) return '❌ ဒီ Email ရှိနှင့်ပြီ — Login tab ကနေ ဝင်ပါ';
+    if (low.indexOf('weak password') !== -1) return '❌ Password ပိုမိုခိုင်မာအောင် ထည့်ပါ';
+    if (low.indexOf('network') !== -1 || low.indexOf('fetch') !== -1) return '❌ ချိတ်ဆက်မရပါ — Internet စစ်ပါ';
+    return '❌ ' + (raw || 'Sign Up မအောင်မြင်ပါ');
+  }
+
+  function renderAvSafe(el, av) {
+    if (!el) return;
+    if (av && (String(av).indexOf('http') === 0 || String(av).indexOf('data:') === 0)) {
+      el.innerHTML = '<img src="' + av + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.parentElement.textContent=\'🐯\'">';
+    } else {
+      el.textContent = av || '🐯';
+    }
+  }
+
+  async function onUserSignedIn(user, session) {
+    _isGuest = false;
+    _authUser = user;
+    setStatus('auth-status', '');
+
+    await persistAuthBackupFromSession(user, session);
+
+    try {
+      var profile = null;
+      try {
+        profile = await loadProfileFromDB(user.id);
+      } catch(e) {
+        safeWarn('[AUTH] loadProfileFromDB failed, falling back:', e);
+      }
+      if (!profile) {
+        try {
+          profile = await autoCreateProfile(user);
+        } catch(e2) {
+          safeWarn('[AUTH] autoCreateProfile failed, falling back:', e2);
+        }
+      }
+      if (!profile) profile = buildFallbackProfile(user);
+      _userProfile = profile;
+      try { applyProfileToLobby(profile); } catch(e3) { safeWarn('[AUTH] applyProfileToLobby failed:', e3); }
+      hideAuthLoading();
+      try { showScr('lobby'); } catch(e4) {}
+      if (typeof startGlobalPresence === 'function') startGlobalPresence();
+      if (typeof window._loadPendingFriendRequests === 'function') window._loadPendingFriendRequests();
+      try { localStorage.removeItem(AUTH_RETURN_URL_KEY); } catch(e5) {}
+    } catch(e) {
+      safeError('[AUTH] onUserSignedIn fatal:', e);
+      hideAuthLoading();
+      resetAuthUi();
+      try { showScr('auth'); } catch(e6) {}
+      setStatus('auth-status', '❌ Profile ကို load မလုပ်နိုင်ပါ — ပြန်ဝင်ကြည့်ပါ', 'err');
+      throw e;
+    }
+  }
+
+  function clearAuthInitRetry() {
+    if (_authInitRetryTimer) {
+      clearTimeout(_authInitRetryTimer);
+      _authInitRetryTimer = null;
+    }
+  }
+
+  function scheduleAuthInitRetry(reason) {
+    if (_authInitialized) return;
+    clearAuthInitRetry();
+    _authInitAttempts += 1;
+    if (_authInitAttempts > AUTH_INIT_MAX_RETRIES) {
+      safeError('[AUTH] init failed after max retries. Last reason:', reason);
+      _authInitInFlight = false;
+      showAuthScreenWithStatus('❌ Supabase auth မတက်လာပါ — Page reload လုပ်ပါ သို့မဟုတ် Internet စစ်ပါ', 'err');
+      return;
+    }
+    setStatus('auth-status', '⏳ Authentication ကို စတင်နေသည်... (' + _authInitAttempts + '/' + AUTH_INIT_MAX_RETRIES + ')', 'info');
+    _authInitRetryTimer = setTimeout(function() {
+      _authInitRetryTimer = null;
+      window.initAuth();
+    }, AUTH_INIT_RETRY_MS);
+  }
+
+  async function resumeAuthFromStorage(reason) {
+    if (_authResumeInFlight || _authInitInFlight) return;
+    if (!canUseSupabaseAuth()) return;
+    _authResumeInFlight = true;
+    try {
+      var sessRes = await SB().auth.getSession();
+      var currentSession = sessRes && sessRes.data ? sessRes.data.session : null;
+      if (currentSession && currentSession.user) {
+        await handleSignedIn(currentSession.user, currentSession, 'resume:' + reason);
+        return;
+      }
+      var restored = await restoreSessionFromBackup();
+      if (restored && restored.user) {
+        await handleSignedIn(restored.user, restored, 'resumeBackup:' + reason);
+      }
+    } catch(e) {
+      safeWarn('[AUTH] resumeAuthFromStorage failed:', reason, e);
+    } finally {
+      _authResumeInFlight = false;
+    }
+  }
+
+  window.initAuth = async function() {
+    safeLog('[AUTH] initAuth started');
+
+    if (_authInitialized || _authInitInFlight) {
+      return;
+    }
+
+    if (window.location.protocol === 'file:') {
+      hideAuthLoading();
+      try { showScr('auth'); } catch(e) {}
+      setStatus('auth-status', '⚠️ GitHub URL မှ ဖွင့်ပါ: nytherisq-debug.github.io/MMKyarrKwat', 'err');
+      return;
+    }
+
+    if (!canUseSupabaseAuth()) {
+      scheduleAuthInitRetry('Supabase client not ready');
+      return;
+    }
+
+    _authInitInFlight = true;
+    clearAuthInitRetry();
+
+    try {
+      bindAuthStateListener();
+
+      var hadRedirect = hasAuthRedirectParams();
+      if (hadRedirect) {
+        setStatus('auth-status', '⏳ Login callback ကို အတည်ပြုနေသည်...', 'info');
+      }
+
+      var sessRes = await SB().auth.getSession();
+      var currentSession = sessRes && sessRes.data ? sessRes.data.session : null;
+
+      if (!currentSession && hadRedirect) {
+        await new Promise(function(resolve){ setTimeout(resolve, 350); });
+        sessRes = await SB().auth.getSession();
+        currentSession = sessRes && sessRes.data ? sessRes.data.session : null;
+      }
+
+      if (hadRedirect) cleanupAuthRedirectUrl();
+
+      if (currentSession && currentSession.user) {
+        _authInitAttempts = 0;
+        _authInitialized = true;
+        await handleSignedIn(currentSession.user, currentSession, 'init:getSession');
+        return;
+      }
+
+      var restoredSession = await restoreSessionFromBackup();
+      if (restoredSession && restoredSession.user) {
+        _authInitAttempts = 0;
+        _authInitialized = true;
+        await handleSignedIn(restoredSession.user, restoredSession, 'init:backup');
+        return;
+      }
+
+      _authInitAttempts = 0;
+      _authInitialized = true;
+      hideAuthLoading();
+      resetAuthUi();
+      if (!_tryRestoreGuest()) {
+        try { showScr('auth'); } catch(e) {}
+      }
+      setStatus('auth-status', '');
+    } catch(e) {
+      safeError('[AUTH] initAuth error:', e);
+      hideAuthLoading();
+      resetAuthUi();
+      if (!_tryRestoreGuest()) {
+        try { showScr('auth'); } catch(e2) {}
+      }
+      setStatus('auth-status', '❌ Authentication စတင်မရပါ — Page reload လုပ်ပြီး ပြန်ကြိုးစားပါ', 'err');
+    } finally {
+      _authInitInFlight = false;
+    }
+  };
+
+  window.signInWithGoogle = function() {
+    if (window.location.protocol === 'file:') {
+      setStatus('auth-status', '⚠️ GitHub URL မှ ဖွင့်ပါ', 'err');
+      return;
+    }
+    if (!canUseSupabaseAuth()) {
+      setStatus('auth-status', '⚠️ Supabase မတက်လာသေးပါ — ခဏစောင့်ပြီး ပြန်ကြိုးစားပါ', 'err');
+      return;
+    }
+    var redirectTo = getAuthRedirectUrl('oauth');
+    try { localStorage.setItem(AUTH_RETURN_URL_KEY, redirectTo); } catch(e) {}
+    setAuthBusy('login');
+    setStatus('auth-status', '⏳ Google ဆက်သွယ်နေသည်...', 'info');
+    SB().auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectTo,
+        queryParams: { prompt: 'select_account' }
+      }
+    }).then(function(r) {
+      if (r && r.error) {
+        setStatus('auth-status', '❌ ' + r.error.message, 'err');
+        resetAuthUi();
+      }
+    }).catch(function(e) {
+      safeError('[AUTH] Google OAuth failed:', e);
+      setStatus('auth-status', '❌ Google မချိတ်ဆက်နိုင်ပါ', 'err');
+      resetAuthUi();
+    });
+  };
+
+  window.doEmailLogin = async function() {
+    var email = ((document.getElementById('auth-email') || {}).value || '').trim();
+    var pw = ((document.getElementById('auth-pw') || {}).value || '').trim();
+    if (!email) { setStatus('auth-status', '⚠️ Email ထည့်ပါ', 'err'); return; }
+    if (!pw) { setStatus('auth-status', '⚠️ Password ထည့်ပါ', 'err'); return; }
+    if (!canUseSupabaseAuth()) {
+      setStatus('auth-status', '⚠️ Supabase မတက်လာသေးပါ — ခဏစောင့်ပြီး ပြန်ကြိုးစားပါ', 'err');
+      return;
+    }
+
+    setAuthBusy('login');
+    setStatus('auth-status', '⏳ Login ဝင်နေသည်...', 'info');
+
+    try {
+      var r = await SB().auth.signInWithPassword({ email: email, password: pw });
+      if (r && r.error) {
+        setStatus('auth-status', normalizeLoginErrorMessage(r.error.message), 'err');
+        return;
+      }
+
+      var directSession = r && r.data ? r.data.session : null;
+      var directUser = directSession && directSession.user ? directSession.user : (r && r.data ? r.data.user : null);
+      if (directSession && directUser) {
+        await handleSignedIn(directUser, directSession, 'login:directResult');
+        return;
+      }
+
+      var sess = await SB().auth.getSession();
+      var currentSession = sess && sess.data ? sess.data.session : null;
+      if (currentSession && currentSession.user) {
+        await handleSignedIn(currentSession.user, currentSession, 'login:getSessionFallback');
+        return;
+      }
+
+      safeError('[AUTH] Login returned no usable session');
+      setStatus('auth-status', '⚠️ Login အောင်မြင်ပေမယ့် session မရပါ — Page reload လုပ်ပြီး ပြန်ဝင်ပါ', 'err');
+    } catch(e) {
+      safeError('[AUTH] doEmailLogin failed:', e);
+      setStatus('auth-status', normalizeLoginErrorMessage(e && e.message ? e.message : ''), 'err');
+    } finally {
+      resetAuthUi();
+    }
+  };
+
+  window.doEmailSignup = async function() {
+    var email = ((document.getElementById('auth-semail') || {}).value || '').trim();
+    var pw = ((document.getElementById('auth-spw') || {}).value || '').trim();
+    if (!email) { setStatus('auth-status', '⚠️ Email ထည့်ပါ', 'err'); return; }
+    if (pw.length < 6) { setStatus('auth-status', '⚠️ Password အနည်းဆုံး 6 လုံး ထည့်ပါ', 'err'); return; }
+    if (!canUseSupabaseAuth()) {
+      setStatus('auth-status', '⚠️ Supabase မတက်လာသေးပါ — ခဏစောင့်ပြီး ပြန်ကြိုးစားပါ', 'err');
+      return;
+    }
+
+    setAuthBusy('signup');
+    setStatus('auth-status', '⏳ Account ဖန်တီးနေသည်...', 'info');
+
+    try {
+      var redirectTo = getAuthRedirectUrl('signup');
+      try { localStorage.setItem(AUTH_RETURN_URL_KEY, redirectTo); } catch(e0) {}
+      var r = await SB().auth.signUp({
+        email: email,
+        password: pw,
+        options: { emailRedirectTo: redirectTo }
+      });
+
+      if (r && r.error) {
+        setStatus('auth-status', normalizeSignupErrorMessage(r.error.message), 'err');
+        return;
+      }
+
+      var directSession = r && r.data ? r.data.session : null;
+      var directUser = directSession && directSession.user ? directSession.user : (r && r.data ? r.data.user : null);
+      if (directSession && directUser) {
+        await handleSignedIn(directUser, directSession, 'signup:directResult');
+        return;
+      }
+
+      if (!directSession && directUser) {
+        var identities = directUser.identities && directUser.identities.length !== undefined ? directUser.identities : null;
+        if (identities && identities.length === 0) {
+          setStatus('auth-status', '⚠️ ဒီ Email ရှိပြီးသား ဖြစ်နိုင်သည် — Login tab ကနေ ဝင်ပါ သို့မဟုတ် Password Reset လုပ်ပါ', 'err');
+        } else {
+          var loginEmail = document.getElementById('auth-email');
+          if (loginEmail && !loginEmail.value) loginEmail.value = email;
+          if (typeof switchAuthTab === 'function') switchAuthTab('login');
+          setStatus('auth-status', '📧 Email Inbox စစ်ပြီး Confirmation link နှိပ်ပါ — ပြီးရင် App ထဲပြန်ဝင်မည်', 'ok');
+        }
+        return;
+      }
+
+      var sess = await SB().auth.getSession();
+      var currentSession = sess && sess.data ? sess.data.session : null;
+      if (currentSession && currentSession.user) {
+        await handleSignedIn(currentSession.user, currentSession, 'signup:getSessionFallback');
+        return;
+      }
+
+      setStatus('auth-status', '⚠️ Account ဖန်တီးပြီးသော်လည်း session မရပါ — Login ပြန်ဝင်ကြည့်ပါ', 'err');
+    } catch(e) {
+      safeError('[AUTH] doEmailSignup failed:', e);
+      setStatus('auth-status', normalizeSignupErrorMessage(e && e.message ? e.message : ''), 'err');
+    } finally {
+      resetAuthUi();
+    }
+  };
+
+  window.doForgotPassword = async function() {
+    var email = ((document.getElementById('auth-email') || {}).value || '').trim();
+    if (!email) { setStatus('auth-status', '⚠️ Email ထည့်ပြီးမှ နှိပ်ပါ', 'err'); return; }
+    if (!canUseSupabaseAuth()) {
+      setStatus('auth-status', '⚠️ Supabase မတက်လာသေးပါ — ခဏစောင့်ပြီး ပြန်ကြိုးစားပါ', 'err');
+      return;
+    }
+    setStatus('auth-status', '⏳ Reset link ပို့နေသည်...', 'info');
+    try {
+      var redirectTo = getAuthRedirectUrl('recovery');
+      try { localStorage.setItem(AUTH_RETURN_URL_KEY, redirectTo); } catch(e0) {}
+      var r = await SB().auth.resetPasswordForEmail(email, { redirectTo: redirectTo });
+      if (r && r.error) setStatus('auth-status', '❌ ' + r.error.message, 'err');
+      else setStatus('auth-status', '✅ Email စစ်ဆေးပါ — Reset link ပို့ပြီ', 'ok');
+    } catch(e) {
+      safeError('[AUTH] Forgot password failed:', e);
+      setStatus('auth-status', '❌ ' + ((e && e.message) || 'Reset link မပို့နိုင်ပါ'), 'err');
+    }
+  };
+
+  window.doSignOut = async function() {
+    if (!confirm('Sign Out ထွက်မည်လား?')) return;
+    if (typeof closeProfileModal === 'function') closeProfileModal();
+    _authUser = null;
+    _userProfile = null;
+    _isGuest = false;
+    _lastHandledAuthKey = '';
+    _lastHandledAuthAt = 0;
+    try { await SB().auth.signOut({ scope: 'local' }); } catch(e) { safeWarn('[AUTH] signOut failed:', e); }
+    try {
+      Object.keys(localStorage).filter(function(k){
+        return k.indexOf('kk_prof_') === 0 ||
+               k.indexOf('sb-oxziinvwdhligrbllqbj') !== -1 ||
+               k === 'kk_auth_backup' ||
+               k === 'kk_guest_v1' ||
+               k === AUTH_STORAGE_KEY ||
+               k === AUTH_STORAGE_MIRROR_KEY ||
+               k === AUTH_RETURN_URL_KEY;
+      }).forEach(function(k){ localStorage.removeItem(k); });
+    } catch(e2) { safeWarn('[AUTH] Failed to clear auth storage:', e2); }
+    try { sessionStorage.removeItem(AUTH_STORAGE_MIRROR_KEY); } catch(e3) {}
+    resetAuthUi();
+    hideAuthLoading();
+    try { showScr('auth'); } catch(e4) {}
+    setStatus('auth-status', '');
+  };
+
+  window._loadPendingFriendRequests = function() {
+    try {
+      if (typeof _loadIncomingRequests !== 'function') return;
+      var pending = _loadIncomingRequests();
+      if (!pending || !pending.length) return;
+      clearTimeout(_pendingFriendLoadTimer);
+      _pendingFriendLoadTimer = setTimeout(function() {
+        if (window._freqPending) return;
+        var first = pending[0];
+        if (first && typeof showFriendRequestPopup === 'function') {
+          showFriendRequestPopup(first.fromId, first.fromName, first.reqId || null);
+        }
+      }, 450);
+    } catch(e) {
+      safeWarn('[FRIENDS] Failed to load pending friend requests:', e);
+    }
+  };
+
+  function fillFriendsPanelMyCard() {
+    try {
+      var myAv = document.getElementById('fp-my-avatar');
+      var myNm = document.getElementById('fp-my-name');
+      var pidEl = document.getElementById('fp-pid-val');
+      if (pidEl && typeof MY_PLAYER_ID !== 'undefined') pidEl.textContent = MY_PLAYER_ID;
+      if (myNm) myNm.textContent = _userProfile ? (_userProfile.display_name || myName || 'ကစားသမား') : (myName || 'ကစားသမား');
+      if (myAv) {
+        var av = _userProfile ? (_userProfile.avatar_url || _userProfile.avatar) : null;
+        renderAvSafe(myAv, av || '🐯');
+      }
+    } catch(e) {
+      safeWarn('[FRIENDS] Failed to fill my card:', e);
+    }
+  }
+
+  window.openFriendsPanel = function() {
+    var panel = document.getElementById('friends-panel');
+    if (!panel) {
+      safeError('[FRIENDS] #friends-panel not found');
+      return;
+    }
+    fillFriendsPanelMyCard();
+    _friendsPanelOpen = true;
+    panel.classList.add('open');
+    panel.classList.add('force-open');
+    panel.style.pointerEvents = 'all';
+    panel.style.display = 'flex';
+    panel.setAttribute('aria-hidden', 'false');
+    var bd = panel.querySelector('.fp-backdrop');
+    if (bd) bd.style.opacity = '1';
+    var content = panel.querySelector('.fp-content');
+    if (content) content.style.transform = 'translateY(0)';
+    try { if (typeof updateGlobalPresence === 'function') updateGlobalPresence('lobby', null); } catch(e2) {}
+    try { if (typeof renderFriendsList === 'function') renderFriendsList(); } catch(e3) { safeWarn('[FRIENDS] renderFriendsList failed:', e3); }
+    try { if (typeof _refreshFriendBadge === 'function') _refreshFriendBadge(); } catch(e4) {}
+    window._loadPendingFriendRequests();
+  };
+
+  window.closeFriendsPanel = function() {
+    var panel = document.getElementById('friends-panel');
+    _friendsPanelOpen = false;
+    if (!panel) return;
+    panel.classList.remove('open');
+    panel.classList.remove('force-open');
+    panel.style.pointerEvents = '';
+    panel.setAttribute('aria-hidden', 'true');
+    var bd = panel.querySelector('.fp-backdrop');
+    if (bd) bd.style.opacity = '';
+    var content = panel.querySelector('.fp-content');
+    if (content) content.style.transform = '';
+  };
+
+  function bindFriendsButtons() {
+    try {
+      var buttons = document.querySelectorAll('.bfriends');
+      for (var i = 0; i < buttons.length; i++) {
+        var btn = buttons[i];
+        if (btn.getAttribute('data-friends-bound') === '1') continue;
+        btn.setAttribute('data-friends-bound', '1');
+        btn.addEventListener('click', function(ev) {
+          try { ev.preventDefault(); ev.stopPropagation(); } catch(e) {}
+          window.openFriendsPanel();
+        }, true);
+        btn.addEventListener('touchend', function(ev) {
+          try { ev.preventDefault(); ev.stopPropagation(); } catch(e) {}
+          window.openFriendsPanel();
+        }, { passive: false });
+      }
+    } catch(e) {
+      safeWarn('[FRIENDS] Failed to bind friend buttons:', e);
+    }
+  }
+
+  function bootUltimatePatch() {
+    bindFriendsButtons();
+    if (typeof window.initAuth === 'function') window.initAuth();
+  }
+
+  window.addEventListener('pageshow', function() {
+    bindFriendsButtons();
+    setTimeout(function(){ resumeAuthFromStorage('pageshow'); }, 250);
+  });
+
+  window.addEventListener('focus', function() {
+    setTimeout(function(){ resumeAuthFromStorage('focus'); }, 250);
+  });
+
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+      bindFriendsButtons();
+      setTimeout(function(){ resumeAuthFromStorage('visibility'); }, 250);
+    }
+  });
+
+  window.addEventListener('storage', function(ev) {
+    if (!ev) return;
+    if (ev.key === AUTH_STORAGE_KEY || ev.key === AUTH_STORAGE_MIRROR_KEY || ev.key === 'kk_auth_backup') {
+      setTimeout(function(){ resumeAuthFromStorage('storage'); }, 150);
+    }
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootUltimatePatch, { once: true });
+  } else {
+    setTimeout(bootUltimatePatch, 50);
+  }
+})();
+</script>
+
 </body>
-   </html>
+</html>
