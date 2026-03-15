@@ -4525,7 +4525,7 @@ button {
       <div style="margin-top:8px">
         <input type="file" id="setup-photo-inp" accept="image/*" style="display:none" onchange="handleSetupPhotoUpload(this)">
         <button onclick="document.getElementById('setup-photo-inp').click()" style="width:100%;padding:9px;border:1px dashed rgba(212,168,67,.35);border-radius:10px;background:rgba(212,168,67,.05);color:rgba(212,168,67,.7);font-family:'Outfit',sans-serif;font-size:.78rem;cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(212,168,67,.1)'" onmouseout="this.style.background='rgba(212,168,67,.05)'">
-          📷 ဖုန်းထဲမှ ပုံ ရွေးမည်
+          🖼️ Gallery မှ ပုံ ရွေးမည်
         </button>
         <div id="setup-upload-prog" style="display:none;text-align:center;font-size:.65rem;color:rgba(212,168,67,.7);font-family:Outfit,sans-serif;margin-top:5px">⏳ ပုံ တင်နေသည်...</div>
       </div>
@@ -4557,11 +4557,11 @@ button {
           <div id="pm-avatar-el" style="width:80px;height:80px;border-radius:50%;font-size:2.2rem;display:flex;align-items:center;justify-content:center;border:2px solid rgba(212,168,67,.35);background:rgba(212,168,67,.08);cursor:pointer;overflow:hidden;transition:all .2s">🐯</div>
           <div style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#8A6410,#D4A843);display:flex;align-items:center;justify-content:center;font-size:.75rem;border:2px solid rgba(6,3,0,.9);cursor:pointer">📷</div>
         </div>
-        <input type="file" id="modal-photo-inp" accept="image/*" capture="user" style="display:none" onchange="handleModalPhotoUpload(this)">
+        <input type="file" id="modal-photo-inp" accept="image/*" style="display:none" onchange="handleModalPhotoUpload(this)">
         <div id="modal-upload-prog" style="display:none;font-size:.63rem;color:rgba(212,168,67,.75);font-family:Outfit,sans-serif;margin-bottom:4px">⏳ ပုံ တင်နေသည်...</div>
         <!-- Upload / Emoji toggle buttons -->
         <div style="display:flex;gap:6px">
-          <button onclick="document.getElementById('modal-photo-inp').click()" style="padding:5px 12px;border:1px solid rgba(212,168,67,.3);border-radius:8px;background:rgba(212,168,67,.08);color:rgba(212,168,67,.8);font-size:.68rem;cursor:pointer;font-family:'Outfit',sans-serif">📷 ဖုန်းထဲမှ</button>
+          <button onclick="document.getElementById('modal-photo-inp').click()" style="padding:5px 12px;border:1px solid rgba(212,168,67,.3);border-radius:8px;background:rgba(212,168,67,.08);color:rgba(212,168,67,.8);font-size:.68rem;cursor:pointer;font-family:'Outfit',sans-serif">🖼️ Gallery မှ</button>
           <button onclick="var p=document.getElementById('pm-av-picker');p.style.display=p.style.display==='none'?'block':'none'" style="padding:5px 12px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:rgba(255,255,255,.03);color:var(--text-3);font-size:.68rem;cursor:pointer;font-family:'Outfit',sans-serif">😊 Emoji</button>
         </div>
       </div>
@@ -7029,56 +7029,6 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 })();
 </script>
 
-<!-- PROFILE MODAL -->
-<div id="profile-modal">
-  <div class="pm-box">
-    <div class="pm-header">
-      <div class="pm-title">👤 Profile ကြည့်မည်/ပြင်မည်</div>
-      <button class="pm-close" onclick="closeProfileModal()">✕</button>
-    </div>
-
-    <!-- Avatar -->
-    <div class="pm-av-section">
-      <div class="pm-avatar" id="pm-avatar-el" onclick="togglePmAvPicker()">?</div>
-      <button class="pm-av-btn" onclick="togglePmAvPicker()">🖼️ Avatar ပြောင်းမည်</button>
-    </div>
-
-    <!-- Avatar picker inside modal -->
-    <div class="pm-av-picker" id="pm-av-picker">
-      <div class="av-picker-grid" id="pm-av-grid"></div>
-      <div class="av-url-row" style="margin-top:8px">
-        <input class="linp" id="pm-av-url" type="url" placeholder="Image URL..." style="margin-bottom:0;font-size:.75rem">
-        <button class="fp-add-btn" onclick="usePmAvatarUrl()" style="font-size:.75rem">✓</button>
-      </div>
-    </div>
-
-    <!-- Player ID -->
-    <div class="pm-field">
-      <div class="pm-lbl">🪪 Player ID</div>
-      <div class="pm-pid-row" onclick="copyPlayerId()">
-        <span class="pm-pid-val" id="pm-pid-val">KK------</span>
-        <span class="pm-pid-copy">📋 ကူး</span>
-      </div>
-    </div>
-
-    <!-- Display Name -->
-    <div class="pm-field">
-      <div class="pm-lbl">✏️ ကစားသမား အမည်</div>
-      <input class="linp" id="pm-name-inp" type="text" placeholder="အမည်..." maxlength="20" style="margin-bottom:0">
-    </div>
-
-    <!-- Stats -->
-    <div class="pm-stats-row">
-      <div class="pm-stat"><div class="pm-stat-val" id="pm-stat-games">0</div><div class="pm-stat-lbl">ကစားပွဲ</div></div>
-      <div class="pm-stat"><div class="pm-stat-val" id="pm-stat-wins">0</div><div class="pm-stat-lbl">အနိုင်</div></div>
-      <div class="pm-stat"><div class="pm-stat-val" id="pm-stat-friends">0</div><div class="pm-stat-lbl">မိတ်ဆွေ</div></div>
-    </div>
-
-    <button class="pm-save" onclick="saveProfileChanges()">💾 သိမ်းမည်</button>
-    <button class="pm-logout" onclick="doSignOut()">🚪 Logout ထွက်မည်</button>
-    <div class="auth-status" id="pm-status"></div>
-  </div>
-</div>
 
 <!-- FRIENDS PANEL -->
 <div id="friends-panel" class="friends-panel">
@@ -7247,7 +7197,7 @@ function renderFriendsList(){
     const sc=ol?(ol.status==='playing'?'fi-playing':'fi-online'):'fi-offline';
     const st=ol?(ol.status==='playing'?'\u{1F3AE} \u1000\u1005\u102c\u1038\u1014\u1031\u101e\u100a\u103a':ol.status==='waiting'?'\u23F3 \u1000\u1005\u102c\u1038\u1016\u1031\u102c \u1005\u102c\u103e\u1031\u103a\u1014\u1031\u101e\u100a\u103a':'\u{1F7E2} Online'):'\u26AB Offline';
     const jh=(ol?.status==='waiting'&&ol?.roomId)?'<button class="fi-join" onclick="joinFriendRoom(\''+ol.roomId+'\')">&#x26A1; Join</button>':'';
-    return '<div class="friend-item '+sc+'"><div class="fi-avatar">'+(dn[0]||'?').toUpperCase()+'</div><div class="fi-info"><div class="fi-name">'+_esc(dn)+'</div><div class="fi-uid">'+f.id+'</div><div class="fi-status">'+st+'</div></div><div class="fi-actions">'+jh+'<button class="fi-remove" onclick="confirmRemoveFriend(\''+f.id+'\')">&#x2715;</button></div></div>';
+    return '<div class="friend-item '+sc+'"><div class="fi-avatar">'+(function(){var av=ol&&(ol.avatarUrl||ol.avatar_url);if(av&&(av.startsWith('http')||av.startsWith('data:'))){return '<img src="'+av+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';}return (dn[0]||'?').toUpperCase();})()+'</div><div class="fi-info"><div class="fi-name">'+_esc(dn)+'</div><div class="fi-uid">'+f.id+'</div><div class="fi-status">'+st+'</div></div><div class="fi-actions">'+jh+'<button class="fi-remove" onclick="confirmRemoveFriend(\''+f.id+'\')">&#x2715;</button></div></div>';
   }).join('');
 }
 
@@ -7528,8 +7478,8 @@ function setStatus(id, msg, type) {
 
 function renderAv(el, av) {
   if (!el) return;
-  if (av && av.startsWith('http')) {
-    el.innerHTML = '<img src="' + av + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.parentElement.textContent=\'' + (_userProfile ? _userProfile.display_name[0] : 'K') + '\'">';
+  if (av && (av.startsWith('http') || av.startsWith('data:'))) {
+    el.innerHTML = '<img src="' + av + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.parentElement.innerHTML=\'🐯\'">';
   } else {
     el.textContent = av || '🐯';
     el.style.backgroundImage = '';
@@ -7558,7 +7508,14 @@ async function loadProfileFromDB(uid) {
 }
 
 async function upsertProfile(p) {
-  try { localStorage.setItem('kk_prof_' + p.id, JSON.stringify(p)); } catch(e) {}
+  try { 
+    var toStore = Object.assign({}, p);
+    // Don't store large data: URIs in localStorage (use Supabase only)
+    if (toStore.avatar_url && toStore.avatar_url.startsWith('data:') && toStore.avatar_url.length > 50000) {
+      toStore = Object.assign({}, toStore, { avatar_url: null });
+    }
+    localStorage.setItem('kk_prof_' + p.id, JSON.stringify(toStore)); 
+  } catch(e) {}
   try {
     var r = await SB().from('profiles').upsert(p, { onConflict: 'id' });
     return !r.error;
@@ -7584,8 +7541,8 @@ function applyProfileToLobby(p) {
   // Show profile widget
   var w = document.getElementById('lobby-profile');
   if (w) w.style.display = 'flex';
-  // Fill widget
-  renderAv(document.getElementById('lp-avatar-el'), p.avatar || p.avatar_url);
+  // Fill widget - prefer avatar_url (photo) over emoji avatar
+  renderAv(document.getElementById('lp-avatar-el'), p.avatar_url || p.avatar);
   var ln = document.getElementById('lp-name-el');
   if (ln) ln.textContent = p.display_name || 'ကစားသမား';
   var lp = document.getElementById('lp-pid-el');
