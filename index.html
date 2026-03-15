@@ -5140,12 +5140,77 @@ function _hideOppLeft(){
   const ol=$('opp-left-overlay');if(ol)ol.classList.remove('on');
 }
 
+const KK_SB_AUTH_STORAGE_KEY='sb-oxziinvwdhligrbllqbj-auth-token';
+const KK_SB_AUTH_MIRROR_KEY='kk_sb_auth_mirror_v2';
+function __kkExtractAuthSession(raw){
+  try{
+    const parsed=typeof raw==='string'?JSON.parse(raw):raw;
+    if(!parsed)return null;
+    if(parsed.currentSession&&parsed.currentSession.access_token&&parsed.currentSession.refresh_token)return parsed.currentSession;
+    if(parsed.access_token&&parsed.refresh_token)return parsed;
+    if(Array.isArray(parsed)){
+      for(const item of parsed){
+        if(item&&item.access_token&&item.refresh_token)return item;
+        if(item&&item.currentSession&&item.currentSession.access_token&&item.currentSession.refresh_token)return item.currentSession;
+      }
+    }
+  }catch(e){}
+  return null;
+}
+function __kkPersistAuthBackup(raw){
+  try{
+    const sess=__kkExtractAuthSession(raw);
+    if(!sess||!sess.access_token||!sess.refresh_token)return;
+    localStorage.setItem('kk_auth_backup',JSON.stringify({
+      access_token:sess.access_token,
+      refresh_token:sess.refresh_token,
+      user_id:sess.user&&sess.user.id?sess.user.id:null,
+      savedAt:Date.now()
+    }));
+  }catch(e){console.warn('[AUTH] backup persist failed',e);}
+}
+const __kkAuthStorage={
+  getItem(key){
+    try{
+      const v=window.localStorage.getItem(key);
+      if(v)return v;
+    }catch(e){console.warn('[AUTH] localStorage.getItem failed',key,e);}
+    if(key===KK_SB_AUTH_STORAGE_KEY){
+      try{
+        const mv=window.localStorage.getItem(KK_SB_AUTH_MIRROR_KEY);
+        if(mv)return mv;
+      }catch(e){}
+      try{
+        const sv=window.sessionStorage.getItem(KK_SB_AUTH_MIRROR_KEY);
+        if(sv)return sv;
+      }catch(e){}
+    }
+    return null;
+  },
+  setItem(key,value){
+    try{window.localStorage.setItem(key,value);}catch(e){console.warn('[AUTH] localStorage.setItem failed',key,e);}
+    if(key===KK_SB_AUTH_STORAGE_KEY){
+      try{window.localStorage.setItem(KK_SB_AUTH_MIRROR_KEY,value);}catch(e){}
+      try{window.sessionStorage.setItem(KK_SB_AUTH_MIRROR_KEY,value);}catch(e){}
+      __kkPersistAuthBackup(value);
+    }
+  },
+  removeItem(key){
+    try{window.localStorage.removeItem(key);}catch(e){console.warn('[AUTH] localStorage.removeItem failed',key,e);}
+    if(key===KK_SB_AUTH_STORAGE_KEY){
+      try{window.localStorage.removeItem(KK_SB_AUTH_MIRROR_KEY);}catch(e){}
+      try{window.sessionStorage.removeItem(KK_SB_AUTH_MIRROR_KEY);}catch(e){}
+    }
+  }
+};
+
 function SB(){
   if(!_sb){
     _sb=supabase.createClient(SB_URL,SB_KEY,{
       auth:{
         persistSession:true,
-        storage:window.localStorage,
+        storageKey:KK_SB_AUTH_STORAGE_KEY,
+        storage:__kkAuthStorage,
         autoRefreshToken:true,
         detectSessionInUrl:true,
         flowType:'implicit'
@@ -8895,47 +8960,49 @@ window.handleAvatarUpload = async function(inp) {
     try {
       var reg = SB().auth.onAuthStateChange(function(event, session) {
         safeLog('[AUTH EVENT]', event, session && session.user ? (session.user.email || session.user.id) : 'none');
-        Promise.resolve().then(async function() {
-          if (event === 'SIGNED_IN') {
-            if (session && session.user) await handleSignedIn(session.user, session, 'listener:SIGNED_IN');
-            return;
-          }
-          if (event === 'TOKEN_REFRESHED') {
-            if (session && session.user) {
-              _authUser = session.user;
-              await persistAuthBackupFromSession(session.user, session);
-              if (!_userProfile) await handleSignedIn(session.user, session, 'listener:TOKEN_REFRESHED');
+        setTimeout(async function() {
+          try {
+            if (event === 'SIGNED_IN') {
+              if (session && session.user) await handleSignedIn(session.user, session, 'listener:SIGNED_IN');
+              return;
             }
-            return;
-          }
-          if (event === 'INITIAL_SESSION') {
-            if (session && session.user) {
-              await handleSignedIn(session.user, session, 'listener:INITIAL_SESSION');
-            } else if (!_authInitInFlight) {
+            if (event === 'TOKEN_REFRESHED') {
+              if (session && session.user) {
+                _authUser = session.user;
+                await persistAuthBackupFromSession(session.user, session);
+                if (!_userProfile) await handleSignedIn(session.user, session, 'listener:TOKEN_REFRESHED');
+              }
+              return;
+            }
+            if (event === 'INITIAL_SESSION') {
+              if (session && session.user) {
+                await handleSignedIn(session.user, session, 'listener:INITIAL_SESSION');
+              } else if (!_authInitInFlight) {
+                hideAuthLoading();
+                resetAuthUi();
+                if (!_tryRestoreGuest()) {
+                  try { showScr('auth'); } catch(e) {}
+                }
+              }
+              return;
+            }
+            if (event === 'SIGNED_OUT') {
+              _authUser = null;
+              _userProfile = null;
+              _isGuest = false;
+              _lastHandledAuthKey = '';
+              _lastHandledAuthAt = 0;
+              try { localStorage.removeItem('kk_auth_backup'); } catch(e) {}
               hideAuthLoading();
               resetAuthUi();
-              if (!_tryRestoreGuest()) {
-                try { showScr('auth'); } catch(e) {}
-              }
+              try { showScr('auth'); } catch(e) {}
+              setStatus('auth-status', '');
             }
-            return;
+          } catch(err) {
+            safeError('[AUTH] onAuthStateChange handler failed:', err);
+            showAuthScreenWithStatus('⚠️ Login state update မအောင်မြင်ပါ — ပြန်ဝင်ကြည့်ပါ', 'err');
           }
-          if (event === 'SIGNED_OUT') {
-            _authUser = null;
-            _userProfile = null;
-            _isGuest = false;
-            _lastHandledAuthKey = '';
-            _lastHandledAuthAt = 0;
-            try { localStorage.removeItem('kk_auth_backup'); } catch(e) {}
-            hideAuthLoading();
-            resetAuthUi();
-            try { showScr('auth'); } catch(e) {}
-            setStatus('auth-status', '');
-          }
-        }).catch(function(err) {
-          safeError('[AUTH] onAuthStateChange handler failed:', err);
-          showAuthScreenWithStatus('⚠️ Login state update မအောင်မြင်ပါ — ပြန်ဝင်ကြည့်ပါ', 'err');
-        });
+        }, 0);
       });
       _authListenerSub = reg && reg.data && reg.data.subscription ? reg.data.subscription : reg;
       _authListenerBound = true;
@@ -9442,6 +9509,21 @@ window.handleAvatarUpload = async function(inp) {
     if (content) content.style.transform = '';
   };
 
+  (function injectFriendsPatchStyle(){
+    try {
+      if (document.getElementById('kk-friends-fix-style')) return;
+      var st = document.createElement('style');
+      st.id = 'kk-friends-fix-style';
+      st.textContent = '#friends-panel{z-index:1400 !important;display:flex !important;}'+
+                       '#friends-panel.open,#friends-panel.force-open{pointer-events:all !important;}'+
+                       '#friends-panel.open .fp-backdrop,#friends-panel.force-open .fp-backdrop{opacity:1 !important;}'+
+                       '#friends-panel.open .fp-content,#friends-panel.force-open .fp-content{transform:translateY(0) !important;}';
+      document.head.appendChild(st);
+    } catch(e) {
+      safeWarn('[FRIENDS] Failed to inject panel patch style:', e);
+    }
+  })();
+
   function bindFriendsButtons() {
     try {
       var buttons = document.querySelectorAll('.bfriends');
@@ -9463,8 +9545,19 @@ window.handleAvatarUpload = async function(inp) {
     }
   }
 
+  async function requestPersistentStorage() {
+    try {
+      if (navigator.storage && typeof navigator.storage.persist === 'function') {
+        await navigator.storage.persist();
+      }
+    } catch(e) {
+      safeWarn('[AUTH] navigator.storage.persist failed:', e);
+    }
+  }
+
   function bootUltimatePatch() {
     bindFriendsButtons();
+    requestPersistentStorage();
     if (typeof window.initAuth === 'function') window.initAuth();
   }
 
@@ -9475,6 +9568,14 @@ window.handleAvatarUpload = async function(inp) {
 
   window.addEventListener('focus', function() {
     setTimeout(function(){ resumeAuthFromStorage('focus'); }, 250);
+  });
+
+  window.addEventListener('online', function() {
+    setTimeout(function(){ resumeAuthFromStorage('online'); }, 250);
+  });
+
+  document.addEventListener('resume', function() {
+    setTimeout(function(){ resumeAuthFromStorage('resume'); }, 250);
   });
 
   document.addEventListener('visibilitychange', function() {
@@ -9500,4 +9601,4 @@ window.handleAvatarUpload = async function(inp) {
 </script>
 
 </body>
-</html>
+   </html>
