@@ -5080,7 +5080,20 @@ function _hideOppLeft(){
   const ol=$('opp-left-overlay');if(ol)ol.classList.remove('on');
 }
 
-function SB(){if(!_sb)_sb=supabase.createClient(SB_URL,SB_KEY);return _sb;}
+function SB(){
+  if(!_sb){
+    _sb=supabase.createClient(SB_URL,SB_KEY,{
+      auth:{
+        persistSession:true,
+        storage:window.localStorage,
+        autoRefreshToken:true,
+        detectSessionInUrl:true,
+        flowType:'implicit'
+      }
+    });
+  }
+  return _sb;
+}
 
 /* ══════════════════════════════════════════════
    SESSION PERSISTENCE (localStorage)
@@ -7563,50 +7576,103 @@ async function initAuth() {
   try {
     if (typeof SB !== 'function') { setTimeout(initAuth, 300); return; }
     var sb = SB();
+
+    // ── Handle OAuth redirect callback ──
+    // Google OAuth sends tokens in URL hash after redirect
+    var _hash = window.location.hash || '';
+    var _search = window.location.search || '';
+    if (_hash.includes('access_token') || _hash.includes('refresh_token') || _search.includes('code=')) {
+      try { window.history.replaceState({}, document.title, window.location.pathname); } catch(e) {}
+      await new Promise(function(res) { setTimeout(res, 400); });
+    }
+
+    // ── Show cached profile INSTANTLY while waiting for Supabase ──
+    // If we have a cached session, show lobby immediately (no loading wait)
+    var _cachedUid = null;
+    try {
+      // Check if Supabase has a locally stored session
+      var _lsKey = Object.keys(localStorage).find(function(k){ return k.includes('auth-token') || k.includes('supabase.auth'); });
+      if (_lsKey) {
+        var _lsVal = JSON.parse(localStorage.getItem(_lsKey) || '{}');
+        var _cachedUser = _lsVal.user || (_lsVal.currentSession && _lsVal.currentSession.user);
+        if (_cachedUser && _cachedUser.id) {
+          _cachedUid = _cachedUser.id;
+          var _cachedProfile = await loadProfileFromDB(_cachedUser.id);
+          if (_cachedProfile) {
+            // Show lobby immediately from cache — auth will verify in background
+            _authUser = _cachedUser;
+            _userProfile = _cachedProfile;
+            applyProfileToLobby(_cachedProfile);
+            showScr('lobby');
+            if (typeof startGlobalPresence === 'function') startGlobalPresence();
+          }
+        }
+      }
+    } catch(_ce) { /* cache check non-fatal */ }
+
+    // ── Auth state listener ──
     sb.auth.onAuthStateChange(async function(event, session) {
-      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
         if (session && session.user) {
           _authUser = session.user;
           var profile = await loadProfileFromDB(session.user.id);
           if (profile) {
             _userProfile = profile;
             applyProfileToLobby(profile);
-            showScr('lobby');
+            // Only navigate to lobby if not already there
+            var lobbyEl = document.getElementById('lobby');
+            if (!lobbyEl || !lobbyEl.classList.contains('show')) {
+              showScr('lobby');
+            }
             if (typeof startGlobalPresence === 'function') startGlobalPresence();
             if (typeof _loadPendingFriendRequests === 'function') _loadPendingFriendRequests();
           } else {
-            // Pre-fill name from OAuth metadata
+            // First time — profile setup
             var meta = session.user.user_metadata || {};
             _pendingName = _pendingName || meta.full_name || meta.name || (session.user.email || '').split('@')[0] || '';
             _pendingAv = meta.avatar_url || meta.picture || null;
-            // Show setup screen
             var si = document.getElementById('psetup-name');
             if (si && _pendingName) si.value = _pendingName;
             var ap = document.getElementById('psetup-av-preview');
             if (ap) renderAv(ap, _pendingAv || '🐯');
             showScr('profile-setup');
           }
-        } else {
-          showScr('auth');
+        } else if (event !== 'TOKEN_REFRESHED') {
+          // Only show auth on explicit sign-out/no session, not on token refresh
+          if (!_cachedUid) showScr('auth');
         }
       } else if (event === 'SIGNED_OUT') {
         _authUser = null; _userProfile = null; _isGuest = false;
+        _cachedUid = null;
+        // Clear all cached profile data
+        try {
+          Object.keys(localStorage).filter(function(k){
+            return k.startsWith('kk_prof_') || k.includes('supabase') || k.includes('auth-token');
+          }).forEach(function(k){ localStorage.removeItem(k); });
+        } catch(e) {}
         showScr('auth');
       } else if (event === 'PASSWORD_RECOVERY') {
         showScr('auth');
         switchAuthTab('login');
-        setStatus('auth-status', '✅ Email စစ်ဆေးပါ — Password reset link ပို့ပြီ', 'ok');
+        setStatus('auth-status', '✅ Email စစ်ဆေးပါ — Reset link ပို့ပြီ', 'ok');
       }
     });
-    // Check existing session
+
+    // ── Check & restore existing session ──
     var sess = await sb.auth.getSession();
-    // Hide splash loader
-    var splash = document.getElementById('auth-loading');
-    if (splash) { splash.classList.add('fade'); setTimeout(function(){splash.classList.add('gone');},350); }
     if (!sess.data || !sess.data.session) {
-      showScr('auth');
+      // Retry once for OAuth callback timing
+      await new Promise(function(res) { setTimeout(res, 600); });
+      sess = await sb.auth.getSession();
     }
-    // else onAuthStateChange fires automatically
+    // Hide splash
+    var splash = document.getElementById('auth-loading');
+    if (splash) { splash.classList.add('fade'); setTimeout(function(){ splash.classList.add('gone'); }, 350); }
+    if (!sess.data || !sess.data.session) {
+      if (!_cachedUid) showScr('auth'); // Only show auth if no cached session either
+    }
+    // Session exists — onAuthStateChange(INITIAL_SESSION) will fire automatically
+
   } catch(e) {
     console.warn('initAuth error:', e);
     var splash2 = document.getElementById('auth-loading');
@@ -7635,9 +7701,22 @@ window.switchAuthTab = function(tab) {
 ═══════════════════════════════════════ */
 window.signInWithGoogle = function() {
   setStatus('auth-status', '⏳ Google ဆက်သွယ်နေသည်...', 'info');
+  // Warn if running from file:// (won't work for OAuth)
+  if (window.location.protocol === 'file:') {
+    setStatus('auth-status', '⚠️ Google Login — Browser မှ GitHub URL ဖြင့် ဝင်ပါ (file:// မသုံးပါနှင့်)', 'err');
+    return;
+  }
+  // Use current page URL as redirect (strips hash/query params for clean redirect)
+  // Exact GitHub Pages URL — must match Supabase Redirect URLs setting
+  var redirectUrl = window.location.href.includes('nytherisq-debug.github.io')
+    ? 'https://nytherisq-debug.github.io/MMKyarrKwat/'
+    : (window.location.origin + window.location.pathname);
   SB().auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.href }
+    options: {
+      redirectTo: redirectUrl,
+      skipBrowserRedirect: false
+    }
   }).then(function(r) {
     if (r.error) setStatus('auth-status', '❌ ' + r.error.message, 'err');
   }).catch(function(e) {
@@ -7710,7 +7789,7 @@ window.doForgotPassword = async function() {
   if (!email) { setStatus('auth-status', '⚠️ Email ထည့်ပြီးမှ နှိပ်ပါ', 'err'); return; }
   setStatus('auth-status', '⏳ Reset link ပို့နေသည်...', 'info');
   try {
-    var r = await SB().auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
+    var r = await SB().auth.resetPasswordForEmail(email, { redirectTo: window.location.href.includes('nytherisq-debug.github.io') ? 'https://nytherisq-debug.github.io/MMKyarrKwat/' : window.location.href });
     if (r.error) setStatus('auth-status', '❌ ' + r.error.message, 'err');
     else setStatus('auth-status', '✅ Email စစ်ဆေးပါ — Reset link ပို့ပြီ', 'ok');
   } catch(e) { setStatus('auth-status', '❌ ' + e.message, 'err'); }
@@ -7746,7 +7825,14 @@ window.doSignOut = async function() {
   if (!confirm('Sign Out ထွက်မည်လား?')) return;
   closeProfileModal();
   _isGuest = false; _authUser = null; _userProfile = null;
-  try { await SB().auth.signOut(); } catch(e) {}
+  try { await SB().auth.signOut({ scope: 'local' }); } catch(e) {}
+  // Clear all Supabase + profile localStorage keys
+  try {
+    var toRemove = Object.keys(localStorage).filter(function(k) {
+      return k.startsWith('kk_prof_') || k.includes('supabase') || k.includes('sb-') || k.includes('auth-token');
+    });
+    toRemove.forEach(function(k) { localStorage.removeItem(k); });
+  } catch(e) {}
   showScr('auth');
 };
 
