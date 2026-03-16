@@ -581,7 +581,11 @@ async function _loadAll(){
 
 async function _startPresence(user){
   var sb=_sb();if(!sb)return;
-  if(_pch){try{sb.removeChannel(_pch);}catch(e){}_pch=null;}
+  if(_pch){
+    /* Also remove the friendship watch channel stored on _pch */
+    if(_pch._sgFwch2){try{var _sb2=_sb();if(_sb2)_sb2.removeChannel(_pch._sgFwch2);}catch(e){}}
+    try{sb.removeChannel(_pch);}catch(e){}_pch=null;
+  }
   _pch=sb.channel('kk-presence',{config:{presence:{key:user.id}}});
   _pch
     .on('presence',{event:'sync'},function(){
@@ -601,6 +605,35 @@ async function _startPresence(user){
         try{await _pch.track({user_id:user.id,username:prof?.username||'',ts:Date.now()});}catch(e){}
       }
     });
+
+  /* Realtime friendship changes — refresh modal if open */
+  var _fwch2=_sb().channel('_sg-frw-'+user.id);
+  _fwch2
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'friendships',
+      filter:'addressee_id=eq.'+user.id},
+      async function(){
+        await _loadAll();
+        _renderReqTab();_updateReqBadge();_refreshWidget();
+      })
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'friendships'},
+      async function(payload){
+        var n=payload.new||{};
+        if(n.requester_id===user.id||n.addressee_id===user.id){
+          await _loadAll();
+          _renderFriendTab();_renderReqTab();_updateReqBadge();_refreshWidget();
+        }
+      })
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'friendships'},
+      async function(payload){
+        var o=payload.old||{};
+        if(o.requester_id===user.id||o.addressee_id===user.id){
+          await _loadAll();
+          _renderFriendTab();_renderReqTab();_updateReqBadge();_refreshWidget();
+        }
+      })
+    .subscribe();
+  /* Store so it gets cleaned up with presence */
+  _pch._sgFwch2=_fwch2;
 }
 
 /* ── Friend actions ── */
@@ -618,7 +651,19 @@ window._sgAddFriend=async function(){
     if(tg.error||!tg.data){_msg('_sg-addmsg','er','❌ ID မတွေ့ပါ: '+code);if(btn&&$('_sg-m')){btn.disabled=false;btn.textContent='ခေါ်မည်';}return;}
     var ex=await sb.from('friendships').select('id,status')
       .or('and(requester_id.eq.'+user.id+',addressee_id.eq.'+tg.data.id+'),and(requester_id.eq.'+tg.data.id+',addressee_id.eq.'+user.id+')').maybeSingle();
-    if(ex?.data){_msg('_sg-addmsg','info',ex.data.status==='accepted'?'✓ ရှိပြီးသား သူငယ်ချင်း':'⏳ ခေါ်ချက် ပို့ပြီးပြီ');if(btn&&$('_sg-m')){btn.disabled=false;btn.textContent='ခေါ်မည်';}return;}
+    if(ex?.data){
+      var _exRow=ex.data;
+      if(_exRow.status==='accepted'){
+        _msg('_sg-addmsg','ok','✓ ရှိပြီးသား သူငယ်ချင်း');
+      } else if(_exRow.requester_id===user.id){
+        _msg('_sg-addmsg','info','⏳ ခေါ်ချက် ပို့ပြီးသား — ပြန်ဖြေဆိုမည်ကို စောင့်နေသည်');
+      } else {
+        /* They already sent me a request */
+        _msg('_sg-addmsg','info','💡 သူများကပဲ ခေါ်ထားသည် — ခေါ်ချက် Tab မှ လက်ခံနိုင်သည်');
+        setTimeout(function(){window._sgSetTab('req');},800);
+      }
+      if(btn&&$('_sg-m')){btn.disabled=false;btn.textContent='ခေါ်မည်';}return;
+    }
     await sb.from('friendships').insert({requester_id:user.id,addressee_id:tg.data.id,status:'pending'});
     var inp=$('_sg-addinp');if(inp)inp.value='';
     _msg('_sg-addmsg','ok','✓ '+_x(tg.data.username||code)+' ထံ ခေါ်ချက် ပို့ပြီးပါပြီ');
