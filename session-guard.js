@@ -289,22 +289,141 @@ function _css(){
   box-shadow:inset 0 2px 4px rgba(0,0,50,.3),0 1px 4px rgba(0,0,0,.2);
   transition:all .08s ease;
 }
-._sg-fpcard{
-  display:flex;flex-direction:column;align-items:center;gap:10px;
-  padding:18px 16px 14px;
-  background:rgba(255,255,255,.025);
-  border:1px solid ${GL.border};border-top:1px solid ${GL.hi};
-  border-radius:16px;animation:_sg-up .3s cubic-bezier(.16,1,.3,1)both;
+/* ── DM Chat Modal ── */
+._sg-dm-wrap{
+  display:flex;flex-direction:column;
+  height:420px;max-height:72vh;
 }
-._sg-fp-av{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2.5px solid ${GL.goldBd};box-shadow:0 0 18px rgba(212,168,67,.25),0 4px 16px rgba(0,0,0,.5)}
-._sg-fp-avfb{width:64px;height:64px;border-radius:50%;background:rgba(212,168,67,.07);display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:2.5px solid ${GL.goldBd}}
-._sg-fp-name{font-size:.84rem;font-weight:700;color:#F0E8D8;font-family:\'Outfit\',sans-serif;text-align:center}
-._sg-fp-id{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:${GL.r.full};background:${GL.goldDm};border:1px solid ${GL.goldBd};font-size:.68rem;font-family:\'Outfit\',monospace;font-weight:700;color:${GL.goldHi};letter-spacing:.07em}
-._sg-fp-status{display:flex;align-items:center;gap:5px;font-size:.65rem;font-family:\'Outfit\',sans-serif}
-._sg-fp-btns{display:flex;gap:8px;width:100%;margin-top:4px}
-._sg-fp-btns button{flex:1}
-._sg-fri-cl{cursor:pointer}
-._sg-fri-cl:active{transform:scale(.99)}
+._sg-dm-msgs{
+  flex:1;overflow-y:auto;
+  display:flex;flex-direction:column;
+  gap:6px;padding:12px 4px 8px;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(212,168,67,.12) transparent;
+}
+._sg-dm-msgs::-webkit-scrollbar{width:3px}
+._sg-dm-msgs::-webkit-scrollbar-track{background:transparent}
+._sg-dm-msgs::-webkit-scrollbar-thumb{background:rgba(212,168,67,.15);border-radius:2px}
+._sg-dm-empty{
+  text-align:center;padding:30px 16px;
+  font-size:.70rem;color:rgba(180,148,70,.38);
+  font-family:\'Outfit\',sans-serif;line-height:2;
+}
+._sg-dm-row{display:flex;width:100%;}
+._sg-dm-row.me{justify-content:flex-end;}
+._sg-dm-row.them{justify-content:flex-start;}
+._sg-dm-bub{
+  max-width:78%;padding:8px 12px;
+  font-size:.74rem;color:#F0E8D8;
+  font-family:\'Outfit\',sans-serif;line-height:1.55;
+  word-break:break-word;
+  position:relative;
+  animation:_sg-in .18s ease both;
+}
+._sg-dm-row.me ._sg-dm-bub{
+  background:rgba(212,168,67,.12);
+  border:1px solid rgba(212,168,67,.22);
+  border-top:1px solid rgba(255,255,255,.12);
+  border-radius:14px 4px 14px 14px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 2px 8px rgba(0,0,0,.25);
+  backdrop-filter:blur(8px);
+}
+._sg-dm-row.them ._sg-dm-bub{
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.08);
+  border-top:1px solid rgba(255,255,255,.14);
+  border-radius:4px 14px 14px 14px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 2px 8px rgba(0,0,0,.2);
+  backdrop-filter:blur(8px);
+}
+._sg-dm-inp-row{
+  display:flex;gap:8px;padding:10px 0 2px;
+  border-top:1px solid rgba(212,168,67,.10);
+  margin-top:2px;
+}
+._sg-dm-inp{
+  flex:1;padding:9px 14px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);
+  border-top:1px solid rgba(255,255,255,.16);
+  border-radius:12px;
+  color:#F0E8D8;font-size:.76rem;
+  font-family:\'Outfit\',sans-serif;
+  outline:none;
+  backdrop-filter:blur(8px);
+  transition:border-color .2s,box-shadow .2s;
+}
+._sg-dm-inp:focus{
+  border-color:rgba(212,168,67,.42);
+  box-shadow:0 0 0 3px rgba(212,168,67,.07),inset 0 1px 0 rgba(255,255,255,.06);
+}
+._sg-dm-inp::placeholder{color:rgba(212,168,67,.22);}
+._sg-dm-send{
+  padding:9px 16px;border-radius:12px;cursor:pointer;
+  font-size:.85rem;font-weight:700;flex-shrink:0;
+  background:linear-gradient(135deg,rgba(80,50,5,.9),rgba(200,150,42,.95),rgba(240,195,65,.98));
+  border:1px solid rgba(255,255,255,.20);
+  border-top:1px solid rgba(255,255,255,.32);
+  color:#0A0600;
+  box-shadow:0 2px 10px rgba(200,150,42,.25),inset 0 1px 0 rgba(255,255,255,.22);
+  transition:all .2s cubic-bezier(.16,1,.3,1);
+}
+._sg-dm-send:hover{
+  transform:translateY(-1px);
+  box-shadow:0 5px 18px rgba(200,150,42,.38),inset 0 1px 0 rgba(255,255,255,.28);
+}
+._sg-dm-send:active{transform:scale(.95);transition:all .08s;}
+/* DM notification floating banner */
+._sg-dm-notif{
+  position:fixed;top:64px;left:50%;
+  transform:translateX(-50%) translateY(-20px);
+  z-index:9500;display:flex;align-items:center;gap:10px;
+  background:rgba(8,5,18,.97);
+  border:1px solid rgba(212,168,67,.28);
+  border-top:1px solid rgba(255,255,255,.16);
+  border-radius:14px;padding:10px 16px;
+  box-shadow:0 8px 32px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.07);
+  backdrop-filter:blur(20px);
+  cursor:pointer;max-width:88vw;
+  font-family:\'Outfit\',sans-serif;
+  opacity:0;transition:transform .3s cubic-bezier(.16,1,.3,1),opacity .3s;
+  pointer-events:none;
+}
+._sg-dm-notif.show{
+  transform:translateX(-50%) translateY(0);
+  opacity:1;pointer-events:all;
+}
+/* Chat button in friend row */
+._sg-bchat-wrap{
+  position:relative;flex-shrink:0;display:flex;align-items:center;
+}
+._sg-bchat{
+  padding:6px 10px;border-radius:9px;cursor:pointer;
+  background:rgba(255,255,255,.05);
+  border:1px solid ${GL.border};border-top:1px solid ${GL.hi};
+  color:rgba(180,148,70,.65);font-size:.80rem;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+  backdrop-filter:blur(8px);
+  transition:all .2s cubic-bezier(.16,1,.3,1);
+  position:relative;overflow:hidden;
+}
+._sg-bchat::before{content:'';position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(to bottom,rgba(255,255,255,.06),transparent);pointer-events:none;border-radius:inherit;}
+._sg-bchat:hover{
+  background:rgba(212,168,67,.14);border-color:rgba(212,168,67,.38);
+  color:rgba(212,168,67,.90);transform:translateY(-1px) scale(1.04);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 4px 14px rgba(212,168,67,.18);
+}
+._sg-bchat:active{transform:scale(.93) translateY(1px);box-shadow:inset 0 2px 5px rgba(0,0,0,.28);transition:all .07s ease;}
+._sg-unread{
+  position:absolute;top:-5px;right:-5px;
+  background:#EF4444;color:#fff;
+  border-radius:99px;padding:1px 5px;
+  font-size:.52rem;font-weight:700;
+  font-family:\'Outfit\',sans-serif;
+  border:1.5px solid rgba(6,4,18,.95);
+  animation:_sg-up .2s ease both;
+  pointer-events:none;
+}
 
 /* ── Profile badge ── */
 #_sg-badge{
@@ -445,6 +564,25 @@ function _css(){
   background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.28);
   font-size:.58rem;color:rgba(245,200,80,.85);font-weight:700;
 }
+
+/* ── DM Chat window ── */
+._sg-dm-win{display:flex;flex-direction:column;background:rgba(6,4,16,.97);border:1px solid rgba(255,255,255,.08);border-top:1px solid rgba(255,255,255,.16);border-radius:20px;overflow:hidden;animation:_sg-in .3s cubic-bezier(.16,1,.3,1) both;}
+._sg-dm-hdr{display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(0,0,0,.20);border-bottom:1px solid rgba(212,168,67,.10);}
+._sg-dm-hdr-name{font-size:.78rem;font-weight:700;color:#F0E8D8;font-family:'Outfit',sans-serif;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+._sg-dm-hdr-status{font-size:.60rem;color:rgba(180,148,70,.45);font-family:'Outfit',sans-serif;}
+._sg-dm-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;max-height:300px;min-height:80px;scrollbar-width:thin;scrollbar-color:rgba(212,168,67,.10) transparent;}
+._sg-dm-msgs::-webkit-scrollbar{width:3px}
+._sg-dm-msgs::-webkit-scrollbar-thumb{background:rgba(212,168,67,.15);border-radius:99px}
+._sg-bubble-out{align-self:flex-end;max-width:80%;padding:7px 12px;border-radius:14px 3px 14px 14px;background:rgba(212,168,67,.13);border:1px solid rgba(212,168,67,.22);border-top:1px solid rgba(255,255,255,.12);color:#F0E8D8;font-size:.72rem;line-height:1.5;font-family:'Outfit',sans-serif;word-break:break-word;animation:_sg-up .15s ease both;}
+._sg-bubble-in{align-self:flex-start;max-width:80%;padding:7px 12px;border-radius:3px 14px 14px 14px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);border-top:1px solid rgba(255,255,255,.13);color:rgba(240,232,216,.85);font-size:.72rem;line-height:1.5;font-family:'Outfit',sans-serif;word-break:break-word;animation:_sg-up .15s ease both;}
+._sg-dm-foot{display:flex;gap:8px;padding:10px 12px;border-top:1px solid rgba(212,168,67,.08);background:rgba(0,0,0,.15);}
+._sg-dm-inp{flex:1;padding:8px 13px;background:rgba(255,255,255,.04);border:1px solid rgba(212,168,67,.16);border-top:1px solid rgba(255,255,255,.10);border-radius:12px;color:#F0E8D8;font-family:'Outfit',sans-serif;font-size:.74rem;outline:none;transition:all .2s;}
+._sg-dm-inp:focus{border-color:rgba(212,168,67,.40);background:rgba(255,255,255,.07);box-shadow:0 0 0 3px rgba(212,168,67,.07);}
+._sg-dm-inp::placeholder{color:rgba(212,168,67,.20);}
+._sg-dm-send{padding:8px 14px;border-radius:12px;cursor:pointer;background:linear-gradient(135deg,rgba(80,50,5,.9),rgba(200,150,42,.9),rgba(240,195,65,.95));border:1px solid rgba(212,168,67,.42);border-top:1px solid rgba(255,255,255,.22);color:#0A0600;font-size:.78rem;font-weight:700;box-shadow:0 2px 10px rgba(200,150,42,.18);transition:all .2s cubic-bezier(.16,1,.3,1);}
+._sg-dm-send:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(200,150,42,.32);}
+._sg-dm-send:active{transform:scale(.94);transition:all .07s;}
+._sg-dm-empty{text-align:center;padding:24px 0;font-size:.70rem;color:rgba(180,148,70,.28);font-family:'Outfit',sans-serif;}
 `;
   document.head.appendChild(s);
 }
@@ -647,6 +785,12 @@ async function _loadAll(){
     var raw=rd.data||[];
     _reqs.inc=raw.filter(function(f){return f.addressee_id===user.id&&f.status==='pending';});
     _reqs.out=raw.filter(function(f){return f.requester_id===user.id&&f.status==='pending';});
+    /* Also load guest friend requests directed to this auth user */
+    try{
+      var gr=await sb.from('guest_friend_requests').select('*')
+        .eq('to_uid',user.id).eq('status','pending');
+      _reqs.guestInc=gr.data||[];
+    }catch(e){_reqs.guestInc=[];}
   }catch(e){_flist=[];_reqs={inc:[],out:[]};}
   /* Fetch in-match status for all friends */
   var myId2=user.id;
@@ -661,10 +805,35 @@ async function _loadAll(){
 async function _startPresence(user){
   var sb=_sb();if(!sb)return;
   if(_pch){
-    /* Also remove the friendship watch channel stored on _pch */
     if(_pch._sgFwch2){try{var _sb2=_sb();if(_sb2)_sb2.removeChannel(_pch._sgFwch2);}catch(e){}}
+    if(_pch._sgBcast){try{sb.removeChannel(_pch._sgBcast);}catch(e){}}
     try{sb.removeChannel(_pch);}catch(e){}_pch=null;
   }
+
+  /* ── BROADCAST channel for INSTANT online/offline ── */
+  /* This fires in < 200ms vs presence which can take 5-30s */
+  var _bcast=sb.channel('kk-online-bcast');
+  _bcast
+    .on('broadcast',{event:'online'},function(d){
+      if(d.payload&&d.payload.uid&&d.payload.uid!==user.id){
+        _online.add(d.payload.uid);
+        _refreshWidget();_renderFriendTab();_renderOnlineCount();
+      }
+    })
+    .on('broadcast',{event:'offline'},function(d){
+      if(d.payload&&d.payload.uid){
+        _online.delete(d.payload.uid);
+        _refreshWidget();_renderFriendTab();_renderOnlineCount();
+      }
+    })
+    .subscribe(async function(s){
+      if(s==='SUBSCRIBED'){
+        /* Announce myself as online instantly */
+        try{await _bcast.send({type:'broadcast',event:'online',payload:{uid:user.id,ts:Date.now()}});}catch(e){}
+      }
+    });
+
+  /* ── PRESENCE channel for initial sync & reconnect ── */
   _pch=sb.channel('kk-presence',{config:{presence:{key:user.id}}});
   _pch
     .on('presence',{event:'sync'},function(){
@@ -673,10 +842,12 @@ async function _startPresence(user){
       _refreshWidget();_renderFriendTab();_renderOnlineCount();
     })
     .on('presence',{event:'join'},function(d){
-      if(d.key)_online.add(d.key);_refreshWidget();_renderFriendTab();_renderOnlineCount();
+      if(d.key&&d.key!==user.id)_online.add(d.key);
+      _refreshWidget();_renderFriendTab();_renderOnlineCount();
     })
     .on('presence',{event:'leave'},function(d){
-      if(d.key)_online.delete(d.key);_refreshWidget();_renderFriendTab();_renderOnlineCount();
+      if(d.key)_online.delete(d.key);
+      _refreshWidget();_renderFriendTab();_renderOnlineCount();
     })
     .subscribe(async function(s){
       if(s==='SUBSCRIBED'){
@@ -684,6 +855,40 @@ async function _startPresence(user){
         try{await _pch.track({user_id:user.id,username:prof?.username||'',ts:Date.now()});}catch(e){}
       }
     });
+
+  /* Store broadcast channel on _pch for cleanup */
+  _pch._sgBcast=_bcast
+  /* Start DM listener (idempotent) */
+  _startDMListener(user);;
+
+  /* ── Heartbeat: re-announce online every 12s (keeps presence alive) ── */
+  if(_pch._heartbeat)clearInterval(_pch._heartbeat);
+  _pch._heartbeat=setInterval(function(){
+    if(!_pch||!_pch._sgBcast)return;
+    try{_pch._sgBcast.send({type:'broadcast',event:'online',payload:{uid:user.id,ts:Date.now()}});}catch(e){}
+    /* Also re-track presence to prevent timeout */
+    _getProf().then(function(prof){
+      try{_pch.track({user_id:user.id,username:prof?.username||'',ts:Date.now()});}catch(e){}
+    });
+  },5000);
+
+  /* ── Visibility: re-announce online / announce offline instantly ── */
+  document.addEventListener('visibilitychange',function(){
+    if(!_pch||!_pch._sgBcast)return;
+    if(!document.hidden){
+      /* Back to foreground → announce online */
+      try{_pch._sgBcast.send({type:'broadcast',event:'online',payload:{uid:user.id,ts:Date.now()}});}catch(e){}
+    } else {
+      /* Hidden (background/locked) → announce offline */
+      try{_pch._sgBcast.send({type:'broadcast',event:'offline',payload:{uid:user.id,ts:Date.now()}});}catch(e){}
+    }
+  });
+  /* Page close/unload → announce offline (best-effort) */
+  window.addEventListener('pagehide',function(){
+    if(_pch&&_pch._sgBcast){
+      try{_pch._sgBcast.send({type:'broadcast',event:'offline',payload:{uid:user.id,ts:Date.now()}});}catch(e){}
+    }
+  });
 
   /* Realtime friendship changes — refresh modal if open */
   var _fwch2=_sb().channel('_sg-frw-'+user.id);
@@ -715,6 +920,10 @@ async function _startPresence(user){
   _pch._sgFwch2=_fwch2;
 }
 
+function _stopPresenceHeartbeat(){
+  if(_pch&&_pch._heartbeat){clearInterval(_pch._heartbeat);_pch._heartbeat=null;}
+}
+
 /* ── Friend actions ── */
 window._sgAddFriend=async function(){
   var code=($('_sg-addinp')?.value||'').trim().toUpperCase();
@@ -722,29 +931,53 @@ window._sgAddFriend=async function(){
   var user=await _getUser();
   var isGuest=(!_kp)||(_kp.type!=='auth');
 
-  /* ── GUEST MODE: save to localStorage ── */
+  /* ── GUEST MODE ── */
   if(!user||isGuest){
-    var gid=_kp?.id||'';
-    if(code===gid){_msg('_sg-addmsg','er','⚠️ ကိုယ့် ID မဖြစ်နိုင်');return;}
+    var myGid=_kp?.id||'';
+    if(code===myGid){_msg('_sg-addmsg','er','⚠️ ကိုယ့် ID မဖြစ်နိုင်');return;}
     if(_getGuestFriends().find(function(x){return x.user_code===code;})){
       _msg('_sg-addmsg','info','✓ ရှိပြီးသား သူငယ်ချင်း');return;
     }
     var sb=_sb();
     var btn=$('_sg-addbtn');if(btn){btn.disabled=true;btn.textContent='…';}
     try{
-      var pRes=sb?await sb.from('profiles').select('username,avatar_url,user_code').eq('user_code',code).maybeSingle():null;
-      var pData=pRes?.data;
-      var gProf={user_code:code,username:pData?.username||code,avatar_url:pData?.avatar_url||null};
-      _addGuestFriend(gProf);
+      /* Search auth profiles first, then guest_profiles */
+      var target=null,targetUid=null,isTargetGuest=false;
+      if(sb){
+        var aRes=await sb.from('profiles').select('id,username,avatar_url,user_code').eq('user_code',code).maybeSingle();
+        if(aRes?.data){target=aRes.data;targetUid=aRes.data.id;}
+        if(!target){
+          var gRes=await sb.from('guest_profiles').select('id,display_name').eq('id',code).maybeSingle();
+          if(gRes?.data){
+            target={user_code:gRes.data.id,username:gRes.data.display_name,avatar_url:null};
+            isTargetGuest=true;
+          }
+        }
+      }
+      if(!target){
+        _msg('_sg-addmsg','er','❌ ID မတွေ့ပါ: '+code);
+        if(btn&&$('_sg-m')){btn.disabled=false;btn.textContent='ထည့်မည်';}
+        return;
+      }
+      /* Send request via DB if target is auth, else store locally */
+      if(!isTargetGuest&&targetUid&&sb){
+        var myName=_kp?.name||'Guest';
+        await sb.from('guest_friend_requests').insert({
+          from_guest_id:myGid, from_guest_name:myName,
+          to_player_code:code, to_uid:targetUid, status:'pending'
+        });
+        _msg('_sg-addmsg','ok','✓ '+_x(target.username||code)+' ထံ ခေါ်ချက် ပို့ပြီး');
+      } else {
+        /* Guest-to-guest: just store locally */
+        _addGuestFriend({user_code:code,username:target.username||code,avatar_url:target.avatar_url||null,is_guest:true});
+        _msg('_sg-addmsg','ok','✓ '+_x(target.username||code)+' ထည့်ပြီး');
+        _renderFriendTab();
+      }
       var inp=$('_sg-addinp');if(inp)inp.value='';
-      _msg('_sg-addmsg','ok','✓ '+_x(gProf.username)+' သူငယ်ချင်း ထည့်ပြီးပါပြီ');
-      _renderFriendTab();
       setTimeout(function(){window._sgSetTab('fri');},800);
     }catch(e){
-      _addGuestFriend({user_code:code,username:code,avatar_url:null});
-      var inp=$('_sg-addinp');if(inp)inp.value='';
-      _msg('_sg-addmsg','ok','✓ '+code+' ထည့်ပြီး (offline mode)');
-      _renderFriendTab();
+      console.error('addFriend guest:',e);
+      _msg('_sg-addmsg','er','❌ '+(e.message||'မအောင်မြင်ပါ'));
     }
     if(btn&&$('_sg-m')){btn.disabled=false;btn.textContent='ထည့်မည်';}
     return;
@@ -849,7 +1082,7 @@ function _renderFriendTab(){
         '<div class="_sg-fav-ring">'+avH+'<div class="_sg-sdot off"></div></div>'+
         '<div style="flex:1;min-width:0">'+
           '<div style="font-size:.76rem;font-weight:700;color:#F0E8D8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:\'Outfit\',sans-serif">'+_x(g.username||'\u2013')+'</div>'+
-          '<div style="font-size:.55rem;color:rgba(180,148,70,.40);font-family:\'Outfit\',monospace;margin-top:2px">'+_x(g.user_code||'')+'</div>'+
+          '<div style="display:flex;align-items:center;gap:5px;margin-top:2px">'+'<span style="font-size:.56rem;color:rgba(180,148,70,.55);background:rgba(212,168,67,.08);border:1px solid rgba(212,168,67,.18);border-radius:4px;padding:1px 5px;font-family:\'Outfit\',sans-serif">👤 Guest</span>'+'<span style="font-size:.54rem;color:rgba(180,148,70,.35);font-family:\'Outfit\',monospace">'+_x(g.user_code||'')+'</span>'+'</div>'+
         '</div>'+
         '<button class="_sg-binv" onclick="event.stopPropagation();window._sgInviteFri(\''+_x(g.username||g.user_code||'')+'\')">📨 Invite</button>'+
       '</div>';
@@ -878,18 +1111,46 @@ function _renderFriendTab(){
           (p.user_code?'<span style="font-size:.55rem;color:rgba(180,148,70,.40);font-family:\'Outfit\',monospace;margin-left:4px">'+_x(p.user_code)+'</span>':'')+
         '</div>'+
       '</div>'+
+      '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'+
       '<button class="_sg-binv" onclick="event.stopPropagation();window._sgInviteFri(\''+p.id+'\',\''+_x(p.username||p.user_code||'')+'\')">📨</button>'+
+      '<div class="_sg-bchat-wrap" data-chat-uid="'+p.id+'" onclick="event.stopPropagation();window._sgOpenDM(\''+p.id+'\')">'+
+        '<button class="_sg-bchat">💬</button>'+
+        (_dmUnread[p.id]?'<span class="_sg-unread">'+_dmUnread[p.id]+'</span>':'')+
+      '</div>'+
+    '</div>'+
     '</div>';
   }).join('');
 }
 
 function _renderReqTab(){
   var inc=$('_sg-rinci');var out=$('_sg-routi');if(!inc||!out)return;
-  if(!_reqs.inc.length&&!_reqs.out.length){
+  var guestInc=_reqs.guestInc||[];
+  var totalInc=_reqs.inc.length+guestInc.length;
+  if(!totalInc&&!_reqs.out.length){
     inc.innerHTML='<div class="_sg-empty" style="padding:14px 0">ရောက်လာသော ခေါ်ချက် မရှိပါ</div>';
     out.innerHTML='<div class="_sg-empty" style="padding:14px 0">ပို့ထားသော ခေါ်ချက် မရှိပါ</div>';
     return;
   }
+  /* Guest requests rendered first with Guest badge */
+  var guestRows=guestInc.map(function(g){
+    return '<div class="_sg-fri">'+
+      '<div class="_sg-fav-ring">'+
+        '<div style="width:38px;height:38px;border-radius:50%;background:rgba(212,168,67,.08);display:flex;align-items:center;justify-content:center;font-size:1rem;border:1px solid rgba(212,168,67,.18)">👤</div>'+
+        '<div class="_sg-sdot off"></div>'+
+      '</div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-size:.76rem;font-weight:700;color:#F0E8D8;font-family:\'Outfit\',sans-serif">'+_x(g.from_guest_name||g.from_guest_id)+'</div>'+
+        '<div style="display:flex;align-items:center;gap:5px;margin-top:2px">'+
+          '<span style="font-size:.58rem;color:rgba(180,148,70,.55);background:rgba(212,168,67,.10);border:1px solid rgba(212,168,67,.2);border-radius:4px;padding:1px 5px;font-family:\'Outfit\',sans-serif">👤 Guest</span>'+
+          '<span style="font-size:.56rem;color:rgba(180,148,70,.35);font-family:\'Outfit\',monospace">'+_x(g.from_guest_id)+'</span>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:5px">'+
+        '<button class="_sg-bsm _sg-badd" onclick="window._sgAccGuestFri(\''+g.id+'\'\,\''+_x(g.from_guest_id)+'\'\,\''+_x(g.from_guest_name||g.from_guest_id)+'\')">လက်ခံ</button>'+
+        '<button class="_sg-bsm _sg-brem" onclick="window._sgDecGuestFri(\''+g.id+'\')">ငြင်းမည်</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
   inc.innerHTML=_reqs.inc.map(function(f){
     var p=f.req;if(!p)return'';
     return '<div class="_sg-fri">'+
@@ -903,7 +1164,8 @@ function _renderReqTab(){
         '<button class="_sg-bsm _sg-brem" onclick="window._sgDecFri(\''+f.id+'\')">ငြင်းမည်</button>'+
       '</div>'+
     '</div>';
-  }).join('')||'<div class="_sg-empty" style="padding:14px 0">မရှိပါ</div>';
+  }).join('');
+  inc.innerHTML = (guestRows + inc.innerHTML) || '<div class="_sg-empty" style="padding:14px 0">မရှိပါ</div>';
   out.innerHTML=_reqs.out.map(function(f){
     var p=f.adr;if(!p)return'';
     return '<div class="_sg-fri">'+
@@ -936,40 +1198,184 @@ function _renderOnlineCount(){
 
 function _updateReqBadge(){
   var el=$('_sg-tab-req-badge');
-  if(el){var n=_reqs.inc.length;el.style.display=n?'':'none';el.textContent=n;}
+  if(el){
+    var n=(_reqs.inc?_reqs.inc.length:0)+(_reqs.guestInc?_reqs.guestInc.length:0);
+    el.style.display=n?'':'none';el.textContent=n;
+  }
 }
+
+/* ══════════════════════════════════════════════════════════
+   FRIEND CHAT (DM) — real-time, both sides
+══════════════════════════════════════════════════════════ */
+
+var _dmCh=null;           /* DM realtime channel */
+var _dmUnread={};         /* {uid: count} unread messages */
+var _dmCurrentUid=null;   /* uid of currently open chat */
+
+/* Start DM listener after auth user confirmed */
+async function _startDMListener(user){
+  if(_dmCh)return;
+  var sb=_sb();if(!sb||!user)return;
+  _dmCh=sb.channel('kk-dm-'+user.id);
+  _dmCh
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'friend_messages',
+        filter:'to_uid=eq.'+user.id},
+      function(payload){
+        var msg=payload.new;if(!msg)return;
+        if(_dmCurrentUid===msg.from_uid){
+          /* Chat is open → append message live */
+          _appendDMMsg(msg.message,false,msg.from_uid);
+        } else {
+          /* Chat is closed → show notification + badge */
+          _dmUnread[msg.from_uid]=(_dmUnread[msg.from_uid]||0)+1;
+          _showDMNotif(msg.from_name||'Friend',msg.message,msg.from_uid);
+          /* Update unread badge on friend row button */
+          _updateDMBadge(msg.from_uid);
+        }
+      })
+    .subscribe();
+}
+
+/* Show floating DM notification (works lobby + in-game) */
+function _showDMNotif(senderName,text,fromUid){
+  var old=document.getElementById('_sg-dm-notif');if(old)old.remove();
+  var el=document.createElement('div');el.id='_sg-dm-notif';
+  el.style.cssText='position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:9500;'+
+    'background:rgba(8,5,18,.97);border:1px solid rgba(212,168,67,.25);'+
+    'border-top:1px solid rgba(255,255,255,.14);border-radius:14px;'+
+    'padding:10px 16px;display:flex;align-items:center;gap:10px;'+
+    'box-shadow:0 8px 32px rgba(0,0,0,.6);cursor:pointer;max-width:88vw;'+
+    'font-family:\'Outfit\',sans-serif;backdrop-filter:blur(20px);'+
+    'animation:_sg-in .3s ease both';
+  el.innerHTML=
+    '<span style="font-size:1.1rem">💬</span>'+
+    '<div style="flex:1;min-width:0">'+
+      '<div style="font-size:.72rem;font-weight:700;color:#F0E8D8;white-space:nowrap">'+_x(senderName)+'</div>'+
+      '<div style="font-size:.64rem;color:rgba(180,148,70,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px">'+_x(text)+'</div>'+
+    '</div>'+
+    '<div style="font-size:.58rem;color:rgba(212,168,67,.45);flex-shrink:0;padding:3px 7px;background:rgba(212,168,67,.08);border-radius:6px;border:1px solid rgba(212,168,67,.15)">Reply ▸</div>';
+  el.onclick=function(){el.remove();window._sgOpenDM(fromUid);};
+  document.body.appendChild(el);
+  setTimeout(function(){if(el&&el.parentNode){el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(function(){if(el.parentNode)el.remove();},300);}},5000);
+}
+
+/* Update unread badge on friend row chat button */
+function _updateDMBadge(uid){
+  var btn=document.querySelector('[data-chat-uid="'+uid+'"] ._sg-unread');
+  if(!btn){
+    var wrap=document.querySelector('[data-chat-uid="'+uid+'"]');
+    if(wrap){
+      var badge=document.createElement('span');badge.className='_sg-unread';
+      badge.textContent=_dmUnread[uid];wrap.appendChild(badge);
+    }
+    return;
+  }
+  btn.textContent=_dmUnread[uid];
+}
+
+/* Open DM thread */
+window._sgOpenDM=async function(friendUid){
+  var user=await _getUser();if(!user)return;
+  var sb=_sb();if(!sb)return;
+  _currentDMFriend=friendUid;
+  delete _dmUnread[friendUid];
+  _updateDMBadge(friendUid);
+
+  var myId=user.id;
+  var friendName='Friend',friendAv=null,isOnline=false;
+  var fr=_flist.find(function(f){return f.requester_id===friendUid||f.addressee_id===friendUid;});
+  if(fr){var fp=fr.requester_id===myId?fr.adr:fr.req;if(fp){friendName=fp.username||'Friend';friendAv=fp.avatar_url;}}
+  isOnline=_online.has(friendUid);
+
+  var msgs=[];
+  try{
+    var res=await sb.from('friend_messages')
+      .select('id,from_uid,message,created_at')
+      .or('and(from_uid.eq.'+myId+',to_uid.eq.'+friendUid+'),and(from_uid.eq.'+friendUid+',to_uid.eq.'+myId+')')
+      .order('created_at',{ascending:true}).limit(80);
+    if(res.data)msgs=res.data;
+  }catch(e){console.warn('DM load:',e);}
+
+  var avH=friendAv
+    ?'<img src="'+_x(friendAv)+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(212,168,67,.3)" loading="lazy">'
+    :'<div style="width:28px;height:28px;border-radius:50%;background:rgba(212,168,67,.08);display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(212,168,67,.2);font-size:.85rem">👤</div>';
+
+  var renderMsgs=function(list){
+    if(!list.length)return'<div class="_sg-dm-empty">💬 Message မရှိသေးပါ<br><small>ပထမဆုံး Message ပေးပို့ပါ</small></div>';
+    return list.map(function(m){
+      return'<div class="'+(m.from_uid===myId?'_sg-bubble-out':'_sg-bubble-in')+'">'+_x(m.message)+'</div>';
+    }).join('');
+  };
+
+  _open(
+    '<div class="_sg-dm-win">'+
+      '<div class="_sg-dm-hdr">'+
+        '<div class="_sg-hclose" onclick="window._sgClose()" style="order:-1;margin-right:0">✕</div>'+
+        avH+
+        '<div style="flex:1;min-width:0">'+
+          '<div class="_sg-dm-hdr-name">'+_x(friendName)+'</div>'+
+          '<div class="_sg-dm-hdr-status"><span class="'+(isOnline?'_sg-don':'_sg-doff')+'" style="vertical-align:middle;margin-right:3px"></span>'+(isOnline?'Online':'Offline')+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="_sg-dm-msgs" id="_sg-dm-msgs">'+renderMsgs(msgs)+'</div>'+
+      '<div class="_sg-dm-foot">'+
+        '<input class="_sg-dm-inp" id="_sg-dm-inp" placeholder="Message ရေးပါ…" maxlength="200"'+
+          ' onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();window._sgSendDM(\''+friendUid+'\');}">'+
+        '<button class="_sg-dm-send" onclick="window._sgSendDM(\''+friendUid+'\')">▶</button>'+
+      '</div>'+
+    '</div>',
+    function(){
+      var msgs=$('_sg-dm-msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;
+      var inp=$('_sg-dm-inp');if(inp)inp.focus();
+    }
+  );
+};
+
+/* Append a message to the currently open chat */
+function _appendDMMsg(text,isMe,fromUid){
+  var box=document.getElementById('_sg-dm-msgs');if(!box)return;
+  /* Remove empty placeholder */
+  var empty=box.querySelector('._sg-dm-empty');if(empty)empty.remove();
+  var d=document.createElement('div');
+  d.className='_sg-dm-row '+(isMe?'me':'them');
+  d.innerHTML='<div class="_sg-dm-bub">'+_x(text)+'</div>';
+  box.appendChild(d);
+  box.scrollTop=box.scrollHeight;
+}
+
+/* Send a message */
+window._sgSendDM=async function(toUid){
+  var inp=$('_sg-dm-inp');if(!inp)return;
+  var msg=inp.value.trim();if(!msg)return;
+  var user=await _getUser();if(!user)return;
+  var sb=_sb();if(!sb)return;
+  inp.value='';
+  var fromName=_kp&&_kp.name?_kp.name:'Friend';
+  /* Optimistic UI */
+  var box=$('_sg-dm-msgs');
+  if(box){
+    var d=document.createElement('div');
+    d.className='_sg-bubble-out';d.textContent=msg;
+    box.appendChild(d);box.scrollTop=box.scrollHeight;
+  }
+  try{
+    await sb.from('friend_messages').insert({
+      from_uid:user.id,to_uid:toUid,message:msg,from_name:fromName
+    });
+  }catch(e){
+    console.error('DM send:',e);
+    /* Restore input on failure */
+    if(inp)inp.value=msg;
+    if(box&&box.lastChild&&box.lastChild.className==='_sg-bubble-out')box.removeChild(box.lastChild);
+  }
+};
 
 /* ══════════════════════════════════════════════════════════
    ROOM INVITE SYSTEM — send, receive, accept, decline
 ══════════════════════════════════════════════════════════ */
 
 /* Send room invite to a friend (both index.html lobby and auth.html) */
-window._sgInviteFri=async function(toUid,toName){
-  if(!toUid){_sgToast('❌ Friend UID မရပါ');return;}
-  var user=await _getUser();if(!user)return;
-  var sb=_sb();if(!sb){_sgToast('❌ DB မချိတ်ဆက်ရသေးပါ');return;}
-  /* Get active room code: in-game → window.roomId, lobby → inp-code not used for hosting */
-  var rc=(window.roomId&&window.roomId!=='AI')?window.roomId:'';
-  if(!rc){
-    _sgToast('💡 Room ဖန်တီးပြီးမှ Invite ပို့နိုင်မည်');
-    return;
-  }
-  try{
-    /* Remove old pending invite from same sender to same recipient */
-    await sb.from('room_invites').delete()
-      .eq('from_uid',user.id).eq('to_uid',toUid).eq('status','pending');
-    var fromName=_kp&&_kp.name?_kp.name:(user.email||'').split('@')[0]||'Player';
-    await sb.from('room_invites').insert({
-      from_uid:user.id, to_uid:toUid,
-      from_name:fromName, room_code:rc, status:'pending'
-    });
-    _sgToast('📨 '+_x(toName||'Friend')+' ထံ Room Invite ပို့ပြီး ✓');
-    window._sgClose&&window._sgClose();
-  }catch(e){
-    console.error('Invite send:',e);
-    _sgToast('❌ Invite မပို့ရပါ: '+(e.message||''));
-  }
-};
+;
 
 /* Start listening for incoming invites (runs after user verified) */
 async function _startInviteListener(user){
@@ -1045,12 +1451,6 @@ function _sgToast(msg){
    DIRECT MESSAGES — send, receive, in-game notification
 ══════════════════════════════════════════════════════════ */
 
-/* Start listening for incoming DMs */
-/* Floating DM notification (works in lobby AND in-game) */
-/* Open DM thread with a friend */
-;
-
-;
 
 /* ══════════════════════════════════════════════════════════
    IN-MATCH STATUS — track & display
@@ -1100,7 +1500,7 @@ async function _fetchFriendStatuses(uids){
 
 /* Helper: close existing modal */
 window._sgClose=function(){
-  _currentDMFriend=null;
+  _dmCurrentUid=null;
   _close();
 };
 
@@ -1221,6 +1621,48 @@ window._sgRemoveGuestFri=function(code){
   /* update widget sub text */
   var sub=$('_sg-fw-sub');if(sub)sub.textContent=list.length?'သူငယ်ချင်း '+list.length+' ဦး (Guest)':'သူငယ်ချင်း ထည့်မည်';
 };
+
+/* ══ GUEST FRIEND REQUEST ACCEPT/DECLINE (by auth user) ══ */
+window._sgAccGuestFri=async function(reqId,guestId,guestName){
+  var sb=_sb();if(!sb)return;
+  try{
+    await sb.from('guest_friend_requests').update({status:'accepted'}).eq('id',reqId);
+    /* Store as local guest friend on auth side */
+    var gProf={user_code:guestId,username:guestName||guestId,avatar_url:null,is_guest:true};
+    _addGuestFriend(gProf);
+    await _loadAll();_renderFriendTab();_renderReqTab();_updateReqBadge();_refreshWidget();
+  }catch(e){console.error('accGuestFri:',e);}
+};
+window._sgDecGuestFri=async function(reqId){
+  var sb=_sb();if(!sb)return;
+  try{
+    await sb.from('guest_friend_requests').update({status:'declined'}).eq('id',reqId);
+    if(_reqs.guestInc)_reqs.guestInc=_reqs.guestInc.filter(function(g){return g.id!==reqId;});
+    _renderReqTab();_updateReqBadge();
+  }catch(e){console.error('decGuestFri:',e);}
+};
+
+/* ══ LISTEN for incoming guest requests (auth users) ══ */
+async function _startGuestReqListener(user){
+  if(!user)return;
+  var sb=_sb();if(!sb)return;
+  var ch=sb.channel('kk-greq-'+user.id);
+  ch.on('postgres_changes',{event:'INSERT',schema:'public',table:'guest_friend_requests',
+      filter:'to_uid=eq.'+user.id},
+    async function(payload){
+      if(payload.new?.status==='pending'){
+        if(!_reqs.guestInc)_reqs.guestInc=[];
+        _reqs.guestInc.push(payload.new);
+        _renderReqTab();_updateReqBadge();
+        /* Toast notification */
+        var nm=payload.new.from_guest_name||payload.new.from_guest_id||'Guest';
+        var t=document.getElementById('toast');
+        if(t){t.textContent='👤 '+_x(nm)+' (Guest) က သူငယ်ချင်း ခေါ်သည်';t.classList.add('on');
+          setTimeout(function(){t.classList.remove('on');},3000);}
+      }
+    })
+  .subscribe();
+}
 
 window._sgSetTab=function(t){
   ['fri','add','req'].forEach(function(x){
