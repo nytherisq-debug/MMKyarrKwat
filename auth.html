@@ -516,21 +516,31 @@ function SB(){
    — same concept as PUBG/ML guest ID
 ═══════════════════════════════════════════════ */
 function getGuestID(){
-  let id = localStorage.getItem(CFG.LS_GID);
-  if(!id){
-    /* generate once, never overwrite */
-    id = 'G' + _randChars(7);
-    localStorage.setItem(CFG.LS_GID, id);
+  /* Wrapped in try/catch — private browsing mode throws SecurityError */
+  try{
+    let id = localStorage.getItem(CFG.LS_GID);
+    if(!id){
+      id = 'G' + _randChars(7);
+      try{ localStorage.setItem(CFG.LS_GID, id); }catch(e){}
+    }
+    return id || ('G' + _randChars(7));
+  }catch(e){
+    /* Private browsing: generate session-scoped guest ID */
+    if(!window._sgGuestIdFallback) window._sgGuestIdFallback = 'G' + _randChars(7);
+    return window._sgGuestIdFallback;
   }
-  return id;
 }
 function getGuestName(){
-  let nm = localStorage.getItem(CFG.LS_GNM);
-  if(!nm){
-    nm = 'Guest·' + getGuestID().slice(1,5);
-    localStorage.setItem(CFG.LS_GNM, nm);
+  try{
+    let nm = localStorage.getItem(CFG.LS_GNM);
+    if(!nm){
+      nm = 'Guest·' + getGuestID().slice(1,5);
+      try{ localStorage.setItem(CFG.LS_GNM, nm); }catch(e){}
+    }
+    return nm;
+  }catch(e){
+    return 'Guest·' + getGuestID().slice(1,5);
   }
-  return nm;
 }
 function _randChars(n){
   const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -689,7 +699,7 @@ async function doGuest(){
   /* ensure permanent IDs exist */
   getGuestID();
   getGuestName();
-  localStorage.setItem(CFG.LS_MODE, 'guest');
+  try{ localStorage.setItem(CFG.LS_MODE, 'guest'); }catch(e){}
   _showProfileGuest();
 }
 
@@ -865,93 +875,136 @@ async function doLogout(){
 async function _loadProfile(){
   if(!_user) return;
   /*
-   * PERMANENT ID LOGIC (MLBB / PUBG style)
-   * ─────────────────────────────────────────────────────────────
-   * Gmail users  → ID lives in Supabase DB, tied to auth UID.
-   *                Any phone, any device = same ID always.
-   *                localStorage is ONLY used as a read-only display
-   *                cache when DB is unreachable. It NEVER writes a
-   *                new code to DB unless the row truly does not exist.
+   * PERMANENT ID LOGIC — MLBB / PUBG style
+   * ─────────────────────────────────────────────────────────────────
+   * Gmail  → ID lives in Supabase DB (auth UID bound).
+   *          Same ID on every device, every session.
+   *          localStorage = READ-ONLY offline cache.
+   *          NEVER generates a new random code if one already exists.
    *
-   * Guest users  → ID lives in localStorage on this device only.
-   *                (handled separately by getGuestID)
-   * ─────────────────────────────────────────────────────────────
+   * Guest  → ID lives in localStorage of THIS device only.
+   *          (handled by getGuestID — separate key kk_gid)
+   * ─────────────────────────────────────────────────────────────────
+   * Failure hierarchy (so ID is NEVER shown as ------):
+   *   1. DB row with user_code          ← authoritative, always wins
+   *   2. DB write succeeded, re-fetched ← write path
+   *   3. localStorage cached code       ← offline / same device fallback
+   *   4. Deterministic code from UID    ← last resort, consistent across all devices
+   *      (same UID → same code always, even without DB)
+   * ─────────────────────────────────────────────────────────────────
    */
-  const _lsCk = 'kk_uc_' + _user.id; /* display cache key — read-only fallback */
+  const _lsCk = 'kk_uc_' + _user.id;
+
+  /* ── Deterministic fallback: same UID → same code, always ──
+     Uses a simple hash of the user UUID so it's device-independent.
+     This is the LAST resort — we still try to persist to DB first. */
+  function _deterministicCode(uid){
+    let h = 0x811c9dc5;
+    for(let i = 0; i < uid.length; i++){
+      h ^= uid.charCodeAt(i);
+      h = (h * 0x01000193) >>> 0;
+    }
+    const C = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = 'KK', n = h;
+    for(let i = 0; i < 6; i++){ code += C[n % C.length]; n = Math.floor(n / C.length) || (h >>> i); }
+    return code;
+  }
+
+  /* Stable code: DB-stored > localStorage-cached > deterministic */
+  function _bestCode(dbCode){
+    return dbCode
+        || localStorage.getItem(_lsCk)
+        || _deterministicCode(_user.id);
+  }
 
   try{
     const m  = _user.user_metadata || {};
     const nm = m.full_name || m.name || m.username || _user.email?.split('@')[0] || 'Player';
 
-    /* ── Step 1: Fetch existing profile row ── */
+    /* ── STEP 1: Fetch existing profile row ── */
     let {data, error} = await SB().from('profiles').select('*').eq('id', _user.id).single();
 
-    if(error && error.code !== 'PGRST116'){
-      /* PGRST116 = row not found; anything else = real DB error */
-      throw error;
-    }
+    if(error && error.code !== 'PGRST116') throw error;  /* PGRST116 = not found */
 
+    /* ── STEP 2: New user — INSERT once ── */
     if(!data){
-      /* ── Step 2: Truly new user — INSERT once ──
-         Never upsert here: upsert could overwrite an existing row's
-         user_code if a race condition or error caused the select to
-         return nothing. Use insert + ignore-conflict instead. */
-      const newCode = 'KK' + _randChars(6);
+      /* Use deterministic code as the seed so even if DB write fails,
+         subsequent fetches on any device will generate the same code */
+      const newCode = _deterministicCode(_user.id);
       const {data:ins, error:ie} = await SB().from('profiles')
         .insert({
-          id: _user.id,
-          username: nm,
-          avatar_url: m.avatar_url || null,
-          user_code: newCode,
-          updated_at: new Date().toISOString()
+          id         : _user.id,
+          username   : nm,
+          avatar_url : m.avatar_url || null,
+          user_code  : newCode,
+          updated_at : new Date().toISOString()
         })
         .select()
         .single();
 
-      if(ie && ie.code !== '23505'){
-        /* 23505 = unique_violation (row inserted by another tab/device
-           between our select and insert — race condition). Re-fetch. */
-        throw ie;
-      }
+      if(ie && ie.code !== '23505') throw ie;  /* 23505 = race — row already exists */
 
-      if(ins){
+      if(ins && ins.user_code){
+        /* INSERT + SELECT succeeded */
         data = ins;
-        localStorage.setItem(_lsCk, ins.user_code); /* cache for offline display */
       } else {
-        /* Race: row already exists — re-fetch the real row */
-        const {data:refetch} = await SB().from('profiles').select('*').eq('id', _user.id).single();
-        data = refetch;
+        /* Either: race condition (another tab inserted first)
+           OR: RLS blocks SELECT after INSERT → re-fetch */
+        const {data:rf, error:rfe} = await SB().from('profiles').select('*').eq('id', _user.id).single();
+        if(rfe && rfe.code !== 'PGRST116') throw rfe;
+        data = rf || { id:_user.id, username:nm, avatar_url:m.avatar_url||null, user_code:newCode };
       }
     }
 
-    /* ── Step 3: Existing user missing user_code (legacy row) ──
-       Only UPDATE user_code; do NOT touch anything else. */
+    /* ── STEP 3: Existing user with null user_code (legacy row) ── */
     if(data && !data.user_code){
-      const legacyCode = 'KK' + _randChars(6);
+      /* Use deterministic code — so both tabs get the same value simultaneously */
+      const fixCode = _deterministicCode(_user.id);
+
+      /* Attempt conditional write — only touches user_code=null rows */
       await SB().from('profiles')
-        .update({user_code:legacyCode, updated_at:new Date().toISOString()})
+        .update({ user_code: fixCode, updated_at: new Date().toISOString() })
         .eq('id', _user.id)
-        .is('user_code', null); /* conditional: only if still null in DB */
-      /* Re-fetch to get whatever the DB actually stored */
+        .is('user_code', null);
+
+      /* Re-fetch to get what DB actually stored */
       const {data:r3} = await SB().from('profiles').select('*').eq('id', _user.id).single();
-      data = r3 || {...data, user_code:legacyCode};
+
+      /* FIX (was: data = r3 || fallback — r3 could be truthy but r3.user_code still null) */
+      if(r3?.user_code){
+        data = r3;
+      } else if(r3){
+        /* DB returned row but user_code still null (RLS blocked write or race)
+           → inject the deterministic code locally so the user sees their ID */
+        data = { ...r3, user_code: fixCode };
+      } else {
+        data = { ...data, user_code: fixCode };
+      }
+
       if(data.user_code) localStorage.setItem(_lsCk, data.user_code);
     }
 
-    /* ── Step 4: Cache to localStorage for offline display only ── */
+    /* ── STEP 4: Final null-user_code guarantee ──
+       If after all steps user_code is STILL null (complete DB failure),
+       use the hierarchy: localStorage cache → deterministic UID hash.
+       This means ID is NEVER shown as ------ on ANY device. */
+    if(data && !data.user_code){
+      data = { ...data, user_code: _bestCode(null) };
+    }
+
+    /* ── STEP 5: Cache authoritative code to localStorage ── */
     if(data?.user_code) localStorage.setItem(_lsCk, data.user_code);
 
-    /* ── Step 5: Guest → Auth upgrade: carry over custom guest name ── */
+    /* ── STEP 6: Guest → Auth upgrade — carry over custom guest name ── */
     const _upgradeNm = localStorage.getItem('kk_upgrade_nm');
     if(_upgradeNm){
       const defaultNm = m.full_name || m.name || m.username || _user.email?.split('@')[0];
-      /* Only apply if the profile still has the default Google name (first sign-in) */
       if(data && data.username === defaultNm){
         try{
           await SB().from('profiles')
-            .update({username:_upgradeNm, updated_at:new Date().toISOString()})
+            .update({ username: _upgradeNm, updated_at: new Date().toISOString() })
             .eq('id', _user.id);
-          data = {...data, username:_upgradeNm};
+          data = { ...data, username: _upgradeNm };
         }catch(e){ console.warn('upgrade name:', e); }
       }
       localStorage.removeItem('kk_upgrade_nm');
@@ -960,17 +1013,17 @@ async function _loadProfile(){
     _prof = data;
 
   }catch(e){
-    console.warn('_loadProfile:', e);
+    console.warn('_loadProfile error:', e);
     if(!_prof){
-      /* Offline / DB-down fallback — show cached code from localStorage.
-         This is read-only: we do NOT write this code back to DB. */
-      const cachedCode = localStorage.getItem(_lsCk) || null;
+      /* Offline / DB-down fallback.
+         _bestCode() returns: localStorage cache → deterministic UID hash.
+         Same UID always produces the same deterministic code → permanent across devices. */
       const m = _user.user_metadata || {};
       _prof = {
-        id        : _user.id,
-        username  : m.full_name || m.name || _user.email?.split('@')[0] || 'Player',
-        avatar_url: m.avatar_url || null,
-        user_code : cachedCode,  /* null if truly first-time + DB down */
+        id         : _user.id,
+        username   : m.full_name || m.name || _user.email?.split('@')[0] || 'Player',
+        avatar_url : m.avatar_url || null,
+        user_code  : _bestCode(null),  /* NEVER null — deterministic from UID */
       };
     }
   }
@@ -1180,11 +1233,11 @@ async function addFriend(){
   btn.disabled = true; btn.textContent = '…';
   try{
     const {data:tg, error:te} = await SB().from('profiles').select('id,username').eq('user_code', code).single();
-    if(te || !tg){ toast('❌ ID မတွေ့ပါ: ' + code); return; }
+    if(te || !tg){ toast('❌ ID မတွေ့ပါ: ' + code); btn.disabled=false; btn.textContent='ထည့်မည်'; return; }
     const {data:ex} = await SB().from('friendships').select('id,status')
       .or(`and(requester_id.eq.${_user.id},addressee_id.eq.${tg.id}),and(requester_id.eq.${tg.id},addressee_id.eq.${_user.id})`)
       .maybeSingle();
-    if(ex){ toast(ex.status==='accepted' ? 'ရှိပြီးသား သူငယ်ချင်း' : 'ခေါ်ချက် ပို့ပြီးပါပြီ'); return; }
+    if(ex){ toast(ex.status==='accepted' ? 'ရှိပြီးသား သူငယ်ချင်း' : 'ခေါ်ချက် ပို့ပြီးပါပြီ'); btn.disabled=false; btn.textContent='ထည့်မည်'; return; }
     const {error} = await SB().from('friendships').insert({requester_id:_user.id, addressee_id:tg.id, status:'pending'});
     if(error) throw error;
     document.getElementById('add-inp').value = '';
@@ -1200,7 +1253,7 @@ async function accFri(fid){
     await Promise.all([loadFriends(), loadReqs()]);
   }catch(e){ toast('❌ ' + e.message); }
 }
-async function decFri(fid){ await delFri(fid, 'ငြင်းပယ်ပြီးပါပြီ'); }
+async function decFri(fid){ try{ await delFri(fid, 'ငြင်းပယ်ပြီးပါပြီ'); }catch(e){ toast('❌ ' + e.message); } }
 async function delFri(fid, msg='ပြီးပါပြီ'){
   try{
     await SB().from('friendships').delete().eq('id', fid);
