@@ -28,10 +28,8 @@ var _x=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;
 var _sb=function(){return(typeof window.SB==='function')?window.SB():null;};
 var _kp=null;
 try{var _r=sessionStorage.getItem('kk_player');if(_r)_kp=JSON.parse(_r);}catch(e){}
-/* ── New feature state ── */
-var _dmUnread={};       /* {uid: count} unread DMs */
-var _inviteCh=null;     /* invite realtime channel */
-var _dmCh=null;         /* DM realtime channel */
+/* ── New feature state ── */       /* {uid: count} unread DMs */
+var _inviteCh=null;     /* invite realtime channel */         /* DM realtime channel */
 var _statusCh=null;     /* in-match status channel */
 var _currentDMFriend=null; /* uid of open DM thread */
 var _friendStatus={};   /* {uid: 'lobby'|'in_match'} */
@@ -846,7 +844,6 @@ function _renderFriendTab(){
         '</div>'+
       '</div>'+
       '<button class="_sg-binv" onclick="event.stopPropagation();window._sgInviteFri(\''+p.id+'\',\''+_x(p.username||p.user_code||'')+'\')">📨</button>'+
-      '<button class="_sg-binv" style="background:rgba(99,179,237,.09);border-color:rgba(99,179,237,.3)" onclick="event.stopPropagation();window._sgOpenDM(\''+p.id+'\')">💬'+(_dmUnread[p.id]?'<span style="background:#EF4444;color:#fff;border-radius:99px;padding:0 4px;font-size:.5rem;margin-left:2px">'+_dmUnread[p.id]+'</span>':'')+'</button>'+
     '</div>';
   }).join('');
 }
@@ -1014,136 +1011,11 @@ function _sgToast(msg){
 ══════════════════════════════════════════════════════════ */
 
 /* Start listening for incoming DMs */
-async function _startDMListener(user){
-  if(_dmCh)return;
-  var sb=_sb();if(!sb||!user)return;
-  _dmCh=sb.channel('kk-dm-'+user.id);
-  _dmCh
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'friend_messages',
-        filter:'to_uid=eq.'+user.id},
-      async function(payload){
-        var msg=payload.new;if(!msg)return;
-        /* Track unread */
-        _dmUnread[msg.from_uid]=(_dmUnread[msg.from_uid]||0)+1;
-        /* Fetch sender name if not cached */
-        var senderName=msg.from_name||'Friend';
-        /* If DM thread is already open for this sender → append to thread */
-        if(_currentDMFriend===msg.from_uid){
-          var box=$('_sg-dm-msgs');
-          if(box){
-            var d=document.createElement('div');
-            d.style.cssText='display:flex;justify-content:flex-start;margin-bottom:6px';
-            d.innerHTML='<div style="max-width:75%;padding:7px 11px;border-radius:3px 12px 12px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);font-size:.72rem;color:#F0E8D8;font-family:\'Outfit\',sans-serif;line-height:1.4;word-break:break-word">'+_x(msg.message)+'</div>';
-            box.appendChild(d);box.scrollTop=box.scrollHeight;
-          }
-        } else {
-          _showDMNotif(senderName,msg.message,msg.from_uid);
-        }
-      })
-    .subscribe();
-}
-
 /* Floating DM notification (works in lobby AND in-game) */
-function _showDMNotif(senderName,text,fromUid){
-  var old=$('_sg-dm-notif');if(old)old.remove();
-  var el=document.createElement('div');el.id='_sg-dm-notif';
-  el.style.cssText='position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:9500;background:rgba(8,5,18,.97);border:1px solid rgba(212,168,67,.32);border-top:1px solid rgba(255,255,255,.16);border-radius:14px;padding:10px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.6);cursor:pointer;max-width:88vw;font-family:\'Outfit\',sans-serif;animation:_sg-in .3s ease both';
-  el.innerHTML=
-    '<span style="font-size:1.2rem">💬</span>'+
-    '<div style="flex:1;min-width:0">'+
-      '<div style="font-size:.72rem;font-weight:700;color:#F0E8D8">'+_x(senderName)+'</div>'+
-      '<div style="font-size:.64rem;color:rgba(180,148,70,.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px">'+_x(text)+'</div>'+
-    '</div>'+
-    '<div style="font-size:.58rem;color:rgba(212,168,67,.45);flex-shrink:0">Reply ▸</div>';
-  el.onclick=function(){el.remove();window._sgOpenDM(fromUid);};
-  document.body.appendChild(el);
-  setTimeout(function(){if(el&&el.parentNode)el.remove();},5000);
-}
-
 /* Open DM thread with a friend */
-window._sgOpenDM=async function(friendUid){
-  var user=await _getUser();if(!user)return;
-  var sb=_sb();if(!sb)return;
-  _currentDMFriend=friendUid;
-  /* Clear unread badge */
-  delete _dmUnread[friendUid];
-  /* Get friend name */
-  var myId=user.id;
-  var friendName='Friend';
-  if(_flist&&_flist.length){
-    var fr=_flist.find(function(f){return f.requester_id===friendUid||f.addressee_id===friendUid;});
-    if(fr){var fp=fr.requester_id===myId?fr.adr:fr.req;if(fp)friendName=fp.username||'Friend';}
-  }
-  /* Load messages */
-  var msgs=[];
-  try{
-    var res=await sb.from('friend_messages')
-      .select('id,from_uid,to_uid,message,created_at')
-      .or('and(from_uid.eq.'+myId+',to_uid.eq.'+friendUid+'),and(from_uid.eq.'+friendUid+',to_uid.eq.'+myId+')')
-      .order('created_at',{ascending:true}).limit(60);
-    if(res.data)msgs=res.data;
-  }catch(e){console.warn('DM load:',e);}
-  var renderMsgs=function(list){
-    if(!list.length)return'<div style="text-align:center;padding:20px;font-size:.70rem;color:rgba(180,148,70,.38)">Message မရှိသေးပါ</div>';
-    return list.map(function(m){
-      var isMe=m.from_uid===myId;
-      return'<div style="display:flex;justify-content:'+(isMe?'flex-end':'flex-start')+';margin-bottom:5px">'+
-        '<div style="max-width:78%;padding:7px 11px;border-radius:'+(isMe?'12px 3px 12px 12px':'3px 12px 12px 12px')+';'+
-        'background:'+(isMe?'rgba(212,168,67,.12)':'rgba(255,255,255,.06)')+';'+
-        'border:1px solid '+(isMe?'rgba(212,168,67,.22)':'rgba(255,255,255,.08)')+';'+
-        'font-size:.72rem;color:#F0E8D8;font-family:\'Outfit\',sans-serif;line-height:1.5;word-break:break-word">'+
-        _x(m.message)+'</div></div>';
-    }).join('');
-  };
-  _open(
-    '<div class="_sg-hdr">'+
-      '<div class="_sg-htitle">💬 '+_x(friendName)+'</div>'+
-      '<div class="_sg-hclose" onclick="window._sgClose()">✕</div>'+
-    '</div>'+
-    '<div class="_sg-body">'+
-      '<div id="_sg-dm-msgs" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;padding:4px 0;scrollbar-width:thin;scrollbar-color:rgba(212,168,67,.1) transparent">'+
-        renderMsgs(msgs)+
-      '</div>'+
-      '<div style="display:flex;gap:8px;padding-top:10px;margin-top:8px;border-top:1px solid rgba(212,168,67,.1)">'+
-        '<input class="_sg-inp" id="_sg-dm-inp" placeholder="Message ရေးပါ..." maxlength="200"'+
-          ' style="flex:1" onkeydown="if(event.key===\'Enter\')window._sgSendDM(\''+friendUid+'\')">'+
-        '<button class="_sg-bgold" style="padding:8px 14px;flex-shrink:0" onclick="window._sgSendDM(\''+friendUid+'\')">▶</button>'+
-      '</div>'+
-    '</div>',
-    function(){
-      var box=$('_sg-dm-msgs');
-      if(box)box.scrollTop=box.scrollHeight;
-      var inp=$('_sg-dm-inp');if(inp)inp.focus();
-    }
-  );
-};
+;
 
-window._sgSendDM=async function(toUid){
-  var inp=$('_sg-dm-inp');if(!inp)return;
-  var msg=inp.value.trim();if(!msg)return;
-  var user=await _getUser();if(!user)return;
-  var sb=_sb();if(!sb)return;
-  inp.value='';
-  /* Get sender's name */
-  var fromName=_kp&&_kp.name?_kp.name:'Friend';
-  try{
-    await sb.from('friend_messages').insert({
-      from_uid:user.id, to_uid:toUid,
-      message:msg, from_name:fromName
-    });
-    /* Add to thread UI immediately */
-    var box=$('_sg-dm-msgs');
-    if(box){
-      var d=document.createElement('div');
-      d.style.cssText='display:flex;justify-content:flex-end;margin-bottom:5px';
-      d.innerHTML='<div style="max-width:78%;padding:7px 11px;border-radius:12px 3px 12px 12px;background:rgba(212,168,67,.12);border:1px solid rgba(212,168,67,.22);font-size:.72rem;color:#F0E8D8;font-family:\'Outfit\',sans-serif;line-height:1.5;word-break:break-word">'+_x(msg)+'</div>';
-      box.appendChild(d);box.scrollTop=box.scrollHeight;
-    }
-  }catch(e){
-    console.error('DM send:',e);_sgToast('❌ Message မပို့ရပါ');
-    if(inp)inp.value=msg; /* restore */
-  }
-};
+;
 
 /* ══════════════════════════════════════════════════════════
    IN-MATCH STATUS — track & display
@@ -1227,8 +1099,6 @@ window._sgOpenFriProfile=function(fid){
         <button class="_sg-bgold" onclick="window._sgInviteFri('`+p.id+`','`+_x(p.username||p.user_code||'')+`')">
           📨 Invite
         </button>
-        <button class="_sg-bgold" style="background:rgba(99,179,237,.15);border-color:rgba(99,179,237,.4);color:#bee3f8" onclick="window._sgOpenDM('`+p.id+`')">
-          💬 Message
         </button>
       </div>
       <button class="_sg-brem _sg-bsm" style="width:100%;border-radius:10px;padding:9px;margin-top:4px"
@@ -1433,7 +1303,7 @@ async function _openFriends(){
       await _loadAll();
       if(!_pch){await _startPresence(user);}
       _startInviteListener(user);
-      _startDMListener(user);
+      
       _renderFriendTab();_renderReqTab();_updateReqBadge();
     });
 }
@@ -1535,7 +1405,7 @@ function _buildLobby(p){
       });
       /* Start invite and DM listeners */
       _startInviteListener(u);
-      _startDMListener(u);
+      
     });
   } else {
     var sub=$('_sg-fw-sub');
@@ -1652,7 +1522,7 @@ function _doInit(){
   /* Start invite listener in index.html if user is authenticated */
   if(_kp&&_kp.type==='auth'){
     _getUser().then(function(u){
-      if(u){_startInviteListener(u);_startDMListener(u);}
+      if(u){_startInviteListener(u);}
     });
   }
 }
