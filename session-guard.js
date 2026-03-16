@@ -28,6 +28,13 @@ var _x=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;
 var _sb=function(){return(typeof window.SB==='function')?window.SB():null;};
 var _kp=null;
 try{var _r=sessionStorage.getItem('kk_player');if(_r)_kp=JSON.parse(_r);}catch(e){}
+/* ── New feature state ── */
+var _dmUnread={};       /* {uid: count} unread DMs */
+var _inviteCh=null;     /* invite realtime channel */
+var _dmCh=null;         /* DM realtime channel */
+var _statusCh=null;     /* in-match status channel */
+var _currentDMFriend=null; /* uid of open DM thread */
+var _friendStatus={};   /* {uid: 'lobby'|'in_match'} */
 var _authUser=null,_authProf=null;
 
 async function _getUser(){
@@ -608,6 +615,14 @@ async function _loadAll(){
     _reqs.inc=raw.filter(function(f){return f.addressee_id===user.id&&f.status==='pending';});
     _reqs.out=raw.filter(function(f){return f.requester_id===user.id&&f.status==='pending';});
   }catch(e){_flist=[];_reqs={inc:[],out:[]};}
+  /* Fetch in-match status for all friends */
+  var myId2=user.id;
+  var friendUids=_flist.map(function(f){return f.requester_id===myId2?f.addressee_id:f.requester_id;}).filter(Boolean);
+  if(friendUids.length){
+    await _fetchFriendStatuses(friendUids);
+    /* Subscribe to status changes (idempotent) */
+    _startStatusListener(user,friendUids);
+  }
 }
 
 async function _startPresence(user){
@@ -826,11 +841,12 @@ function _renderFriendTab(){
         '<div style="font-size:.76rem;font-weight:700;color:#F0E8D8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:\'Outfit\',sans-serif">'+_x(p.username||'–')+'</div>'+
         '<div style="display:flex;align-items:center;gap:5px;margin-top:2px">'+
           '<span class="'+(on?'_sg-don':'_sg-doff')+'"></span>'+
-          '<span style="font-size:.60rem;color:'+(on?GL.ok:'rgba(255,255,255,.28)')+';font-family:\'Outfit\',sans-serif">'+(on?'Online':'Offline')+'</span>'+
+          '<span style="font-size:.60rem;color:'+(on?(_friendStatus[p.id]==='in_match'?'rgba(245,158,11,.85)':GL.ok):'rgba(255,255,255,.28)')+';font-family:\'Outfit\',sans-serif">'+(on?(_friendStatus[p.id]==='in_match'?'🎮 In Match':'Online'):'Offline')+'</span>'+
           (p.user_code?'<span style="font-size:.55rem;color:rgba(180,148,70,.40);font-family:\'Outfit\',monospace;margin-left:4px">'+_x(p.user_code)+'</span>':'')+
         '</div>'+
       '</div>'+
-      '<button class="_sg-binv" onclick="event.stopPropagation();window._sgInviteFri(\''+_x(p.username||p.user_code||'')+'\')">📨 Invite</button>'+
+      '<button class="_sg-binv" onclick="event.stopPropagation();window._sgInviteFri(\''+p.id+'\',\''+_x(p.username||p.user_code||'')+'\')">📨</button>'+
+      '<button class="_sg-binv" style="background:rgba(99,179,237,.09);border-color:rgba(99,179,237,.3)" onclick="event.stopPropagation();window._sgOpenDM(\''+p.id+'\')">💬'+(_dmUnread[p.id]?'<span style="background:#EF4444;color:#fff;border-radius:99px;padding:0 4px;font-size:.5rem;margin-left:2px">'+_dmUnread[p.id]+'</span>':'')+'</button>'+
     '</div>';
   }).join('');
 }
@@ -891,6 +907,296 @@ function _updateReqBadge(){
   if(el){var n=_reqs.inc.length;el.style.display=n?'':'none';el.textContent=n;}
 }
 
+/* ══════════════════════════════════════════════════════════
+   ROOM INVITE SYSTEM — send, receive, accept, decline
+══════════════════════════════════════════════════════════ */
+
+/* Send room invite to a friend (both index.html lobby and auth.html) */
+window._sgInviteFri=async function(toUid,toName){
+  if(!toUid){_sgToast('❌ Friend UID မရပါ');return;}
+  var user=await _getUser();if(!user)return;
+  var sb=_sb();if(!sb){_sgToast('❌ DB မချိတ်ဆက်ရသေးပါ');return;}
+  /* Get active room code: in-game → window.roomId, lobby → inp-code not used for hosting */
+  var rc=(window.roomId&&window.roomId!=='AI')?window.roomId:'';
+  if(!rc){
+    _sgToast('💡 Room ဖန်တီးပြီးမှ Invite ပို့နိုင်မည်');
+    return;
+  }
+  try{
+    /* Remove old pending invite from same sender to same recipient */
+    await sb.from('room_invites').delete()
+      .eq('from_uid',user.id).eq('to_uid',toUid).eq('status','pending');
+    var fromName=_kp&&_kp.name?_kp.name:(user.email||'').split('@')[0]||'Player';
+    await sb.from('room_invites').insert({
+      from_uid:user.id, to_uid:toUid,
+      from_name:fromName, room_code:rc, status:'pending'
+    });
+    _sgToast('📨 '+_x(toName||'Friend')+' ထံ Room Invite ပို့ပြီး ✓');
+    window._sgClose&&window._sgClose();
+  }catch(e){
+    console.error('Invite send:',e);
+    _sgToast('❌ Invite မပို့ရပါ: '+(e.message||''));
+  }
+};
+
+/* Start listening for incoming invites (runs after user verified) */
+async function _startInviteListener(user){
+  if(_inviteCh)return;
+  var sb=_sb();if(!sb||!user)return;
+  _inviteCh=sb.channel('kk-inv-'+user.id);
+  _inviteCh
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'room_invites',
+        filter:'to_uid=eq.'+user.id},
+      function(payload){
+        if(payload.new&&payload.new.status==='pending')_showInviteOverlay(payload.new);
+      })
+    .subscribe();
+}
+
+/* Show accept/decline overlay for incoming invite */
+function _showInviteOverlay(inv){
+  /* Don't interrupt if already in an active game */
+  if(window.roomId&&window.roomId!=='AI'){return;}
+  _ensureBd();
+  var bd=$('_sg-bd');
+  bd.innerHTML=
+    '<div class="_sg-mw"><div class="_sg-mc" id="_sg-m">'+
+      '<div class="_sg-hdr"><div class="_sg-htitle">📨 Room Invite</div></div>'+
+      '<div class="_sg-body">'+
+        '<div style="text-align:center;padding:18px 0 10px">'+
+          '<div style="font-size:2rem;margin-bottom:10px">🎮</div>'+
+          '<div style="font-size:.88rem;font-weight:700;color:#F0E8D8;margin-bottom:5px">'+_x(inv.from_name||'Friend')+'</div>'+
+          '<div style="font-size:.70rem;color:rgba(180,148,70,.55);margin-bottom:14px">Room ကို ဖိတ်ခေါ်သည်</div>'+
+          '<div style="font-family:\'Orbitron\',monospace;font-size:1.6rem;color:#F0CC72;letter-spacing:10px;font-weight:700;padding:10px;background:rgba(212,168,67,.08);border-radius:10px;border:1px solid rgba(212,168,67,.2)">'+_x(inv.room_code)+'</div>'+
+        '</div>'+
+        '<div class="_sg-fp-btns">'+
+          '<button class="_sg-bgold" onclick="window._sgAcceptInvite(\''+inv.id+'\',\''+_x(inv.room_code)+'\')">✅ လက်ခံ</button>'+
+          '<button class="_sg-brem _sg-bsm" style="flex:0.5;border-radius:10px;padding:10px" onclick="window._sgDeclineInvite(\''+inv.id+'\')">❌ ငြင်းမည်</button>'+
+        '</div>'+
+      '</div>'+
+    '</div></div>';
+  bd.classList.add('on');
+}
+
+window._sgAcceptInvite=async function(inviteId,roomCode){
+  var sb=_sb();
+  if(sb){try{await sb.from('room_invites').update({status:'accepted'}).eq('id',inviteId);}catch(e){}}
+  window._sgClose&&window._sgClose();
+  /* Pre-fill room code and join */
+  var inp=$('inp-code');
+  if(inp){inp.value=roomCode;}
+  if(typeof window.joinRoom==='function'){
+    /* Small delay to let modal close */
+    setTimeout(function(){window.joinRoom();},100);
+  }
+};
+
+window._sgDeclineInvite=async function(inviteId){
+  var sb=_sb();
+  if(sb){try{await sb.from('room_invites').update({status:'declined'}).eq('id',inviteId);}catch(e){}}
+  window._sgClose&&window._sgClose();
+};
+
+/* Toast helper (works in index.html via game toast OR standalone) */
+function _sgToast(msg){
+  var t=document.getElementById('toast');
+  if(t){t.textContent=msg;t.classList.add('on');clearTimeout(window._sgToastTimer);window._sgToastTimer=setTimeout(function(){t.classList.remove('on');},2800);return;}
+  /* Fallback: floating div */
+  var el=document.getElementById('_sg-toast');
+  if(!el){el=document.createElement('div');el.id='_sg-toast';el.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(6,4,18,.97);border:1px solid rgba(212,168,67,.28);border-radius:12px;padding:10px 20px;font-size:.8rem;color:#F0E8D8;z-index:9999;pointer-events:none;font-family:\'Outfit\',sans-serif;transition:opacity .3s;white-space:nowrap';document.body.appendChild(el);}
+  el.textContent=msg;el.style.opacity='1';
+  clearTimeout(window._sgToastTimer);
+  window._sgToastTimer=setTimeout(function(){el.style.opacity='0';},2800);
+}
+
+/* ══════════════════════════════════════════════════════════
+   DIRECT MESSAGES — send, receive, in-game notification
+══════════════════════════════════════════════════════════ */
+
+/* Start listening for incoming DMs */
+async function _startDMListener(user){
+  if(_dmCh)return;
+  var sb=_sb();if(!sb||!user)return;
+  _dmCh=sb.channel('kk-dm-'+user.id);
+  _dmCh
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'friend_messages',
+        filter:'to_uid=eq.'+user.id},
+      async function(payload){
+        var msg=payload.new;if(!msg)return;
+        /* Track unread */
+        _dmUnread[msg.from_uid]=(_dmUnread[msg.from_uid]||0)+1;
+        /* Fetch sender name if not cached */
+        var senderName=msg.from_name||'Friend';
+        /* If DM thread is already open for this sender → append to thread */
+        if(_currentDMFriend===msg.from_uid){
+          var box=$('_sg-dm-msgs');
+          if(box){
+            var d=document.createElement('div');
+            d.style.cssText='display:flex;justify-content:flex-start;margin-bottom:6px';
+            d.innerHTML='<div style="max-width:75%;padding:7px 11px;border-radius:3px 12px 12px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);font-size:.72rem;color:#F0E8D8;font-family:\'Outfit\',sans-serif;line-height:1.4;word-break:break-word">'+_x(msg.message)+'</div>';
+            box.appendChild(d);box.scrollTop=box.scrollHeight;
+          }
+        } else {
+          _showDMNotif(senderName,msg.message,msg.from_uid);
+        }
+      })
+    .subscribe();
+}
+
+/* Floating DM notification (works in lobby AND in-game) */
+function _showDMNotif(senderName,text,fromUid){
+  var old=$('_sg-dm-notif');if(old)old.remove();
+  var el=document.createElement('div');el.id='_sg-dm-notif';
+  el.style.cssText='position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:9500;background:rgba(8,5,18,.97);border:1px solid rgba(212,168,67,.32);border-top:1px solid rgba(255,255,255,.16);border-radius:14px;padding:10px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.6);cursor:pointer;max-width:88vw;font-family:\'Outfit\',sans-serif;animation:_sg-in .3s ease both';
+  el.innerHTML=
+    '<span style="font-size:1.2rem">💬</span>'+
+    '<div style="flex:1;min-width:0">'+
+      '<div style="font-size:.72rem;font-weight:700;color:#F0E8D8">'+_x(senderName)+'</div>'+
+      '<div style="font-size:.64rem;color:rgba(180,148,70,.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px">'+_x(text)+'</div>'+
+    '</div>'+
+    '<div style="font-size:.58rem;color:rgba(212,168,67,.45);flex-shrink:0">Reply ▸</div>';
+  el.onclick=function(){el.remove();window._sgOpenDM(fromUid);};
+  document.body.appendChild(el);
+  setTimeout(function(){if(el&&el.parentNode)el.remove();},5000);
+}
+
+/* Open DM thread with a friend */
+window._sgOpenDM=async function(friendUid){
+  var user=await _getUser();if(!user)return;
+  var sb=_sb();if(!sb)return;
+  _currentDMFriend=friendUid;
+  /* Clear unread badge */
+  delete _dmUnread[friendUid];
+  /* Get friend name */
+  var myId=user.id;
+  var friendName='Friend';
+  if(_flist&&_flist.length){
+    var fr=_flist.find(function(f){return f.requester_id===friendUid||f.addressee_id===friendUid;});
+    if(fr){var fp=fr.requester_id===myId?fr.adr:fr.req;if(fp)friendName=fp.username||'Friend';}
+  }
+  /* Load messages */
+  var msgs=[];
+  try{
+    var res=await sb.from('friend_messages')
+      .select('id,from_uid,to_uid,message,created_at')
+      .or('and(from_uid.eq.'+myId+',to_uid.eq.'+friendUid+'),and(from_uid.eq.'+friendUid+',to_uid.eq.'+myId+')')
+      .order('created_at',{ascending:true}).limit(60);
+    if(res.data)msgs=res.data;
+  }catch(e){console.warn('DM load:',e);}
+  var renderMsgs=function(list){
+    if(!list.length)return'<div style="text-align:center;padding:20px;font-size:.70rem;color:rgba(180,148,70,.38)">Message မရှိသေးပါ</div>';
+    return list.map(function(m){
+      var isMe=m.from_uid===myId;
+      return'<div style="display:flex;justify-content:'+(isMe?'flex-end':'flex-start')+';margin-bottom:5px">'+
+        '<div style="max-width:78%;padding:7px 11px;border-radius:'+(isMe?'12px 3px 12px 12px':'3px 12px 12px 12px')+';'+
+        'background:'+(isMe?'rgba(212,168,67,.12)':'rgba(255,255,255,.06)')+';'+
+        'border:1px solid '+(isMe?'rgba(212,168,67,.22)':'rgba(255,255,255,.08)')+';'+
+        'font-size:.72rem;color:#F0E8D8;font-family:\'Outfit\',sans-serif;line-height:1.5;word-break:break-word">'+
+        _x(m.message)+'</div></div>';
+    }).join('');
+  };
+  _open(
+    '<div class="_sg-hdr">'+
+      '<div class="_sg-htitle">💬 '+_x(friendName)+'</div>'+
+      '<div class="_sg-hclose" onclick="window._sgClose()">✕</div>'+
+    '</div>'+
+    '<div class="_sg-body">'+
+      '<div id="_sg-dm-msgs" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;padding:4px 0;scrollbar-width:thin;scrollbar-color:rgba(212,168,67,.1) transparent">'+
+        renderMsgs(msgs)+
+      '</div>'+
+      '<div style="display:flex;gap:8px;padding-top:10px;margin-top:8px;border-top:1px solid rgba(212,168,67,.1)">'+
+        '<input class="_sg-inp" id="_sg-dm-inp" placeholder="Message ရေးပါ..." maxlength="200"'+
+          ' style="flex:1" onkeydown="if(event.key===\'Enter\')window._sgSendDM(\''+friendUid+'\')">'+
+        '<button class="_sg-bgold" style="padding:8px 14px;flex-shrink:0" onclick="window._sgSendDM(\''+friendUid+'\')">▶</button>'+
+      '</div>'+
+    '</div>',
+    function(){
+      var box=$('_sg-dm-msgs');
+      if(box)box.scrollTop=box.scrollHeight;
+      var inp=$('_sg-dm-inp');if(inp)inp.focus();
+    }
+  );
+};
+
+window._sgSendDM=async function(toUid){
+  var inp=$('_sg-dm-inp');if(!inp)return;
+  var msg=inp.value.trim();if(!msg)return;
+  var user=await _getUser();if(!user)return;
+  var sb=_sb();if(!sb)return;
+  inp.value='';
+  /* Get sender's name */
+  var fromName=_kp&&_kp.name?_kp.name:'Friend';
+  try{
+    await sb.from('friend_messages').insert({
+      from_uid:user.id, to_uid:toUid,
+      message:msg, from_name:fromName
+    });
+    /* Add to thread UI immediately */
+    var box=$('_sg-dm-msgs');
+    if(box){
+      var d=document.createElement('div');
+      d.style.cssText='display:flex;justify-content:flex-end;margin-bottom:5px';
+      d.innerHTML='<div style="max-width:78%;padding:7px 11px;border-radius:12px 3px 12px 12px;background:rgba(212,168,67,.12);border:1px solid rgba(212,168,67,.22);font-size:.72rem;color:#F0E8D8;font-family:\'Outfit\',sans-serif;line-height:1.5;word-break:break-word">'+_x(msg)+'</div>';
+      box.appendChild(d);box.scrollTop=box.scrollHeight;
+    }
+  }catch(e){
+    console.error('DM send:',e);_sgToast('❌ Message မပို့ရပါ');
+    if(inp)inp.value=msg; /* restore */
+  }
+};
+
+/* ══════════════════════════════════════════════════════════
+   IN-MATCH STATUS — track & display
+══════════════════════════════════════════════════════════ */
+
+/* Update own in-match status (called by showGame/doLeave wrappers) */
+async function _updateMyStatus(status,roomCode){
+  var user=await _getUser();if(!user)return;
+  var sb=_sb();if(!sb)return;
+  try{
+    await sb.from('user_status').upsert({
+      uid:user.id, status:status,
+      room_code:roomCode||null,
+      updated_at:new Date().toISOString()
+    },{onConflict:'uid'});
+  }catch(e){console.warn('status update:',e);}
+}
+
+/* Subscribe to friends' status changes */
+async function _startStatusListener(user,friendUids){
+  if(!friendUids||!friendUids.length)return;
+  var sb=_sb();if(!sb||!user)return;
+  /* Subscribe to user_status changes for each friend */
+  var ch=sb.channel('kk-fstatus-'+user.id);
+  ch.on('postgres_changes',{event:'*',schema:'public',table:'user_status'},
+    function(payload){
+      var row=payload.new||payload.old;
+      if(!row)return;
+      if(friendUids.indexOf(row.uid)>=0){
+        _friendStatus[row.uid]=row.status||'lobby';
+        /* Re-render friend list to update badge */
+        _renderFriendTab();
+      }
+    })
+    .subscribe();
+}
+
+/* Fetch current statuses for all friends */
+async function _fetchFriendStatuses(uids){
+  if(!uids||!uids.length)return;
+  var sb=_sb();if(!sb)return;
+  try{
+    var res=await sb.from('user_status').select('uid,status').in('uid',uids);
+    if(res.data)res.data.forEach(function(r){_friendStatus[r.uid]=r.status||'lobby';});
+  }catch(e){}
+}
+
+/* Helper: close existing modal */
+window._sgClose=function(){
+  _currentDMFriend=null;
+  _close();
+};
+
 /* ══ FRIEND PROFILE MODAL ══ */
 window._sgOpenFriProfile=function(fid){
   /* Find friend in _flist */
@@ -914,18 +1220,21 @@ window._sgOpenFriProfile=function(fid){
         `+(p.user_code?'<div class="_sg-fp-id">🪪 '+_x(p.user_code)+'</div>':'')+`
         <div class="_sg-fp-status">
           <span class="`+(on?'_sg-don':'_sg-doff')+`"></span>
-          <span style="color:`+(on?GL.ok:'rgba(255,255,255,.35)')+`">`+(on?'Online · ကစားနေသည်':'Offline')+`</span>
+          <span style="color:`+(on?(_friendStatus[p.id]==='in_match'?'rgba(245,158,11,.9)':GL.ok):'rgba(255,255,255,.35)')+`">`+(on?(_friendStatus[p.id]==='in_match'?'🎮 In Match':'Online'):'Offline')+`</span>
         </div>
       </div>
       <div class="_sg-fp-btns">
-        <button class="_sg-bgold" onclick="window._sgInviteFri('`+_x(p.username||p.user_code||'')+`');window._sgClose()">
-          📨 Room Invite
+        <button class="_sg-bgold" onclick="window._sgInviteFri('`+p.id+`','`+_x(p.username||p.user_code||'')+`')">
+          📨 Invite
         </button>
-        <button class="_sg-brem _sg-bsm" style="flex:0.5;border-radius:10px;padding:10px"
-          onclick="if(confirm('`+_x(p.username||'–')+` ကို သူငယ်ချင်းစာရင်းမှ ဖယ်ရှားမည်လား?'))window._sgDelFri('`+fid+`')">
-          ဖယ်ရှား
+        <button class="_sg-bgold" style="background:rgba(99,179,237,.15);border-color:rgba(99,179,237,.4);color:#bee3f8" onclick="window._sgOpenDM('`+p.id+`')">
+          💬 Message
         </button>
       </div>
+      <button class="_sg-brem _sg-bsm" style="width:100%;border-radius:10px;padding:9px;margin-top:4px"
+        onclick="if(confirm('`+_x(p.username||'–')+` ကို ဖယ်ရှားမည်လား?'))window._sgDelFri('`+fid+`')">
+        ဖယ်ရှား
+      </button>
       <button class="_sg-bglass" onclick="window._sgClose()">← ပြန်မည်</button>
     </div>`);
 };
@@ -1123,6 +1432,8 @@ async function _openFriends(){
     async function(){
       await _loadAll();
       if(!_pch){await _startPresence(user);}
+      _startInviteListener(user);
+      _startDMListener(user);
       _renderFriendTab();_renderReqTab();_updateReqBadge();
     });
 }
@@ -1222,6 +1533,9 @@ function _buildLobby(p){
         if(!_pch)_startPresence(u).then(function(){_renderOnlineCount();_refreshWidget();});
         else{_renderOnlineCount();_refreshWidget();}
       });
+      /* Start invite and DM listeners */
+      _startInviteListener(u);
+      _startDMListener(u);
     });
   } else {
     var sub=$('_sg-fw-sub');
@@ -1262,9 +1576,24 @@ function _cleanAv(){
 
 /* ═════════════════════════ WRAP INDEX FUNCTIONS ═══════════════════════ */
 var _oSG=window.showGame;
-if(typeof _oSG==='function'){window.showGame=function(){_oSG.apply(this,arguments);if(_kp)_applyGame(_kp);};}
+if(typeof _oSG==='function'){
+  window.showGame=function(){
+    _oSG.apply(this,arguments);
+    if(_kp)_applyGame(_kp);
+    /* Update in-match status */
+    if(!window.spectatorMode&&window.roomId&&window.roomId!=='AI'){
+      _updateMyStatus('in_match',window.roomId);
+    }
+  };
+}
 var _oDL=window.doLeave;
-if(typeof _oDL==='function'){window.doLeave=async function(){_cleanAv();return _oDL.apply(this,arguments);};}
+if(typeof _oDL==='function'){
+  window.doLeave=async function(){
+    _cleanAv();
+    _updateMyStatus('lobby',null);
+    return _oDL.apply(this,arguments);
+  };
+}
 /* BUG 1: sfxMove in AI */
 var _oAI=window.doAiMove;
 if(typeof _oAI==='function'){
@@ -1308,6 +1637,23 @@ function _doInit(){
   if(ni&&!ni.value){
     var _nm=(_kp&&_kp.name)||localStorage.getItem('kk_gnm')||'';
     if(_nm&&!_nm.startsWith('Guest·'))ni.value=_nm;
+  }
+  /* Auto-join room from invite (set by acceptInvite in auth.html) */
+  var pendingRoom='';
+  try{pendingRoom=sessionStorage.getItem('kk_pending_room')||'';}catch(e){}
+  if(pendingRoom&&pendingRoom.length>=4){
+    try{sessionStorage.removeItem('kk_pending_room');}catch(e){}
+    var ci=$('inp-code');if(ci)ci.value=pendingRoom;
+    /* Auto-join after short delay to let lobby render */
+    setTimeout(function(){
+      if(typeof window.joinRoom==='function')window.joinRoom();
+    },600);
+  }
+  /* Start invite listener in index.html if user is authenticated */
+  if(_kp&&_kp.type==='auth'){
+    _getUser().then(function(u){
+      if(u){_startInviteListener(u);_startDMListener(u);}
+    });
   }
 }
 if(document.readyState==='loading'){
