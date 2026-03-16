@@ -211,6 +211,51 @@ body::after{
   color:rgba(180,140,255,.68);
 }
 .guest-notice a{color:var(--g200);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+/* ── LINK ACCOUNT PANEL ── */
+.link-panel{
+  padding:20px 22px 22px;
+  display:flex;flex-direction:column;gap:14px;
+  border-top:1px solid rgba(212,168,67,.07);
+}
+.link-ttl{
+  font-family:'Cinzel Decorative',serif;font-size:.75rem;font-weight:700;
+  background:linear-gradient(90deg,#D4A843,#F0CC72,#D4A843);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  text-align:center;letter-spacing:.07em;
+}
+.link-items{display:flex;flex-direction:column;gap:7px;margin:0 2px}
+.link-item{
+  display:flex;align-items:center;gap:9px;
+  padding:8px 11px;border-radius:10px;
+  background:rgba(212,168,67,.045);border:1px solid rgba(212,168,67,.10);
+  font-size:.72rem;color:var(--t2);line-height:1.4;
+}
+.link-item-icon{font-size:.95rem;flex-shrink:0;width:22px;text-align:center}
+.link-warn{
+  font-size:.63rem;color:var(--t4);text-align:center;line-height:1.6;
+  padding:6px 10px;border-radius:8px;
+  background:rgba(255,255,255,.022);border:1px solid rgba(255,255,255,.055);
+}
+.btn-link-google{
+  width:100%;padding:11px 14px;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  border-radius:12px;cursor:pointer;
+  font-family:'Outfit',sans-serif;font-size:.86rem;font-weight:700;
+  color:#140b00;
+  background:linear-gradient(132deg,#F4CE68,#D4A843);
+  border:none;
+  box-shadow:0 4px 18px rgba(212,168,67,.38);
+  transition:all .18s var(--ease);
+}
+.btn-link-google:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(212,168,67,.52)}
+.btn-link-google:active{transform:none}
+.btn-link-google:disabled{opacity:.46;cursor:not-allowed;transform:none}
+.btn-link-back{
+  width:100%;padding:8px;background:none;border:none;cursor:pointer;
+  font-family:'Outfit',sans-serif;font-size:.72rem;color:var(--t3);
+  transition:color .14s;
+}
+.btn-link-back:hover{color:var(--t2)}
 /* Profile section tabs */
 .p-tabs{display:flex;border-bottom:1px solid rgba(212,168,67,.07)}
 .p-tab{
@@ -306,7 +351,7 @@ body::after{
 <main class="page">
 
 <!-- ══════════════ AUTH SCREEN ══════════════ -->
-<div class="scr on" id="scr-auth">
+<div class="scr" id="scr-auth">
   <div class="card"><div class="card-body">
     <div class="logo">
       <div class="logo-title">မြန်မာ ကျားကွက်</div>
@@ -399,6 +444,32 @@ body::after{
 
 </main>
 
+<!-- ══════════════ LINK ACCOUNT SCREEN ══════════════ -->
+<div class="scr" id="scr-link">
+  <div class="card"><div class="card-body">
+    <div class="logo">
+      <div class="logo-title">Account ချိတ်ဆက်မည်</div>
+      <div class="logo-sub">LINK GUEST → GMAIL</div>
+    </div>
+    <div class="link-panel">
+      <div class="link-ttl">ဘာတွေ ကူးပြောင်းမည်နည်း?</div>
+      <div class="link-items">
+        <div class="link-item"><span class="link-item-icon">👤</span><span><b id="link-nm-preview">–</b> — နာမည် အသစ် Account မှာ ပါမည်</span></div>
+        <div class="link-item"><span class="link-item-icon">🔐</span><span>Gmail / Google နဲ့ ချိတ်ဆက်ပြီး <b>Permanent Account</b> ရမည်</span></div>
+        <div class="link-item"><span class="link-item-icon">🌐</span><span>ဖုန်း / Device အသစ်မှ ဝင်ဝင် <b>ID တူ</b>နေမည်</span></div>
+        <div class="link-item"><span class="link-item-icon">🖼️</span><span>Profile ပုံ <b>အားလုံးမြင်ရ</b>မည် (Public)</span></div>
+      </div>
+      <div class="link-warn">⚠️ Guest ID (<span id="link-gid-preview">–</span>) သည် ဒီ device မှာသာ ကျန်မည်။ Account ID အသစ် (KK••••••) ရမည်။</div>
+      <button class="btn-link-google" id="link-gg-btn" onclick="doLinkGoogle()">
+        <svg style="width:18px;height:18px;flex-shrink:0" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Gmail နဲ့ ချိတ်ဆက်မည်
+      </button>
+      <button class="btn-link-back" onclick="goBackToGuest()">← Guest အဖြစ် ဆက်ကစားမည်</button>
+      <div class="msg" id="msg-link"></div>
+    </div>
+  </div></div>
+</div>
+
 <div id="toast"></div>
 <div id="overlay">
   <div class="ov-ring" id="ov-icon">✓</div>
@@ -419,6 +490,7 @@ const CFG = {
   LS_GID  : 'kk_gid',    /* guest permanent ID  */
   LS_GNM  : 'kk_gnm',    /* guest display name  */
   LS_MODE : 'kk_mode',   /* 'auth' | 'guest'    */
+  LS_LINK : 'kk_link_pending', /* guest→auth link in progress */
 };
 
 /* ═══════════════════════════════════════════════
@@ -469,6 +541,15 @@ function _randChars(n){
 /* ═══════════════════════════════════════════════
    BOOT
 ═══════════════════════════════════════════════ */
+/* Sync pre-check: show auth immediately only for truly new users (no localStorage
+   mode) so there is no blank flash. For existing 'auth'/'guest' modes we wait for
+   the async check to decide the correct screen. */
+(function(){
+  if(!localStorage.getItem(CFG.LS_MODE)){
+    document.getElementById('scr-auth').classList.add('on');
+  }
+})();
+
 (async()=>{
   /* Handle ?mode=logout — clear auth, show auth screen */
   const mode = new URLSearchParams(window.location.search).get('mode');
@@ -480,7 +561,7 @@ function _randChars(n){
     return;
   }
 
-  /* Check for existing Supabase session */
+  /* Check for existing Supabase session — takes priority over guest mode */
   try{
     const {data:{session}} = await SB().auth.getSession();
     if(session){
@@ -492,8 +573,10 @@ function _randChars(n){
     }
   }catch(e){ console.warn('getSession:', e); }
 
-  /* Check guest mode */
+  /* Check guest mode (only if no active session) */
   if(localStorage.getItem(CFG.LS_MODE) === 'guest'){
+    /* If link was pending but OAuth was cancelled / failed, clear flag and stay guest */
+    localStorage.removeItem('kk_link_pending');
     _showProfileGuest();
     return;
   }
@@ -507,6 +590,21 @@ function _randChars(n){
    AUTH STATE LISTENER (call once)
 ═══════════════════════════════════════════════ */
 let _listening = false;
+let _sessionCheckTimer = null;
+
+/* Redirect to auth with expired message — called once */
+function _sessionExpiredRedirect(){
+  if(localStorage.getItem(CFG.LS_MODE) !== 'auth') return; /* only for auth users */
+  _stopPresence();
+  _user = null; _prof = null; _flist = []; _online.clear(); _presenceStarted = false;
+  /* Show toast then fade to auth screen */
+  toast('⚠️ Session ကုန်သွားပါပြီ — ပြန်ဝင်ပါ', 3000);
+  setTimeout(()=>{
+    localStorage.setItem(CFG.LS_MODE, 'auth');
+    showScr('scr-auth');
+  }, 1800);
+}
+
 function _listenAuth(){
   if(_listening) return;
   _listening = true;
@@ -522,8 +620,37 @@ function _listenAuth(){
       _flist = []; _online.clear();
       _stopPresence();
       _presenceStarted = false;
-      showScr('scr-auth');
+      /* Only redirect if we were on the profile screen (auth mode) */
+      if(localStorage.getItem(CFG.LS_MODE) === 'auth'){
+        _sessionExpiredRedirect();
+      }
     }
+    if(evt === 'TOKEN_REFRESHED' && sess){
+      /* Token refreshed OK — update user ref silently */
+      _user = sess.user;
+    }
+    /* USER_UPDATED: refresh profile silently */
+    if(evt === 'USER_UPDATED' && sess){
+      _user = sess.user;
+    }
+  });
+
+  /* ── Visibility-based session re-validation ──
+     When user returns to tab after long idle, verify session is still alive.
+     Supabase auto-refreshes but this is an extra guard for edge cases. */
+  document.addEventListener('visibilitychange', async()=>{
+    if(document.visibilityState !== 'visible') return;
+    if(localStorage.getItem(CFG.LS_MODE) !== 'auth') return;
+    if(!_user) return;
+    try{
+      const {data:{session}} = await SB().auth.getSession();
+      if(!session){
+        _sessionExpiredRedirect();
+      } else {
+        /* Session alive — silently refresh user ref */
+        _user = session.user;
+      }
+    }catch(e){ console.warn('visibility session check:', e); }
   });
 }
 
@@ -598,6 +725,14 @@ function _showProfileAuth(){
   showScr('scr-profile');
   loadFriends();
   _startPresence();
+
+  /* Post-link success: clear guest mode flags + show toast */
+  if(localStorage.getItem('kk_link_pending')){
+    localStorage.removeItem('kk_link_pending');
+    /* Keep guest ID in localStorage (device memory) but clear mode */
+    localStorage.removeItem(CFG.LS_MODE); /* will be set to 'auth' by _showProfileAuth start */
+    setTimeout(()=> toast('🔗 Account ချိတ်ဆက်ပြီးပါပြီ! Permanent ID ရပြီ ✓', 4000), 400);
+  }
 }
 
 /* ═══════════════════════════════════════════════
@@ -629,8 +764,7 @@ function _showProfileGuest(){
   document.getElementById('av-wrap').onclick = null;
   document.getElementById('av-badge').style.display = 'none';
 
-  /* Edit name hidden */
-  document.getElementById('edit-btn').style.display = 'none';
+  /* Edit name visible for guest too — saves to localStorage */
 
   /* Friends tabs hidden */
   document.getElementById('p-tabs').style.display  = 'none';
@@ -663,11 +797,53 @@ function _resetProfileUI(){
 function tlAction(){} /* overwritten by _showProfileAuth / _showProfileGuest */
 
 /* Go to sign-in (from guest) */
+/* Show Link Account screen (from guest profile) */
 function goToSignIn(){
-  _stopPresence();
-  localStorage.setItem(CFG.LS_MODE, 'auth');
-  showScr('scr-auth');
-  _listenAuth();
+  const gid = getGuestID();
+  const gnm = getGuestName();
+  /* Populate previews */
+  const nmEl  = document.getElementById('link-nm-preview');
+  const gidEl = document.getElementById('link-gid-preview');
+  if(nmEl)  nmEl.textContent  = gnm;
+  if(gidEl) gidEl.textContent = gid;
+  /* Save guest name for carry-over after OAuth */
+  if(gnm && !gnm.startsWith('Guest·')){
+    localStorage.setItem('kk_upgrade_nm', gnm);
+  } else {
+    localStorage.removeItem('kk_upgrade_nm');
+  }
+  /* Mark as link-pending so post-OAuth knows to show success */
+  localStorage.setItem('kk_link_pending', '1');
+  showScr('scr-link');
+}
+
+/* Back button on link screen → return to guest profile */
+function goBackToGuest(){
+  localStorage.removeItem('kk_link_pending');
+  localStorage.removeItem('kk_upgrade_nm');
+  showScr('scr-profile');
+}
+
+/* Initiate Google OAuth from link screen */
+async function doLinkGoogle(){
+  const btn = document.getElementById('link-gg-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Google ချိတ်ဆက်နေသည်…';
+  try{
+    const {error} = await SB().auth.signInWithOAuth({
+      provider: 'google',
+      options:{
+        redirectTo: CFG.base + 'auth.html',
+        queryParams:{ access_type:'offline', prompt:'select_account' }
+      }
+    });
+    if(error) throw error;
+    /* browser redirects — spinner stays */
+  }catch(err){
+    btn.disabled = false;
+    btn.innerHTML = '<svg style="width:18px;height:18px;flex-shrink:0" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Gmail နဲ့ ချိတ်ဆက်မည်';
+    _msg('msg-link','err', err.message || 'Google ချိတ်ဆက်မှု မအောင်မြင်ပါ');
+  }
 }
 
 /* ═══════════════════════════════════════════════
@@ -688,44 +864,113 @@ async function doLogout(){
 ═══════════════════════════════════════════════ */
 async function _loadProfile(){
   if(!_user) return;
+  /*
+   * PERMANENT ID LOGIC (MLBB / PUBG style)
+   * ─────────────────────────────────────────────────────────────
+   * Gmail users  → ID lives in Supabase DB, tied to auth UID.
+   *                Any phone, any device = same ID always.
+   *                localStorage is ONLY used as a read-only display
+   *                cache when DB is unreachable. It NEVER writes a
+   *                new code to DB unless the row truly does not exist.
+   *
+   * Guest users  → ID lives in localStorage on this device only.
+   *                (handled separately by getGuestID)
+   * ─────────────────────────────────────────────────────────────
+   */
+  const _lsCk = 'kk_uc_' + _user.id; /* display cache key — read-only fallback */
+
   try{
-    /* fetch existing profile */
+    const m  = _user.user_metadata || {};
+    const nm = m.full_name || m.name || m.username || _user.email?.split('@')[0] || 'Player';
+
+    /* ── Step 1: Fetch existing profile row ── */
     let {data, error} = await SB().from('profiles').select('*').eq('id', _user.id).single();
 
-    /* create if not exists (trigger fallback) */
-    if(!data || error){
-      const m   = _user.user_metadata || {};
-      const nm  = m.full_name || m.name || m.username || _user.email?.split('@')[0] || 'Player';
-      const code= 'KK' + _randChars(6);
-      await SB().from('profiles').upsert({
-        id: _user.id, username: nm,
-        avatar_url: m.avatar_url || null,
-        user_code: code,
-        updated_at: new Date().toISOString()
-      }, {onConflict:'id'});
-      const r = await SB().from('profiles').select('*').eq('id', _user.id).single();
-      data = r.data;
+    if(error && error.code !== 'PGRST116'){
+      /* PGRST116 = row not found; anything else = real DB error */
+      throw error;
     }
 
-    /* fill null user_code (existing users without ID) */
+    if(!data){
+      /* ── Step 2: Truly new user — INSERT once ──
+         Never upsert here: upsert could overwrite an existing row's
+         user_code if a race condition or error caused the select to
+         return nothing. Use insert + ignore-conflict instead. */
+      const newCode = 'KK' + _randChars(6);
+      const {data:ins, error:ie} = await SB().from('profiles')
+        .insert({
+          id: _user.id,
+          username: nm,
+          avatar_url: m.avatar_url || null,
+          user_code: newCode,
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if(ie && ie.code !== '23505'){
+        /* 23505 = unique_violation (row inserted by another tab/device
+           between our select and insert — race condition). Re-fetch. */
+        throw ie;
+      }
+
+      if(ins){
+        data = ins;
+        localStorage.setItem(_lsCk, ins.user_code); /* cache for offline display */
+      } else {
+        /* Race: row already exists — re-fetch the real row */
+        const {data:refetch} = await SB().from('profiles').select('*').eq('id', _user.id).single();
+        data = refetch;
+      }
+    }
+
+    /* ── Step 3: Existing user missing user_code (legacy row) ──
+       Only UPDATE user_code; do NOT touch anything else. */
     if(data && !data.user_code){
-      const code = 'KK' + _randChars(6);
-      await SB().from('profiles').update({user_code:code, updated_at:new Date().toISOString()}).eq('id', _user.id);
-      const r2 = await SB().from('profiles').select('*').eq('id', _user.id).single();
-      data = r2.data || {...data, user_code:code};
+      const legacyCode = 'KK' + _randChars(6);
+      await SB().from('profiles')
+        .update({user_code:legacyCode, updated_at:new Date().toISOString()})
+        .eq('id', _user.id)
+        .is('user_code', null); /* conditional: only if still null in DB */
+      /* Re-fetch to get whatever the DB actually stored */
+      const {data:r3} = await SB().from('profiles').select('*').eq('id', _user.id).single();
+      data = r3 || {...data, user_code:legacyCode};
+      if(data.user_code) localStorage.setItem(_lsCk, data.user_code);
+    }
+
+    /* ── Step 4: Cache to localStorage for offline display only ── */
+    if(data?.user_code) localStorage.setItem(_lsCk, data.user_code);
+
+    /* ── Step 5: Guest → Auth upgrade: carry over custom guest name ── */
+    const _upgradeNm = localStorage.getItem('kk_upgrade_nm');
+    if(_upgradeNm){
+      const defaultNm = m.full_name || m.name || m.username || _user.email?.split('@')[0];
+      /* Only apply if the profile still has the default Google name (first sign-in) */
+      if(data && data.username === defaultNm){
+        try{
+          await SB().from('profiles')
+            .update({username:_upgradeNm, updated_at:new Date().toISOString()})
+            .eq('id', _user.id);
+          data = {...data, username:_upgradeNm};
+        }catch(e){ console.warn('upgrade name:', e); }
+      }
+      localStorage.removeItem('kk_upgrade_nm');
     }
 
     _prof = data;
+
   }catch(e){
     console.warn('_loadProfile:', e);
-    /* Minimal fallback — never crash */
     if(!_prof){
+      /* Offline / DB-down fallback — show cached code from localStorage.
+         This is read-only: we do NOT write this code back to DB. */
+      const cachedCode = localStorage.getItem(_lsCk) || null;
       const m = _user.user_metadata || {};
       _prof = {
-        id: _user.id,
-        username: m.full_name || m.name || _user.email?.split('@')[0] || 'Player',
+        id        : _user.id,
+        username  : m.full_name || m.name || _user.email?.split('@')[0] || 'Player',
         avatar_url: m.avatar_url || null,
-        user_code: null,
+        user_code : cachedCode,  /* null if truly first-time + DB down */
       };
     }
   }
@@ -767,7 +1012,25 @@ function cancelEditName(){
 async function saveEditName(){
   const nm = document.getElementById('edit-inp').value.trim();
   if(!nm || nm.length < 2){ toast('⚠️ 2 လုံးနှင့်အထက်'); return; }
+
+  /* ── GUEST: save to localStorage only ── */
+  if(!_user){
+    const cur = localStorage.getItem(CFG.LS_GNM);
+    if(nm === cur){ cancelEditName(); return; }
+    localStorage.setItem(CFG.LS_GNM, nm);
+    document.getElementById('pro-name').textContent = nm;
+    toast('✓ နာမည် ပြောင်းပြီးပါပြီ');
+    cancelEditName();
+    return;
+  }
+
+  /* ── AUTH: same name — no-op ── */
+  if(_prof && nm === _prof.username){ cancelEditName(); return; }
   try{
+    /* Duplicate check — case-insensitive (ilike) against all other profiles */
+    const {data:dup} = await SB().from('profiles')
+      .select('id').ilike('username', nm).neq('id', _user.id).maybeSingle();
+    if(dup){ toast('⚠️ Username ရှိပြီးသား — အခြားနာမည် ရွေးပါ'); return; }
     await SB().from('profiles').update({username:nm, updated_at:new Date().toISOString()}).eq('id', _user.id);
     if(_prof) _prof.username = nm;
     document.getElementById('pro-name').textContent = nm;
@@ -782,21 +1045,32 @@ async function saveEditName(){
 async function uploadAvatar(inp){
   const f = inp.files?.[0];
   if(!f) return;
-  if(f.size > 3 * 1024 * 1024){ toast('⚠️ ပုံ 3MB အောက်သာ'); return; }
+  /* MIME validation — do not trust file extension alone */
+  const _ALLOWED_MIME = ['image/jpeg','image/png','image/webp','image/gif'];
+  if(!_ALLOWED_MIME.includes(f.type)){
+    toast('⚠️ JPEG / PNG / WEBP / GIF သာ ခွင့်ပြုသည်'); inp.value=''; return;
+  }
+  if(f.size > 3 * 1024 * 1024){ toast('⚠️ ပုံ 3MB အောက်သာ'); inp.value=''; return; }
   toast('📤 ပုံ upload နေသည်…');
   try{
-    const ext  = f.name.split('.').pop().toLowerCase() || 'jpg';
+    /* Fixed path per user — always overwrite same slot so storage does not accumulate
+       old files when extension changes (e.g. av.jpg + av.png coexisting). */
+    const _EXT_MAP = {'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif'};
+    const ext  = _EXT_MAP[f.type] || 'jpg';
     const path = _user.id + '/av.' + ext;
     const {error:ue} = await SB().storage.from('avatars').upload(path, f, {upsert:true, contentType:f.type});
     if(ue) throw ue;
-    const {data:{publicUrl}} = SB().storage.from('avatars').getPublicUrl(path);
+    /* Null-safe getPublicUrl — handle both {data:{publicUrl}} and legacy {publicUrl} shapes */
+    const puRes = SB().storage.from('avatars').getPublicUrl(path);
+    const publicUrl = puRes?.data?.publicUrl || puRes?.publicUrl;
+    if(!publicUrl) throw new Error('Public URL ရယူမရပါ');
     const url = publicUrl + '?t=' + Date.now();
     await SB().from('profiles').update({avatar_url:url, updated_at:new Date().toISOString()}).eq('id', _user.id);
     if(_prof) _prof.avatar_url = url;
     const img = document.getElementById('av-img');
     img.src = url; img.alt = ''; img.onerror = ()=>{ img.src=''; img.alt='👤'; };
     toast('✓ ပုံ ပြောင်းပြီးပါပြီ');
-  }catch(e){ toast('❌ ' + e.message); }
+  }catch(e){ toast('❌ ' + (e.message || 'Upload မအောင်မြင်ပါ')); }
   inp.value = '';
 }
 
@@ -864,6 +1138,7 @@ function _renderFriends(){
   }
   box.innerHTML = _flist.map(f=>{
     const other = f.requester_id===_user.id ? f.adr : f.req;
+    if(!other) return '';  /* guard: join returned null */
     return _friHTML(f.id, other, _online.has(other.id), 'acc');
   }).join('');
 }
@@ -880,6 +1155,7 @@ function _renderReqs(inc, out){
 }
 
 function _friHTML(fid, p, online, type){
+  if(!p) return '';  /* guard: profile join was null */
   const av = p.avatar_url
     ? `<img class="fav" src="${_x(p.avatar_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div class="fav-fb" style="display:none">👤</div>`
     : `<div class="fav-fb">👤</div>`;
@@ -955,7 +1231,7 @@ function _startPresence(){
           const f = _flist.find(x=> x.requester_id===uid || x.addressee_id===uid);
           if(f){
             const p = f.requester_id===_user.id ? f.adr : f.req;
-            _notifyOnline(p.username || 'Friend');
+            if(p) _notifyOnline(p.username || 'Friend');
           }
         }
       });
@@ -966,7 +1242,7 @@ function _startPresence(){
       const f = _flist.find(x=> x.requester_id===key || x.addressee_id===key);
       if(f){
         const p = f.requester_id===_user.id ? f.adr : f.req;
-        _notifyOnline(p.username || 'Friend');
+        if(p) _notifyOnline(p.username || 'Friend');
       }
       _renderFriends();
     })
@@ -1039,6 +1315,33 @@ function _chime(req=false){
    GO TO GAME
 ═══════════════════════════════════════════════ */
 function goGame(){
+  /* ── Sync player data to sessionStorage for game to consume ── */
+  try{
+    let player;
+    if(_user && _prof){
+      /* Authenticated user */
+      player = {
+        type      : 'auth',
+        id        : _prof.user_code  || null,
+        uid       : _user.id,
+        name      : _prof.username   || _user.email?.split('@')[0] || 'Player',
+        avatar    : _prof.avatar_url || _user.user_metadata?.avatar_url || null,
+        email     : _user.email      || null,
+      };
+    } else {
+      /* Guest */
+      player = {
+        type      : 'guest',
+        id        : getGuestID(),
+        uid       : null,
+        name      : localStorage.getItem(CFG.LS_GNM) || getGuestName(),
+        avatar    : null,
+        email     : null,
+      };
+    }
+    sessionStorage.setItem('kk_player', JSON.stringify(player));
+  }catch(e){ console.warn('goGame sync:', e); }
+
   document.getElementById('ov-icon').textContent = '✓';
   document.getElementById('ov-ttl').textContent  = 'အောင်မြင်ပါသည်';
   document.getElementById('ov-sub').textContent  = 'Game သို့ ဝင်ရောက်နေပါသည်…';
