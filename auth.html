@@ -309,6 +309,8 @@ body::after{
 .fst-txt{font-size:.61rem;color:var(--t3)}
 .fbts{display:flex;gap:5px;flex-shrink:0}
 .fbtn{padding:4px 9px;border-radius:7px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.65rem;font-weight:600;transition:all .14s var(--ease);border:1px solid}
+.fb-dm{background:rgba(99,179,237,.12);color:rgba(147,210,255,.85);border:1px solid rgba(99,179,237,.3) !important;}
+.fb-dm:hover{background:rgba(99,179,237,.22);color:#bee3f8;}
 .fb-acc{color:#6ee7b7;border-color:rgba(16,185,129,.24);background:rgba(16,185,129,.07)}.fb-acc:hover{background:rgba(16,185,129,.14)}
 .fb-rem{color:#fca5a5;border-color:rgba(239,68,68,.22);background:rgba(239,68,68,.06)}.fb-rem:hover{background:rgba(239,68,68,.12)}
 .fb-can{color:var(--t3);border-color:rgba(255,255,255,.09);background:rgba(255,255,255,.03)}.fb-can:hover{color:var(--t2)}
@@ -344,6 +346,9 @@ body::after{
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 /* ── MOBILE ── */
 @media(max-width:420px){.card-body,.pro-hdr,.p-sec{padding-left:18px;padding-right:18px}}
+
+.modal-overlay{position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.85);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:linear-gradient(155deg,rgba(12,8,4,.99),rgba(5,3,8,.99));border:1px solid rgba(212,168,67,.28);border-top:1px solid rgba(255,255,255,.14);border-radius:20px;padding:24px 22px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.8)}
 </style>
 </head>
 <body>
@@ -1109,6 +1114,184 @@ function setTab(t){
 /* ═══════════════════════════════════════════════
    FRIENDS — load / render
 ═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════
+   INVITE LISTENER — auth.html
+═══════════════════════════════════════════════ */
+function _startInviteListenerAuth(){
+  if(_inviteChAuth||!_user) return;
+  _inviteChAuth = SB().channel('kk-inv-auth-'+_user.id);
+  _inviteChAuth
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'room_invites',
+        filter:`to_uid=eq.${_user.id}`},
+      (payload)=>{
+        if(payload.new?.status==='pending') _showInviteModal(payload.new);
+      })
+    .subscribe();
+}
+
+function _showInviteModal(inv){
+  const fromName = inv.from_name || 'Friend';
+  const roomCode = inv.room_code || '';
+  const html = `
+    <div class="modal-overlay" id="invite-overlay" onclick="this.remove()">
+      <div class="modal-box" onclick="event.stopPropagation()" style="max-width:320px">
+        <div style="text-align:center;padding:10px 0 16px">
+          <div style="font-size:2.5rem;margin-bottom:8px">📨</div>
+          <div style="font-size:.9rem;font-weight:700;color:#F0E8D8;margin-bottom:4px">${_x(fromName)}</div>
+          <div style="font-size:.72rem;color:rgba(180,148,70,.55);margin-bottom:14px">Room ကို ဖိတ်ခေါ်သည်</div>
+          <div style="font-family:'Orbitron',monospace;font-size:1.5rem;color:#F0CC72;letter-spacing:8px;font-weight:700;padding:10px;background:rgba(212,168,67,.08);border-radius:10px;border:1px solid rgba(212,168,67,.2)">${_x(roomCode)}</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-play" style="flex:1;font-size:.82rem;padding:10px" onclick="acceptInvite('${inv.id}','${_x(roomCode)}')">✅ လက်ခံ</button>
+          <button class="btn-tl logout" style="flex:0.5;font-size:.78rem;padding:10px" onclick="declineInvite('${inv.id}')">❌ ငြင်းမည်</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+  toast('📨 ' + _x(fromName) + ' က Room Invite ပို့သည်!', 4000);
+}
+
+async function acceptInvite(inviteId, roomCode){
+  document.getElementById('invite-overlay')?.remove();
+  try{ await SB().from('room_invites').update({status:'accepted'}).eq('id',inviteId); }catch(e){}
+  /* Store room code for game join */
+  sessionStorage.setItem('kk_pending_room', roomCode);
+  goGame();
+}
+async function declineInvite(inviteId){
+  document.getElementById('invite-overlay')?.remove();
+  try{ await SB().from('room_invites').update({status:'declined'}).eq('id',inviteId); }catch(e){}
+}
+
+/* ═══════════════════════════════════════════════
+   DM SYSTEM — auth.html
+═══════════════════════════════════════════════ */
+function _startDMListenerAuth(){
+  if(_dmChAuth||!_user) return;
+  _dmChAuth = SB().channel('kk-dm-auth-'+_user.id);
+  _dmChAuth
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'friend_messages',
+        filter:`to_uid=eq.${_user.id}`},
+      (payload)=>{
+        const msg = payload.new; if(!msg) return;
+        _dmUnreadAuth[msg.from_uid] = (_dmUnreadAuth[msg.from_uid]||0)+1;
+        if(_authCurrentDM===msg.from_uid){
+          _appendDMMsg(msg.message, false);
+        } else {
+          toast('💬 ' + _x(msg.from_name||'Friend') + ': ' + _x(msg.message.substring(0,40)), 4000);
+          _renderFriends(); /* refresh unread badges */
+        }
+      })
+    .subscribe();
+}
+
+function _appendDMMsg(text, isMe){
+  const box = document.getElementById('auth-dm-msgs');
+  if(!box) return;
+  const d = document.createElement('div');
+  d.style.cssText = `display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:5px`;
+  d.innerHTML = `<div style="max-width:78%;padding:7px 11px;border-radius:${isMe?'12px 3px 12px 12px':'3px 12px 12px 12px'};background:${isMe?'rgba(212,168,67,.12)':'rgba(255,255,255,.06)'};border:1px solid ${isMe?'rgba(212,168,67,.22)':'rgba(255,255,255,.08)'};font-size:.72rem;color:#F0E8D8;font-family:'Outfit',sans-serif;line-height:1.5;word-break:break-word">${_x(text)}</div>`;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+
+async function openDM(friendUid, friendName){
+  if(!_user) return;
+  _authCurrentDM = friendUid;
+  delete _dmUnreadAuth[friendUid];
+  _renderFriends(); /* clear unread badge */
+
+  let msgs = [];
+  try{
+    const res = await SB().from('friend_messages')
+      .select('id,from_uid,message,created_at')
+      .or(`and(from_uid.eq.${_user.id},to_uid.eq.${friendUid}),and(from_uid.eq.${friendUid},to_uid.eq.${_user.id})`)
+      .order('created_at',{ascending:true}).limit(60);
+    if(res.data) msgs = res.data;
+  }catch(e){ console.warn('DM load:', e); }
+
+  const renderMsgs = (list)=> list.length
+    ? list.map(m=>{
+        const isMe = m.from_uid===_user.id;
+        return `<div style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:5px">
+          <div style="max-width:78%;padding:7px 11px;border-radius:${isMe?'12px 3px 12px 12px':'3px 12px 12px 12px'};background:${isMe?'rgba(212,168,67,.12)':'rgba(255,255,255,.06)'};border:1px solid ${isMe?'rgba(212,168,67,.22)':'rgba(255,255,255,.08)'};font-size:.72rem;color:#F0E8D8;line-height:1.5;word-break:break-word;font-family:'Outfit',sans-serif">${_x(m.message)}</div>
+        </div>`;
+      }).join('')
+    : '<div style="text-align:center;padding:20px;font-size:.70rem;color:rgba(180,148,70,.35)">Message မရှိသေးပါ</div>';
+
+  const html = `
+    <div class="modal-overlay" id="dm-overlay" onclick="">
+      <div class="modal-box" onclick="event.stopPropagation()" style="max-width:360px;max-height:80vh;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <button onclick="document.getElementById('dm-overlay').remove();_authCurrentDM=null" style="background:none;border:none;cursor:pointer;color:#F0E8D8;font-size:1rem;padding:0">✕</button>
+          <div style="font-size:.88rem;font-weight:700;color:#F0E8D8;font-family:'Outfit',sans-serif">💬 ${_x(friendName)}</div>
+        </div>
+        <div id="auth-dm-msgs" style="flex:1;overflow-y:auto;max-height:300px;display:flex;flex-direction:column;padding:4px 0;scrollbar-width:thin;scrollbar-color:rgba(212,168,67,.1) transparent;min-height:80px">
+          ${renderMsgs(msgs)}
+        </div>
+        <div style="display:flex;gap:8px;padding-top:10px;margin-top:8px;border-top:1px solid rgba(212,168,67,.12)">
+          <input class="linp" id="auth-dm-inp" placeholder="Message ရေးပါ..." maxlength="200"
+            style="flex:1;margin-bottom:0;padding:8px 12px"
+            onkeydown="if(event.key==='Enter')sendDM('${friendUid}','${_x(friendName)}')">
+          <button class="btn-play" style="padding:8px 16px;font-size:.85rem;width:auto" onclick="sendDM('${friendUid}','${_x(friendName)}')">▶</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+  const box = document.getElementById('auth-dm-msgs');
+  if(box) box.scrollTop = box.scrollHeight;
+  document.getElementById('auth-dm-inp')?.focus();
+}
+
+async function sendDM(toUid, toName){
+  const inp = document.getElementById('auth-dm-inp');
+  if(!inp) return;
+  const msg = inp.value.trim(); if(!msg) return;
+  if(!_user) return;
+  inp.value = '';
+  const fromName = _prof?.username || _user.email?.split('@')[0] || 'Player';
+  try{
+    await SB().from('friend_messages').insert({
+      from_uid:_user.id, to_uid:toUid,
+      message:msg, from_name:fromName
+    });
+    _appendDMMsg(msg, true);
+  }catch(e){
+    console.error('DM send:',e);
+    toast('❌ Message မပို့ရပါ');
+    inp.value = msg;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   IN-MATCH STATUS — auth.html
+═══════════════════════════════════════════════ */
+function _startStatusListenerAuth(){
+  if(_statusChAuth||!_user) return;
+  _statusChAuth = SB().channel('kk-fstat-auth-'+_user.id);
+  _statusChAuth
+    .on('postgres_changes',{event:'*',schema:'public',table:'user_status'},
+      (payload)=>{
+        const row = payload.new||payload.old; if(!row) return;
+        /* Check if this uid is one of our friends */
+        const isFriend = _flist.some(f=>f.requester_id===row.uid||f.addressee_id===row.uid);
+        if(isFriend){ _friendStatuses[row.uid]=row.status||'lobby'; _renderFriends(); }
+      })
+    .subscribe();
+}
+
+async function _fetchFriendStatusesAuth(){
+  if(!_flist.length||!_user) return;
+  const myId = _user.id;
+  const uids = _flist.map(f=>f.requester_id===myId?f.addressee_id:f.requester_id).filter(Boolean);
+  if(!uids.length) return;
+  try{
+    const {data} = await SB().from('user_status').select('uid,status').in('uid',uids);
+    if(data) data.forEach(r=>{ _friendStatuses[r.uid]=r.status||'lobby'; });
+  }catch(e){}
+}
+
+
 async function loadFriends(){
   if(!_user) return;
   try{
@@ -1120,6 +1303,7 @@ async function loadFriends(){
       .eq('status','accepted');
     if(error) throw error;
     _flist = data || [];
+    await _fetchFriendStatusesAuth();
     _renderFriends();
   }catch(e){ console.warn('loadFriends:', e); }
 
@@ -1245,16 +1429,28 @@ function _friHTML(fid, p, online, type){
   const av = p.avatar_url
     ? `<img class="fav" src="${_x(p.avatar_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div class="fav-fb" style="display:none">👤</div>`
     : `<div class="fav-fb">👤</div>`;
+  const inMatch = (_friendStatuses&&_friendStatuses[p.id]==='in_match');
+  const statusTxt = inMatch ? '🎮 In Match' : (online ? 'Online' : 'Offline');
+  const statusColor = inMatch ? 'rgba(245,158,11,.85)' : (online ? 'var(--ok)' : 'rgba(255,255,255,.28)');
   const st = type==='acc'
-    ? `<div class="${online?'dot-on':'dot-off'}"></div><span class="fst-txt">${online?'Online':'Offline'}</span>`
+    ? `<div class="${online?'dot-on':'dot-off'}"></div><span class="fst-txt" style="color:${statusColor}">${statusTxt}</span>`
     : `<span class="fpend">${type==='inc'?'⏳ ခေါ်ထားသည်':'📤 Pending'}</span>`;
+  const dmBadge = (_dmUnreadAuth&&_dmUnreadAuth[p.id]) ? `<span style="background:#EF4444;color:#fff;border-radius:99px;padding:0 3px;font-size:.5rem;margin-left:2px">${_dmUnreadAuth[p.id]}</span>` : '';
   const bt = type==='acc'
-    ? `<button class="fbtn fb-rem" onclick="delFri('${fid}')">ဖယ်ရှား</button>`
+    ? `<button class="fbtn fb-dm" onclick="openDM('${p.id}','${_x(p.username||'')}')">💬${dmBadge}</button><button class="fbtn fb-rem" onclick="delFri('${fid}')">ဖယ်ရှား</button>`
     : type==='inc'
     ? `<button class="fbtn fb-acc" onclick="accFri('${fid}')">လက်ခံ</button><button class="fbtn fb-rem" onclick="decFri('${fid}')">ငြင်းမည်</button>`
     : `<button class="fbtn fb-can" onclick="delFri('${fid}')">ဖျက်မည်</button>`;
   return `<div class="fri">${av}<div class="finfo"><div class="fnm">${_x(p.username||'–')}</div><div class="fid">${_x(p.user_code||'')}</div><div class="fst">${st}</div></div><div class="fbts">${bt}</div></div>`;
 }
+
+/* ── Friend status tracking ── */
+let _friendStatuses = {};   /* {uid: 'lobby'|'in_match'} */
+let _dmUnreadAuth = {};     /* {uid: count} */
+let _inviteChAuth = null;   /* invite realtime channel */
+let _dmChAuth = null;       /* DM realtime channel */
+let _statusChAuth = null;   /* status realtime channel */
+let _authCurrentDM = null;  /* uid of open DM thread */
 
 /* ── Friend actions ── */
 async function addFriend(){
@@ -1366,6 +1562,11 @@ function _startPresence(){
         await _pch.track({user_id:_user.id, username:_prof?.username||'', ts:Date.now()});
       }
     });
+
+  /* ── Start invite + DM + status listeners ── */
+  _startInviteListenerAuth();
+  _startDMListenerAuth();
+  _startStatusListenerAuth();
 
   /* friend request watch channel (unique per user to avoid conflicts) */
   _fwch = SB().channel('kk-frw-' + _user.id);
