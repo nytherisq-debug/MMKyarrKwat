@@ -504,6 +504,7 @@ let _fwch = null;   /* friendships watch channel      */
 let _flist = [];
 const _online = new Set();
 let _presenceStarted = false;
+let _presenceReady   = false; /* true after first presence sync — prevents login-flood toasts */
 
 function SB(){
   if(!_sb) _sb = supabase.createClient(CFG.sbUrl, CFG.sbKey);
@@ -1329,24 +1330,30 @@ function _startPresence(){
       const prev = new Set(_online);
       _online.clear();
       Object.keys(st).filter(k=> k !== _user.id).forEach(k=> _online.add(k));
-      /* notify newly online friends */
-      _online.forEach(uid=>{
-        if(!prev.has(uid)){
-          const f = _flist.find(x=> x.requester_id===uid || x.addressee_id===uid);
-          if(f){
-            const p = f.requester_id===_user.id ? f.adr : f.req;
-            if(p) _notifyOnline(p.username || 'Friend');
+      /* notify newly online friends — skip first sync to avoid login-flood */
+      if(_presenceReady){
+        _online.forEach(uid=>{
+          if(!prev.has(uid)){
+            const f = _flist.find(x=> x.requester_id===uid || x.addressee_id===uid);
+            if(f){
+              const p = f.requester_id===_user.id ? f.adr : f.req;
+              if(p) _notifyOnline(p.username || 'Friend');
+            }
           }
-        }
-      });
+        });
+      }
+      _presenceReady = true; /* mark initial sync done */
       _renderFriends();
     })
     .on('presence', {event:'join'}, ({key})=>{
+      if(key === _user.id) return; /* self-join: ignore */
       _online.add(key);
-      const f = _flist.find(x=> x.requester_id===key || x.addressee_id===key);
-      if(f){
-        const p = f.requester_id===_user.id ? f.adr : f.req;
-        if(p) _notifyOnline(p.username || 'Friend');
+      if(_presenceReady){ /* only notify after initial sync */
+        const f = _flist.find(x=> x.requester_id===key || x.addressee_id===key);
+        if(f){
+          const p = f.requester_id===_user.id ? f.adr : f.req;
+          if(p) _notifyOnline(p.username || 'Friend');
+        }
       }
       _renderFriends();
     })
@@ -1404,6 +1411,7 @@ function _startPresence(){
 function _stopPresence(){
   if(_pch){ try{ SB().removeChannel(_pch); }catch(e){} _pch=null; }
   if(_fwch){ try{ SB().removeChannel(_fwch); }catch(e){} _fwch=null; }
+  _online.clear(); _presenceStarted=false; _presenceReady=false;
 }
 
 /* ── Notifications + chime ── */
