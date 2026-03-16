@@ -127,22 +127,7 @@ body::after{
 /* ════════════════════════════════════
    PROFILE VIEW
 ════════════════════════════════════ */
-#scr-profile .card{max-width:440px;animation:cardIn .5s var(--spring) both}
 /* Header */
-.pro-hdr{
-  display:flex;flex-direction:column;align-items:center;
-  padding:26px 24px 18px;
-  border-bottom:1px solid rgba(212,168,67,.07);
-  position:relative;
-}
-/* Logout / Sign-In button (top-left) */
-.btn-tl{
-  position:absolute;top:14px;left:14px;
-  padding:6px 12px;border-radius:9px;cursor:pointer;
-  font-family:'Outfit',sans-serif;font-size:.70rem;font-weight:600;
-  transition:all .16s var(--ease);
-}
-.btn-tl.logout{color:rgba(252,165,165,.72);background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.22)}
 .btn-tl.logout:hover{color:#fca5a5;background:rgba(239,68,68,.10);border-color:rgba(239,68,68,.38)}
 .btn-tl.signin{color:rgba(240,204,114,.82);background:rgba(212,168,67,.07);border:1px solid rgba(212,168,67,.28)}
 .btn-tl.signin:hover{color:var(--g100);background:rgba(212,168,67,.12);border-color:rgba(212,168,67,.44)}
@@ -158,59 +143,10 @@ body::after{
 }
 .btn-play:hover{transform:translateY(-1px);box-shadow:0 5px 20px rgba(212,168,67,.45)}
 .btn-play:active{transform:none}
-/* Avatar */
-.av-wrap{position:relative;width:80px;height:80px;cursor:pointer;margin-bottom:10px}
-.av-img{
-  width:80px;height:80px;border-radius:50%;object-fit:cover;display:block;
-  border:2px solid rgba(212,168,67,.38);
-  box-shadow:0 0 18px rgba(212,168,67,.20),0 4px 14px rgba(0,0,0,.48);
-  transition:transform .2s;background:rgba(212,168,67,.06);
-}
-.av-img[alt]::after{content:attr(alt);display:flex;align-items:center;justify-content:center;font-size:1.8rem;width:100%;height:100%;position:absolute;inset:0;border-radius:50%}
-.av-wrap:hover .av-img{transform:scale(1.04)}
-.av-badge{
-  position:absolute;bottom:2px;right:2px;
-  width:22px;height:22px;border-radius:50%;
-  background:rgba(212,168,67,.84);
-  display:flex;align-items:center;justify-content:center;font-size:.68rem;
-  box-shadow:0 2px 6px rgba(0,0,0,.48);border:1.5px solid rgba(255,255,255,.14);
-}
-#av-input{display:none}
-/* Name row */
-.name-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
-.pro-name{font-size:1.04rem;font-weight:700;color:var(--t1);text-align:center}
-.edit-btn{background:none;border:none;cursor:pointer;color:var(--t3);font-size:.78rem;transition:color .14s}
 .edit-btn:hover{color:var(--g100)}
 /* Edit name inline */
-.edit-row{display:none;align-items:center;gap:6px;margin-bottom:4px}
-.edit-inp{
-  background:rgba(0,0,0,.26);border:1px solid rgba(212,168,67,.28);border-radius:8px;
-  color:var(--t1);font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;
-  padding:4px 10px;outline:none;width:148px;text-align:center;
-  -webkit-user-select:auto!important;user-select:auto!important;
-}
-.edit-inp:focus{border-color:rgba(212,168,67,.54);box-shadow:0 0 0 2px rgba(212,168,67,.09)}
-.edit-ok{background:none;border:none;cursor:pointer;color:var(--ok);font-size:.82rem}
-.edit-cancel{background:none;border:none;cursor:pointer;color:var(--t3);font-size:.82rem}
 /* ID Pill */
-.id-pill{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:4px 13px;border-radius:99px;
-  background:rgba(212,168,67,.07);border:1px solid rgba(212,168,67,.18);
-  font-size:.70rem;font-family:'Outfit',sans-serif;font-weight:700;
-  color:var(--g200);letter-spacing:.09em;cursor:pointer;
-  transition:background .16s;
-}
-.id-pill:hover{background:rgba(212,168,67,.12)}
-.id-pill-icon{font-size:.75rem;opacity:.75}
-.id-pill-copy{font-size:.52rem;opacity:.5;margin-left:2px}
-.pro-email{font-size:.63rem;color:var(--t3);margin-top:4px;text-align:center}
 /* Guest notice */
-.guest-notice{
-  margin-top:6px;font-size:.65rem;text-align:center;
-  color:rgba(180,140,255,.68);
-}
-.guest-notice a{color:var(--g200);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 /* ── LINK ACCOUNT PANEL ── */
 .link-panel{
   padding:20px 22px 22px;
@@ -257,64 +193,17 @@ body::after{
 }
 .btn-link-back:hover{color:var(--t2)}
 /* Profile section tabs */
-.p-tabs{display:flex;border-bottom:1px solid rgba(212,168,67,.07)}
-.p-tab{
-  flex:1;padding:10px 0;background:none;border:none;cursor:pointer;
-  font-family:'Outfit',sans-serif;font-size:.76rem;font-weight:600;color:var(--t3);
-  border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .16s var(--ease);
-}
-.p-tab.on{color:var(--g100);border-bottom-color:var(--g200)}
-.p-sec{display:none;padding:16px 20px 22px}.p-sec.on{display:block}
 /* Friend search row */
-.add-row{display:flex;gap:8px;margin-bottom:14px}
-.add-inp{
-  flex:1;padding:9px 12px;
-  background:rgba(0,0,0,.22);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-  border:1px solid rgba(255,255,255,.10);border-radius:10px;
-  color:var(--t1);font-family:'Outfit',sans-serif;font-size:.84rem;
-  outline:none;box-shadow:inset 0 2px 5px rgba(0,0,0,.38);
-  transition:border-color .16s;
-  letter-spacing:.05em;
-  -webkit-user-select:auto!important;user-select:auto!important;
-}
-.add-inp::placeholder{letter-spacing:normal;color:rgba(255,255,255,.20)}
 .add-inp:focus{border-color:rgba(212,168,67,.40);box-shadow:0 0 0 2px rgba(212,168,67,.06),inset 0 2px 5px rgba(0,0,0,.38)}
-.btn-add{
-  padding:0 14px;border:none;border-radius:10px;cursor:pointer;
-  font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:700;
-  color:#140b00;background:linear-gradient(132deg,#F4CE68,#D4A843);
-  box-shadow:0 2px 10px rgba(212,168,67,.26);transition:all .16s var(--ease);white-space:nowrap;
-}
-.btn-add:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(212,168,67,.38)}
 .btn-add:disabled{opacity:.46;cursor:not-allowed;transform:none}
 /* Section title */
-.sec-ttl{font-size:.66rem;font-weight:600;color:var(--t3);letter-spacing:.09em;text-transform:uppercase;margin-bottom:9px}
 /* Friends list */
-.fri-scroll{max-height:260px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(212,168,67,.15) transparent}
 .fri-scroll::-webkit-scrollbar{width:3px}.fri-scroll::-webkit-scrollbar-thumb{background:rgba(212,168,67,.15);border-radius:2px}
-.fri-empty{text-align:center;padding:22px 0;font-size:.75rem;color:var(--t4)}
 .fri-empty small{display:block;font-size:.62rem;margin-top:4px;color:var(--t4);opacity:.7}
 /* Friend item */
-.fri{display:flex;align-items:center;gap:10px;padding:9px 11px;margin-bottom:7px;border-radius:12px;background:rgba(255,255,255,.024);border:1px solid rgba(255,255,255,.052);transition:background .14s}
 .fri:hover{background:rgba(255,255,255,.040)}
-.fav{width:36px;height:36px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(212,168,67,.22);flex-shrink:0;background:rgba(212,168,67,.07)}
-.fav-fb{width:36px;height:36px;border-radius:50%;background:rgba(212,168,67,.07);display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0;border:1.5px solid rgba(212,168,67,.16)}
-.finfo{flex:1;min-width:0}
-.fnm{font-size:.80rem;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fid{font-size:.60rem;color:var(--t3);letter-spacing:.05em}
-.fst{display:flex;align-items:center;gap:4px;margin-top:2px}
-.dot-on{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok);flex-shrink:0;animation:breathe 1.5s ease-in-out infinite alternate}
-.dot-off{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.18);flex-shrink:0}
 @keyframes breathe{0%{transform:scale(.8);opacity:.5;box-shadow:0 0 4px var(--ok)}100%{transform:scale(1.3);opacity:1;box-shadow:0 0 12px var(--ok)}}
-.fst-txt{font-size:.61rem;color:var(--t3)}
-.fbts{display:flex;gap:5px;flex-shrink:0}
-.fbtn{padding:4px 9px;border-radius:7px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.65rem;font-weight:600;transition:all .14s var(--ease);border:1px solid}
-.fb-dm{background:rgba(99,179,237,.12);color:rgba(147,210,255,.85);border:1px solid rgba(99,179,237,.3) !important;}
 .fb-dm:hover{background:rgba(99,179,237,.22);color:#bee3f8;}
-.fb-acc{color:#6ee7b7;border-color:rgba(16,185,129,.24);background:rgba(16,185,129,.07)}.fb-acc:hover{background:rgba(16,185,129,.14)}
-.fb-rem{color:#fca5a5;border-color:rgba(239,68,68,.22);background:rgba(239,68,68,.06)}.fb-rem:hover{background:rgba(239,68,68,.12)}
-.fb-can{color:var(--t3);border-color:rgba(255,255,255,.09);background:rgba(255,255,255,.03)}.fb-can:hover{color:var(--t2)}
-.fpend{display:inline-block;padding:2px 7px;border-radius:5px;font-size:.59rem;font-weight:600;background:rgba(212,168,67,.09);border:1px solid rgba(212,168,67,.18);color:var(--g200)}
 /* ── OVERLAY (success/loading) ── */
 #overlay{
   display:none;position:fixed;inset:0;z-index:999;
@@ -345,7 +234,6 @@ body::after{
 @keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 /* ── MOBILE ── */
-@media(max-width:420px){.card-body,.pro-hdr,.p-sec{padding-left:18px;padding-right:18px}}
 
 .modal-overlay{position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.85);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px}
 .modal-box{background:linear-gradient(155deg,rgba(12,8,4,.99),rgba(5,3,8,.99));border:1px solid rgba(212,168,67,.28);border-top:1px solid rgba(255,255,255,.14);border-radius:20px;padding:24px 22px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.8)}
@@ -379,75 +267,9 @@ body::after{
 </div>
 
 <!-- ══════════════ PROFILE SCREEN ══════════════ -->
-<div class="scr" id="scr-profile">
-  <div class="card">
-
-    <!-- Header -->
-    <div class="pro-hdr">
-      <!-- TL button: Logout (auth) or Sign In (guest) -->
-      <button class="btn-tl" id="btn-tl" onclick="tlAction()">Log Out</button>
-      <!-- Play button -->
-      <button class="btn-play" onclick="goGame()">▶ ကစားမည်</button>
-
-      <!-- Avatar -->
-      <div class="av-wrap" id="av-wrap">
-        <img class="av-img" id="av-img" src="" alt="👤">
-        <div class="av-badge" id="av-badge">✎</div>
-      </div>
-      <input type="file" id="av-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" onchange="uploadAvatar(this)">
-
-      <!-- Name (display / edit) -->
-      <div class="name-row" id="name-row">
-        <span class="pro-name" id="pro-name">–</span>
-        <button class="edit-btn" id="edit-btn" onclick="startEditName()" title="ပြင်ရန်">✎</button>
-      </div>
-      <div class="edit-row" id="edit-row">
-        <input class="edit-inp" id="edit-inp" maxlength="20" placeholder="Username" autocomplete="off">
-        <button class="edit-ok" onclick="saveEditName()">✓</button>
-        <button class="edit-cancel" onclick="cancelEditName()">✕</button>
-      </div>
-
-      <!-- Permanent ID -->
-      <div class="id-pill" onclick="copyID()">
-        <span class="id-pill-icon">🪪</span>
-        <span id="pro-id">––––––</span>
-        <span class="id-pill-copy">ကူးရန်</span>
-      </div>
-
-      <!-- Email / guest notice -->
-      <div class="pro-email" id="pro-email"></div>
-    </div>
-
-    <!-- Section tabs (hidden for guest) -->
-    <div class="p-tabs" id="p-tabs">
-      <button class="p-tab on" id="pt-fri" onclick="setTab('fri')">👥 သူငယ်ချင်း</button>
-      <button class="p-tab" id="pt-req" onclick="setTab('req')">🔔 ခေါ်ချက်<span id="req-n"></span></button>
-    </div>
-
-    <!-- Friends -->
-    <div class="p-sec on" id="ps-fri">
-      <div class="add-row">
-        <input class="add-inp" id="add-inp" placeholder="Player ID ထည့်ပါ (e.g. KK3A7F2B)" maxlength="8">
-        <button class="btn-add" id="btn-add" onclick="addFriend()">ထည့်မည်</button>
-      </div>
-      <div class="sec-ttl">သူငယ်ချင်းများ</div>
-      <div class="fri-scroll" id="fri-list">
-        <div class="fri-empty">သူငယ်ချင်း မရှိသေးပါ<small>Player ID ဖြင့် ထည့်ပါ</small></div>
-      </div>
-    </div>
-
-    <!-- Requests -->
-    <div class="p-sec" id="ps-req">
-      <div class="sec-ttl">ရောက်လာသော ခေါ်ချက်</div>
-      <div class="fri-scroll" id="req-inc"><div class="fri-empty">မရှိသေးပါ</div></div>
-      <div class="sec-ttl" style="margin-top:14px">ပို့ထားသော ခေါ်ချက်</div>
-      <div class="fri-scroll" id="req-out"><div class="fri-empty" style="padding:8px 0">–</div></div>
-    </div>
-
-  </div>
-</div>
 
 </main>
+
 
 <!-- ══════════════ LINK ACCOUNT SCREEN ══════════════ -->
 <div class="scr" id="scr-link">
@@ -506,7 +328,6 @@ let _user = null;   /* Supabase user (null for guest) */
 let _prof = null;   /* profiles row                   */
 let _pch  = null;   /* presence channel               */
 let _fwch = null;   /* friendships watch channel      */
-let _flist = [];
 const _online = new Set();
 let _presenceStarted = false;
 let _presenceReady   = false; /* true after first presence sync — prevents login-flood toasts */
@@ -572,6 +393,7 @@ function _randChars(n){
   if(mode === 'logout'){
     history.replaceState({}, '', window.location.pathname);
     localStorage.setItem(CFG.LS_MODE, 'auth');
+  if(_user) _startInviteListenerAuth();
     showScr('scr-auth');
     _listenAuth();
     return;
@@ -714,107 +536,26 @@ async function doGuest(){
 ═══════════════════════════════════════════════ */
 function _showProfileAuth(){
   localStorage.setItem(CFG.LS_MODE, 'auth');
-  _resetProfileUI();
-
-  /* TL button = Log Out */
-  const tl = document.getElementById('btn-tl');
-  tl.textContent = 'Log Out';
-  tl.className   = 'btn-tl logout';
-  tl.onclick     = doLogout;
-
-  /* Avatar clickable */
-  const aw = document.getElementById('av-wrap');
-  aw.onclick = ()=> document.getElementById('av-input').click();
-  document.getElementById('av-badge').style.display = '';
-
-  /* Edit name visible */
-  document.getElementById('edit-btn').style.display = '';
-
-  /* Friends tabs visible */
-  document.getElementById('p-tabs').style.display = '';
-  document.getElementById('ps-fri').classList.add('on');
-  document.getElementById('ps-req').classList.remove('on');
-  document.getElementById('pt-fri').classList.add('on');
-  document.getElementById('pt-req').classList.remove('on');
-
-  _renderProfile();
-  showScr('scr-profile');
-  loadFriends();
-  _startPresence();
-
-  /* Post-link success: clear guest mode flags + show toast */
+  /* Load profile data then go directly to game — no profile screen */
   if(localStorage.getItem('kk_link_pending')){
     localStorage.removeItem('kk_link_pending');
-    /* Keep guest ID in localStorage (device memory) but clear mode */
-    localStorage.removeItem(CFG.LS_MODE); /* will be set to 'auth' by _showProfileAuth start */
-    setTimeout(()=> toast('🔗 Account ချိတ်ဆက်ပြီးပါပြီ! Permanent ID ရပြီ ✓', 4000), 400);
+    setTimeout(()=> toast('🔗 Account ချိတ်ဆက်ပြီး! ID ရပြီ ✓', 3000), 300);
   }
+  goGame();
 }
+
 
 /* ═══════════════════════════════════════════════
    SHOW PROFILE — GUEST
 ═══════════════════════════════════════════════ */
 function _showProfileGuest(){
-  _resetProfileUI();
-
-  const gid = getGuestID();
-  const gnm = getGuestName();
-
-  /* Fill fields */
-  document.getElementById('pro-name').textContent = gnm;
-  document.getElementById('pro-id').textContent   = gid;
-  document.getElementById('pro-email').innerHTML  =
-    `<div class="guest-notice">👤 Guest Mode &nbsp;·&nbsp; <a onclick="goToSignIn()">Account ဖွင့်ရန်</a></div>`;
-
-  /* Avatar = emoji placeholder */
-  const img = document.getElementById('av-img');
-  img.src = ''; img.alt = '👤';
-
-  /* TL button = Sign In */
-  const tl = document.getElementById('btn-tl');
-  tl.textContent = 'Sign In';
-  tl.className   = 'btn-tl signin';
-  tl.onclick     = goToSignIn;
-
-  /* Avatar NOT clickable for guest */
-  document.getElementById('av-wrap').onclick = null;
-  document.getElementById('av-badge').style.display = 'none';
-
-  /* Edit name visible for guest too — saves to localStorage */
-
-  /* Guest: show friends tab (localStorage-based, ML style) */
-  document.getElementById('p-tabs').style.display  = '';
-  document.getElementById('ps-fri').classList.add('on');
-  document.getElementById('ps-req').classList.remove('on');
-  document.getElementById('pt-fri').classList.add('on');
-  document.getElementById('pt-req').classList.remove('on');
-  /* Guest friend list (localStorage) */
-  _renderGuestFriends();
-
-  showScr('scr-profile');
+  /* Guest: go directly to game */
+  localStorage.setItem(CFG.LS_MODE, 'guest');
+  goGame();
 }
 
-/* Reset profile UI to defaults before showing */
-function _resetProfileUI(){
-  /* cancel any in-progress name edit */
-  cancelEditName();
-  /* reset name + ID */
-  document.getElementById('pro-name').textContent = '–';
-  document.getElementById('pro-id').textContent   = '––––––';
-  document.getElementById('pro-email').textContent= '';
-  /* reset avatar */
-  const img = document.getElementById('av-img');
-  img.src = ''; img.alt = '👤'; img.onerror = null;
-  /* reset friend lists */
-  _flist = []; _online.clear();
-  document.getElementById('fri-list').innerHTML = '<div class="fri-empty">သူငယ်ချင်း မရှိသေးပါ<small>Player ID ဖြင့် ထည့်ပါ</small></div>';
-  document.getElementById('req-inc').innerHTML  = '<div class="fri-empty">မရှိသေးပါ</div>';
-  document.getElementById('req-out').innerHTML  = '<div class="fri-empty" style="padding:8px 0">–</div>';
-  document.getElementById('req-n').textContent  = '';
-}
 
-/* TL button action (set dynamically) */
-function tlAction(){} /* overwritten by _showProfileAuth / _showProfileGuest */
+/* Reset profile UI to defaults before showing *//* TL button action (set dynamically) */ /* overwritten by _showProfileAuth / _showProfileGuest */
 
 /* Go to sign-in (from guest) */
 /* Show Link Account screen (from guest profile) */
@@ -841,7 +582,6 @@ function goToSignIn(){
 function goBackToGuest(){
   localStorage.removeItem('kk_link_pending');
   localStorage.removeItem('kk_upgrade_nm');
-  showScr('scr-profile');
 }
 
 /* Initiate Google OAuth from link screen */
@@ -882,6 +622,40 @@ async function doLogout(){
 /* ═══════════════════════════════════════════════
    PROFILE LOAD + RENDER
 ═══════════════════════════════════════════════ */
+/* ══ INVITE RECEIVE — auth.html ══ */
+function _startInviteListenerAuth(){
+  if(!_user) return;
+  var _invCh = SB().channel('kk-inv-auth-'+_user.id);
+  _invCh.on('postgres_changes',{event:'INSERT',schema:'public',
+      table:'room_invites',filter:`to_uid=eq.${_user.id}`},
+    (p)=>{ if(p.new?.status==='pending') _showInviteModal(p.new); })
+  .subscribe();
+}
+function _showInviteModal(inv){
+  const el = document.createElement('div');
+  el.id = 'inv-overlay';
+  el.style.cssText = 'position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.85);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:20px';
+  el.innerHTML = `
+    <div style="background:linear-gradient(155deg,rgba(12,8,4,.99),rgba(5,3,8,.99));border:1px solid rgba(212,168,67,.28);border-top:1px solid rgba(255,255,255,.14);border-radius:20px;padding:28px 24px;width:100%;max-width:320px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.8)">
+      <div style="font-size:2.5rem;margin-bottom:10px">📨</div>
+      <div style="font-size:.9rem;font-weight:700;color:#F0E8D8;margin-bottom:4px">${_x(inv.from_name||'Friend')}</div>
+      <div style="font-size:.70rem;color:rgba(180,148,70,.55);margin-bottom:14px">Room ကို ဖိတ်ခေါ်သည်</div>
+      <div style="font-family:'Orbitron',monospace;font-size:1.5rem;color:#F0CC72;letter-spacing:8px;font-weight:700;padding:10px;background:rgba(212,168,67,.08);border-radius:10px;border:1px solid rgba(212,168,67,.2);margin-bottom:18px">${_x(inv.room_code)}</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-play" style="flex:1;font-size:.82rem;padding:10px" onclick="acceptInvite('${inv.id}','${_x(inv.room_code)}')">✅ လက်ခံ</button>
+        <button style="flex:0.5;padding:10px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.22);border-radius:10px;color:rgba(252,165,165,.8);font-family:'Outfit',sans-serif;font-size:.78rem;cursor:pointer" onclick="document.getElementById('inv-overlay').remove()">❌ ငြင်းမည်</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+}
+async function acceptInvite(inviteId, roomCode){
+  document.getElementById('inv-overlay')?.remove();
+  try{ await SB().from('room_invites').update({status:'accepted'}).eq('id',inviteId); }catch(e){}
+  sessionStorage.setItem('kk_pending_room', roomCode);
+  goGame();
+}
+
+
 async function _loadProfile(){
   if(!_user) return;
 
@@ -988,71 +762,12 @@ async function _loadProfile(){
     localStorage.removeItem('kk_upgrade_nm');
   }
 }
-
-function _renderProfile(){
-  if(!_user) return;
-  const nm   = _prof?.username || _user.user_metadata?.full_name || _user.email?.split('@')[0] || 'Player';
-  const id   = _prof?.user_code || '––––––';
-  const av   = _prof?.avatar_url || _user.user_metadata?.avatar_url || null;
-
-  document.getElementById('pro-name').textContent = nm;
-  document.getElementById('pro-id').textContent   = id;
-  document.getElementById('pro-email').textContent= _user.email || '';
-
-  const img = document.getElementById('av-img');
-  if(av){
-    img.src = av; img.alt = '';
-    img.onerror = ()=>{ img.src=''; img.alt='👤'; };
-  } else {
-    img.src = ''; img.alt = '👤';
-  }
-}
-
 /* ═══════════════════════════════════════════════
    EDIT NAME
-═══════════════════════════════════════════════ */
-function startEditName(){
-  document.getElementById('name-row').style.display  = 'none';
-  document.getElementById('edit-row').style.display  = 'flex';
-  const inp = document.getElementById('edit-inp');
-  inp.value = document.getElementById('pro-name').textContent;
-  inp.focus(); inp.select();
-}
-function cancelEditName(){
+═══════════════════════════════════════════════ */function cancelEditName(){
   document.getElementById('edit-row').style.display  = 'none';
   document.getElementById('name-row').style.display  = 'flex';
-}
-async function saveEditName(){
-  const nm = document.getElementById('edit-inp').value.trim();
-  if(!nm || nm.length < 2){ toast('⚠️ 2 လုံးနှင့်အထက်'); return; }
-
-  /* ── GUEST: save to localStorage only ── */
-  if(!_user){
-    const cur = localStorage.getItem(CFG.LS_GNM);
-    if(nm === cur){ cancelEditName(); return; }
-    localStorage.setItem(CFG.LS_GNM, nm);
-    document.getElementById('pro-name').textContent = nm;
-    toast('✓ နာမည် ပြောင်းပြီးပါပြီ');
-    cancelEditName();
-    return;
-  }
-
-  /* ── AUTH: same name — no-op ── */
-  if(_prof && nm === _prof.username){ cancelEditName(); return; }
-  try{
-    /* Duplicate check — case-insensitive (ilike) against all other profiles */
-    const {data:dup} = await SB().from('profiles')
-      .select('id').ilike('username', nm).neq('id', _user.id).maybeSingle();
-    if(dup){ toast('⚠️ Username ရှိပြီးသား — အခြားနာမည် ရွေးပါ'); return; }
-    await SB().from('profiles').update({username:nm, updated_at:new Date().toISOString()}).eq('id', _user.id);
-    if(_prof) _prof.username = nm;
-    document.getElementById('pro-name').textContent = nm;
-    toast('✓ Username ပြောင်းပြီးပါပြီ');
-  }catch(e){ toast('❌ ' + e.message); }
-  cancelEditName();
-}
-
-/* ═══════════════════════════════════════════════
+}/* ═══════════════════════════════════════════════
    AVATAR UPLOAD
 ═══════════════════════════════════════════════ */
 async function uploadAvatar(inp){
@@ -1091,359 +806,16 @@ async function uploadAvatar(inp){
 
 /* ═══════════════════════════════════════════════
    COPY ID
-═══════════════════════════════════════════════ */
-function copyID(){
-  const id = document.getElementById('pro-id').textContent;
-  if(!id || id === '––––––') return;
-  navigator.clipboard?.writeText(id)
-    .then(()=> toast('✓ ID ကူးပြီး: ' + id))
-    .catch(()=> toast('ID: ' + id));
-}
-
-/* ═══════════════════════════════════════════════
+═══════════════════════════════════════════════ *//* ═══════════════════════════════════════════════
    PROFILE SECTION TABS
-═══════════════════════════════════════════════ */
-function setTab(t){
-  ['fri','req'].forEach(x=>{
-    document.getElementById('pt-' +x)?.classList.toggle('on', x===t);
-    document.getElementById('ps-' +x)?.classList.toggle('on', x===t);
-  });
-  if(t === 'req') loadReqs();
-}
-
-/* ═══════════════════════════════════════════════
+═══════════════════════════════════════════════ *//* ═══════════════════════════════════════════════
    FRIENDS — load / render
 ═══════════════════════════════════════════════ */
 /* ═══════════════════════════════════════════════
    INVITE LISTENER — auth.html
-═══════════════════════════════════════════════ */
-function _startInviteListenerAuth(){
-  if(_inviteChAuth||!_user) return;
-  _inviteChAuth = SB().channel('kk-inv-auth-'+_user.id);
-  _inviteChAuth
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'room_invites',
-        filter:`to_uid=eq.${_user.id}`},
-      (payload)=>{
-        if(payload.new?.status==='pending') _showInviteModal(payload.new);
-      })
-    .subscribe();
-}
-
-function _showInviteModal(inv){
-  const fromName = inv.from_name || 'Friend';
-  const roomCode = inv.room_code || '';
-  const html = `
-    <div class="modal-overlay" id="invite-overlay" onclick="this.remove()">
-      <div class="modal-box" onclick="event.stopPropagation()" style="max-width:320px">
-        <div style="text-align:center;padding:10px 0 16px">
-          <div style="font-size:2.5rem;margin-bottom:8px">📨</div>
-          <div style="font-size:.9rem;font-weight:700;color:#F0E8D8;margin-bottom:4px">${_x(fromName)}</div>
-          <div style="font-size:.72rem;color:rgba(180,148,70,.55);margin-bottom:14px">Room ကို ဖိတ်ခေါ်သည်</div>
-          <div style="font-family:'Orbitron',monospace;font-size:1.5rem;color:#F0CC72;letter-spacing:8px;font-weight:700;padding:10px;background:rgba(212,168,67,.08);border-radius:10px;border:1px solid rgba(212,168,67,.2)">${_x(roomCode)}</div>
-        </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn-play" style="flex:1;font-size:.82rem;padding:10px" onclick="acceptInvite('${inv.id}','${_x(roomCode)}')">✅ လက်ခံ</button>
-          <button class="btn-tl logout" style="flex:0.5;font-size:.78rem;padding:10px" onclick="declineInvite('${inv.id}')">❌ ငြင်းမည်</button>
-        </div>
-      </div>
-    </div>`;
-  document.body.insertAdjacentHTML('beforeend', html);
-  toast('📨 ' + _x(fromName) + ' က Room Invite ပို့သည်!', 4000);
-}
-
-async function acceptInvite(inviteId, roomCode){
-  document.getElementById('invite-overlay')?.remove();
-  try{ await SB().from('room_invites').update({status:'accepted'}).eq('id',inviteId); }catch(e){}
-  /* Store room code for game join */
-  sessionStorage.setItem('kk_pending_room', roomCode);
-  goGame();
-}
-async function declineInvite(inviteId){
-  document.getElementById('invite-overlay')?.remove();
-  try{ await SB().from('room_invites').update({status:'declined'}).eq('id',inviteId); }catch(e){}
-}
-
 /* ═══════════════════════════════════════════════
    DM SYSTEM — auth.html
-═══════════════════════════════════════════════ */
-function _startDMListenerAuth(){
-  if(_dmChAuth||!_user) return;
-  _dmChAuth = SB().channel('kk-dm-auth-'+_user.id);
-  _dmChAuth
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'friend_messages',
-        filter:`to_uid=eq.${_user.id}`},
-      (payload)=>{
-        const msg = payload.new; if(!msg) return;
-        _dmUnreadAuth[msg.from_uid] = (_dmUnreadAuth[msg.from_uid]||0)+1;
-        if(_authCurrentDM===msg.from_uid){
-          _appendDMMsg(msg.message, false);
-        } else {
-          toast('💬 ' + _x(msg.from_name||'Friend') + ': ' + _x(msg.message.substring(0,40)), 4000);
-          _renderFriends(); /* refresh unread badges */
-        }
-      })
-    .subscribe();
-}
-
-function _appendDMMsg(text, isMe){
-  const box = document.getElementById('auth-dm-msgs');
-  if(!box) return;
-  const d = document.createElement('div');
-  d.style.cssText = `display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:5px`;
-  d.innerHTML = `<div style="max-width:78%;padding:7px 11px;border-radius:${isMe?'12px 3px 12px 12px':'3px 12px 12px 12px'};background:${isMe?'rgba(212,168,67,.12)':'rgba(255,255,255,.06)'};border:1px solid ${isMe?'rgba(212,168,67,.22)':'rgba(255,255,255,.08)'};font-size:.72rem;color:#F0E8D8;font-family:'Outfit',sans-serif;line-height:1.5;word-break:break-word">${_x(text)}</div>`;
-  box.appendChild(d);
-  box.scrollTop = box.scrollHeight;
-}
-
-async function openDM(friendUid, friendName){
-  if(!_user) return;
-  _authCurrentDM = friendUid;
-  delete _dmUnreadAuth[friendUid];
-  _renderFriends(); /* clear unread badge */
-
-  let msgs = [];
-  try{
-    const res = await SB().from('friend_messages')
-      .select('id,from_uid,message,created_at')
-      .or(`and(from_uid.eq.${_user.id},to_uid.eq.${friendUid}),and(from_uid.eq.${friendUid},to_uid.eq.${_user.id})`)
-      .order('created_at',{ascending:true}).limit(60);
-    if(res.data) msgs = res.data;
-  }catch(e){ console.warn('DM load:', e); }
-
-  const renderMsgs = (list)=> list.length
-    ? list.map(m=>{
-        const isMe = m.from_uid===_user.id;
-        return `<div style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:5px">
-          <div style="max-width:78%;padding:7px 11px;border-radius:${isMe?'12px 3px 12px 12px':'3px 12px 12px 12px'};background:${isMe?'rgba(212,168,67,.12)':'rgba(255,255,255,.06)'};border:1px solid ${isMe?'rgba(212,168,67,.22)':'rgba(255,255,255,.08)'};font-size:.72rem;color:#F0E8D8;line-height:1.5;word-break:break-word;font-family:'Outfit',sans-serif">${_x(m.message)}</div>
-        </div>`;
-      }).join('')
-    : '<div style="text-align:center;padding:20px;font-size:.70rem;color:rgba(180,148,70,.35)">Message မရှိသေးပါ</div>';
-
-  const html = `
-    <div class="modal-overlay" id="dm-overlay" onclick="">
-      <div class="modal-box" onclick="event.stopPropagation()" style="max-width:360px;max-height:80vh;display:flex;flex-direction:column">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-          <button onclick="document.getElementById('dm-overlay').remove();_authCurrentDM=null" style="background:none;border:none;cursor:pointer;color:#F0E8D8;font-size:1rem;padding:0">✕</button>
-          <div style="font-size:.88rem;font-weight:700;color:#F0E8D8;font-family:'Outfit',sans-serif">💬 ${_x(friendName)}</div>
-        </div>
-        <div id="auth-dm-msgs" style="flex:1;overflow-y:auto;max-height:300px;display:flex;flex-direction:column;padding:4px 0;scrollbar-width:thin;scrollbar-color:rgba(212,168,67,.1) transparent;min-height:80px">
-          ${renderMsgs(msgs)}
-        </div>
-        <div style="display:flex;gap:8px;padding-top:10px;margin-top:8px;border-top:1px solid rgba(212,168,67,.12)">
-          <input class="linp" id="auth-dm-inp" placeholder="Message ရေးပါ..." maxlength="200"
-            style="flex:1;margin-bottom:0;padding:8px 12px"
-            onkeydown="if(event.key==='Enter')sendDM('${friendUid}','${_x(friendName)}')">
-          <button class="btn-play" style="padding:8px 16px;font-size:.85rem;width:auto" onclick="sendDM('${friendUid}','${_x(friendName)}')">▶</button>
-        </div>
-      </div>
-    </div>`;
-  document.body.insertAdjacentHTML('beforeend', html);
-  const box = document.getElementById('auth-dm-msgs');
-  if(box) box.scrollTop = box.scrollHeight;
-  document.getElementById('auth-dm-inp')?.focus();
-}
-
-async function sendDM(toUid, toName){
-  const inp = document.getElementById('auth-dm-inp');
-  if(!inp) return;
-  const msg = inp.value.trim(); if(!msg) return;
-  if(!_user) return;
-  inp.value = '';
-  const fromName = _prof?.username || _user.email?.split('@')[0] || 'Player';
-  try{
-    await SB().from('friend_messages').insert({
-      from_uid:_user.id, to_uid:toUid,
-      message:msg, from_name:fromName
-    });
-    _appendDMMsg(msg, true);
-  }catch(e){
-    console.error('DM send:',e);
-    toast('❌ Message မပို့ရပါ');
-    inp.value = msg;
-  }
-}
-
-/* ═══════════════════════════════════════════════
-   IN-MATCH STATUS — auth.html
-═══════════════════════════════════════════════ */
-function _startStatusListenerAuth(){
-  if(_statusChAuth||!_user) return;
-  _statusChAuth = SB().channel('kk-fstat-auth-'+_user.id);
-  _statusChAuth
-    .on('postgres_changes',{event:'*',schema:'public',table:'user_status'},
-      (payload)=>{
-        const row = payload.new||payload.old; if(!row) return;
-        /* Check if this uid is one of our friends */
-        const isFriend = _flist.some(f=>f.requester_id===row.uid||f.addressee_id===row.uid);
-        if(isFriend){ _friendStatuses[row.uid]=row.status||'lobby'; _renderFriends(); }
-      })
-    .subscribe();
-}
-
-async function _fetchFriendStatusesAuth(){
-  if(!_flist.length||!_user) return;
-  const myId = _user.id;
-  const uids = _flist.map(f=>f.requester_id===myId?f.addressee_id:f.requester_id).filter(Boolean);
-  if(!uids.length) return;
-  try{
-    const {data} = await SB().from('user_status').select('uid,status').in('uid',uids);
-    if(data) data.forEach(r=>{ _friendStatuses[r.uid]=r.status||'lobby'; });
-  }catch(e){}
-}
-
-
-async function loadFriends(){
-  if(!_user) return;
-  try{
-    const {data, error} = await SB().from('friendships')
-      .select(`id,status,requester_id,addressee_id,
-        req:profiles!requester_id(id,username,avatar_url,user_code),
-        adr:profiles!addressee_id(id,username,avatar_url,user_code)`)
-      .or(`requester_id.eq.${_user.id},addressee_id.eq.${_user.id}`)
-      .eq('status','accepted');
-    if(error) throw error;
-    _flist = data || [];
-    await _fetchFriendStatusesAuth();
-    _renderFriends();
-  }catch(e){ console.warn('loadFriends:', e); }
-
-
-/* ═══════════════════════════════════════════════
-   GUEST FRIEND SYSTEM (auth-3.html)
-   ML style: guests store friends in localStorage
-═══════════════════════════════════════════════ */
-const _GF_KEY = 'kk_gfri';
-function _getGuestFriends(){
-  try{ return JSON.parse(localStorage.getItem(_GF_KEY)||'[]'); }catch(e){ return []; }
-}
-function _saveGuestFriends(arr){
-  try{ localStorage.setItem(_GF_KEY, JSON.stringify(arr)); }catch(e){}
-}
-
-function _renderGuestFriends(){
-  const box = document.getElementById('fri-list');
-  if(!box) return;
-  const list = _getGuestFriends();
-  if(!list.length){
-    box.innerHTML='<div class="fri-empty">သူငယ်ချင်း မရှိသေးပါ<small>Player ID ဖြင့် ထည့်ပါ</small></div>';
-    return;
-  }
-  box.innerHTML = list.map(g => {
-    const av = g.avatar_url
-      ? `<img class="fav" src="${_x(g.avatar_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextSibling&&(this.nextSibling.style.display='flex')"><div class="fav-fb" style="display:none">👤</div>`
-      : `<div class="fav-fb">👤</div>`;
-    return `<div class="fri">
-      ${av}
-      <div class="finfo">
-        <div class="fnm">${_x(g.username||'–')}</div>
-        <div class="fid">${_x(g.user_code||'')}</div>
-        <div class="fst"><span class="fpend">👤 Guest Friend</span></div>
-      </div>
-      <div class="fbts">
-        <button class="fbtn fb-rem" onclick="removeGuestFriend('${_x(g.user_code)}')">ဖယ်ရှား</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function removeGuestFriend(code){
-  const list = _getGuestFriends().filter(x => x.user_code !== code);
-  _saveGuestFriends(list);
-  _renderGuestFriends();
-}
-
-async function addGuestFriend(){
-  const code = document.getElementById('add-inp').value.trim().toUpperCase();
-  if(!code || code.length < 4){ toast('⚠️ Player ID ထည့်ပါ'); return; }
-  const myGid = getGuestID();
-  if(code === myGid){ toast('⚠️ ကိုယ့် ID မဖြစ်နိုင်ပါ'); return; }
-  if(_getGuestFriends().find(x => x.user_code === code)){ toast('✓ ရှိပြီးသား သူငယ်ချင်း'); return; }
-  const btn = document.getElementById('btn-add');
-  btn.disabled = true; btn.textContent = '…';
-  try{
-    /* Try to fetch profile from DB for name+avatar */
-    const {data:p} = await SB().from('profiles').select('username,avatar_url,user_code').eq('user_code',code).maybeSingle();
-    const gProf = { user_code:code, username:p?.username||code, avatar_url:p?.avatar_url||null };
-    const list = _getGuestFriends();
-    list.push(gProf);
-    _saveGuestFriends(list);
-    document.getElementById('add-inp').value = '';
-    toast('✓ ' + _x(gProf.username) + ' သူငယ်ချင်း ထည့်ပြီးပါပြီ');
-    _renderGuestFriends();
-  }catch(e){
-    /* Offline fallback */
-    const list = _getGuestFriends();
-    list.push({user_code:code, username:code, avatar_url:null});
-    _saveGuestFriends(list);
-    document.getElementById('add-inp').value = '';
-    toast('✓ ' + code + ' ထည့်ပြီး (offline)');
-    _renderGuestFriends();
-  }
-  btn.disabled = false; btn.textContent = 'ထည့်မည်';
-}
-
-}
-
-async function loadReqs(){
-  if(!_user) return;
-  try{
-    const {data, error} = await SB().from('friendships')
-      .select(`id,status,requester_id,addressee_id,
-        req:profiles!requester_id(id,username,avatar_url,user_code),
-        adr:profiles!addressee_id(id,username,avatar_url,user_code)`)
-      .or(`requester_id.eq.${_user.id},addressee_id.eq.${_user.id}`)
-      .neq('status','accepted');
-    if(error) throw error;
-    const inc = (data||[]).filter(f=> f.addressee_id===_user.id && f.status==='pending');
-    const out = (data||[]).filter(f=> f.requester_id===_user.id && f.status==='pending');
-    _renderReqs(inc, out);
-  }catch(e){ console.warn('loadReqs:', e); }
-}
-
-function _renderFriends(){
-  const box = document.getElementById('fri-list');
-  if(!_flist.length){
-    box.innerHTML='<div class="fri-empty">သူငယ်ချင်း မရှိသေးပါ<small>Player ID ဖြင့် ထည့်ပါ</small></div>';
-    return;
-  }
-  box.innerHTML = _flist.map(f=>{
-    const other = f.requester_id===_user.id ? f.adr : f.req;
-    if(!other) return '';  /* guard: join returned null */
-    return _friHTML(f.id, other, _online.has(other.id), 'acc');
-  }).join('');
-}
-
-function _renderReqs(inc, out){
-  const nb = document.getElementById('req-n');
-  nb.textContent = inc.length ? ` (${inc.length})` : '';
-  document.getElementById('req-inc').innerHTML = inc.length
-    ? inc.map(f=> _friHTML(f.id, f.req, false, 'inc')).join('')
-    : '<div class="fri-empty">မရှိသေးပါ</div>';
-  document.getElementById('req-out').innerHTML = out.length
-    ? out.map(f=> _friHTML(f.id, f.adr, false, 'out')).join('')
-    : '<div class="fri-empty" style="padding:8px 0">–</div>';
-}
-
-function _friHTML(fid, p, online, type){
-  if(!p) return '';  /* guard: profile join was null */
-  const av = p.avatar_url
-    ? `<img class="fav" src="${_x(p.avatar_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div class="fav-fb" style="display:none">👤</div>`
-    : `<div class="fav-fb">👤</div>`;
-  const inMatch = (_friendStatuses&&_friendStatuses[p.id]==='in_match');
-  const statusTxt = inMatch ? '🎮 In Match' : (online ? 'Online' : 'Offline');
-  const statusColor = inMatch ? 'rgba(245,158,11,.85)' : (online ? 'var(--ok)' : 'rgba(255,255,255,.28)');
-  const st = type==='acc'
-    ? `<div class="${online?'dot-on':'dot-off'}"></div><span class="fst-txt" style="color:${statusColor}">${statusTxt}</span>`
-    : `<span class="fpend">${type==='inc'?'⏳ ခေါ်ထားသည်':'📤 Pending'}</span>`;
-  const dmBadge = (_dmUnreadAuth&&_dmUnreadAuth[p.id]) ? `<span style="background:#EF4444;color:#fff;border-radius:99px;padding:0 3px;font-size:.5rem;margin-left:2px">${_dmUnreadAuth[p.id]}</span>` : '';
-  const bt = type==='acc'
-    ? `<button class="fbtn fb-dm" onclick="openDM('${p.id}','${_x(p.username||'')}')">💬${dmBadge}</button><button class="fbtn fb-rem" onclick="delFri('${fid}')">ဖယ်ရှား</button>`
-    : type==='inc'
-    ? `<button class="fbtn fb-acc" onclick="accFri('${fid}')">လက်ခံ</button><button class="fbtn fb-rem" onclick="decFri('${fid}')">ငြင်းမည်</button>`
-    : `<button class="fbtn fb-can" onclick="delFri('${fid}')">ဖျက်မည်</button>`;
-  return `<div class="fri">${av}<div class="finfo"><div class="fnm">${_x(p.username||'–')}</div><div class="fid">${_x(p.user_code||'')}</div><div class="fst">${st}</div></div><div class="fbts">${bt}</div></div>`;
-}
-
+═══════════════════════════════════════════════ *//* ═══════════════════════════════════════════════
 /* ── Friend status tracking ── */
 let _friendStatuses = {};   /* {uid: 'lobby'|'in_match'} */
 let _dmUnreadAuth = {};     /* {uid: count} */
@@ -1452,206 +824,14 @@ let _dmChAuth = null;       /* DM realtime channel */
 let _statusChAuth = null;   /* status realtime channel */
 let _authCurrentDM = null;  /* uid of open DM thread */
 
-/* ── Friend actions ── */
-async function addFriend(){
-  /* Route guest to localStorage-based friend add */
-  if(!_user){ await addGuestFriend(); return; }
-  const code = document.getElementById('add-inp').value.trim().toUpperCase();
-  if(!code || code.length < 4){ toast('⚠️ Player ID ထည့်ပါ'); return; }
-  if(_prof && code === _prof.user_code){ toast('⚠️ ကိုယ့် ID မဖြစ်နိုင်ပါ'); return; }
-  const btn = document.getElementById('btn-add');
-  btn.disabled = true; btn.textContent = '…';
-  try{
-    /* Search profiles by user_code */
-    const {data:tg, error:te} = await SB()
-      .from('profiles').select('id,username').eq('user_code', code).maybeSingle();
-    if(te){ toast('❌ DB Error: ' + te.message); btn.disabled=false; btn.textContent='ထည့်မည်'; return; }
-    if(!tg){
-      /* Not found — show helpful message */
-      toast('❌ ID မတွေ့ပါ: ' + code + ' — သူ ပြန်ဝင်ပြီး ထပ်ကြိုးစားပါ');
-      btn.disabled=false; btn.textContent='ထည့်မည်'; return;
-    }
-    const {data:ex} = await SB().from('friendships').select('id,status')
-      .or(`and(requester_id.eq.${_user.id},addressee_id.eq.${tg.id}),and(requester_id.eq.${tg.id},addressee_id.eq.${_user.id})`)
-      .maybeSingle();
-    if(ex){
-      if(ex.status==='accepted'){
-        toast('✓ ရှိပြီးသား သူငယ်ချင်း');
-      } else if(ex.requester_id === _user.id){
-        toast('⏳ ခေါ်ချက် ပို့ပြီးသား — ပြန်ဖြေဆိုမည်ကို စောင့်နေသည်');
-      } else {
-        /* They already sent ME a request — prompt to accept */
-        toast('💡 သူများကပဲ ခေါ်ထားသည် — ခေါ်ချက် Tab မှ လက်ခံနိုင်သည်');
-        setTab('req'); /* switch to requests tab */
-      }
-      btn.disabled=false; btn.textContent='ထည့်မည်'; return;
-    }
-    const {error} = await SB().from('friendships').insert({requester_id:_user.id, addressee_id:tg.id, status:'pending'});
-    if(error) throw error;
-    document.getElementById('add-inp').value = '';
-    toast('✓ ' + _x(tg.username) + ' ထံ ခေါ်ချက် ပို့ပြီးပါပြီ');
-  }catch(e){ toast('❌ ' + e.message); }
-  finally{ btn.disabled=false; btn.textContent='ထည့်မည်'; }
-}
-
-async function accFri(fid){
-  try{
-    await SB().from('friendships').update({status:'accepted'}).eq('id', fid);
-    toast('✓ သူငယ်ချင်း ထည့်ပြီးပါပြီ');
-    await Promise.all([loadFriends(), loadReqs()]);
-  }catch(e){ toast('❌ ' + e.message); }
-}
-async function decFri(fid){ try{ await delFri(fid, 'ငြင်းပယ်ပြီးပါပြီ'); }catch(e){ toast('❌ ' + e.message); } }
-async function delFri(fid, msg='ပြီးပါပြီ'){
-  try{
-    await SB().from('friendships').delete().eq('id', fid);
-    toast('✓ ' + msg);
-    await Promise.all([loadFriends(), loadReqs()]);
-  }catch(e){ toast('❌ ' + e.message); }
-}
-
 /* ═══════════════════════════════════════════════
    REALTIME PRESENCE + NOTIFICATIONS
-═══════════════════════════════════════════════ */
-function _startPresence(){
-  if(!_user || !_prof || _presenceStarted) return;
-  _presenceStarted = true;
-  _stopPresence(); /* clean any stale channels first */
-
-  /* presence channel */
-  _pch = SB().channel('kk-presence', {config:{presence:{key:_user.id}}});
-  _pch
-    .on('presence', {event:'sync'}, ()=>{
-      const st  = _pch.presenceState();
-      const prev = new Set(_online);
-      _online.clear();
-      Object.keys(st).filter(k=> k !== _user.id).forEach(k=> _online.add(k));
-      /* notify newly online friends — skip first sync to avoid login-flood */
-      if(_presenceReady){
-        _online.forEach(uid=>{
-          if(!prev.has(uid)){
-            const f = _flist.find(x=> x.requester_id===uid || x.addressee_id===uid);
-            if(f){
-              const p = f.requester_id===_user.id ? f.adr : f.req;
-              if(p) _notifyOnline(p.username || 'Friend');
-            }
-          }
-        });
-      }
-      _presenceReady = true; /* mark initial sync done */
-      _renderFriends();
-    })
-    .on('presence', {event:'join'}, ({key})=>{
-      if(key === _user.id) return; /* self-join: ignore */
-      _online.add(key);
-      if(_presenceReady){ /* only notify after initial sync */
-        const f = _flist.find(x=> x.requester_id===key || x.addressee_id===key);
-        if(f){
-          const p = f.requester_id===_user.id ? f.adr : f.req;
-          if(p) _notifyOnline(p.username || 'Friend');
-        }
-      }
-      _renderFriends();
-    })
-    .on('presence', {event:'leave'}, ({key})=>{
-      _online.delete(key);
-      _renderFriends();
-    })
-    .subscribe(async(s)=>{
-      if(s === 'SUBSCRIBED'){
-        await _pch.track({user_id:_user.id, username:_prof?.username||'', ts:Date.now()});
-      }
-    });
-
-  /* ── Start invite + DM + status listeners ── */
-  _startInviteListenerAuth();
-  _startDMListenerAuth();
-  _startStatusListenerAuth();
-
-  /* friend request watch channel (unique per user to avoid conflicts) */
-  _fwch = SB().channel('kk-frw-' + _user.id);
-  _fwch
-    /* New incoming request */
-    .on('postgres_changes',
-      {event:'INSERT', schema:'public', table:'friendships', filter:`addressee_id=eq.${_user.id}`},
-      async(payload)=>{
-        if(payload.new?.status === 'pending'){
-          const {data:p} = await SB().from('profiles').select('username').eq('id', payload.new.requester_id).single();
-          _notifyRequest(p?.username || 'Someone');
-          await loadReqs();
-        }
-      }
-    )
-    /* Request accepted — refresh friends list so my Pending → Friends */
-    .on('postgres_changes',
-      {event:'UPDATE', schema:'public', table:'friendships'},
-      async(payload)=>{
-        if(payload.new?.status === 'accepted'){
-          const involved = payload.new.requester_id === _user.id
-                        || payload.new.addressee_id === _user.id;
-          if(involved){
-            await Promise.all([loadFriends(), loadReqs()]);
-          }
-        }
-      }
-    )
-    /* Request deleted — remove from my lists */
-    .on('postgres_changes',
-      {event:'DELETE', schema:'public', table:'friendships'},
-      async(payload)=>{
-        const involved = payload.old?.requester_id === _user.id
-                      || payload.old?.addressee_id === _user.id;
-        if(involved){
-          await Promise.all([loadFriends(), loadReqs()]);
-        }
-      }
-    )
-    .subscribe();
-}
-
-function _stopPresence(){
-  if(_pch){ try{ SB().removeChannel(_pch); }catch(e){} _pch=null; }
-  if(_fwch){ try{ SB().removeChannel(_fwch); }catch(e){} _fwch=null; }
-  _online.clear(); _presenceStarted=false; _presenceReady=false;
-}
-
-/* ── Notifications + chime ── */
-function _notifyOnline(name){
-  _chime(false);
-  toast('🟢 ' + _x(name) + ' Online ဖြစ်လာပါပြီ', 3500);
-}
-function _notifyRequest(name){
+═══════════════════════════════════════════════ *//* ── Notifications + chime ── */function _notifyRequest(name){
   _chime(true);
   toast('👤 ' + _x(name) + ' က သူငယ်ချင်း ခေါ်သည်', 4000);
   const nb = document.getElementById('req-n');
   if(nb) nb.textContent = ` (${(parseInt(nb.textContent.replace(/\D/g,''))||0)+1})`;
-}
-function _chime(req=false){
-  try{
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    if(req){
-      [[0,784],[0.18,988]].forEach(([d,f])=>{
-        const o=ctx.createOscillator(), g=ctx.createGain();
-        o.connect(g); g.connect(ctx.destination);
-        o.frequency.setValueAtTime(f, ctx.currentTime+d);
-        g.gain.setValueAtTime(0, ctx.currentTime+d);
-        g.gain.linearRampToValueAtTime(.18, ctx.currentTime+d+.02);
-        g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime+d+.32);
-        o.start(ctx.currentTime+d); o.stop(ctx.currentTime+d+.32);
-      });
-    } else {
-      const o=ctx.createOscillator(), g=ctx.createGain();
-      o.type='sine'; o.connect(g); g.connect(ctx.destination);
-      o.frequency.setValueAtTime(880, ctx.currentTime);
-      o.frequency.exponentialRampToValueAtTime(660, ctx.currentTime+.18);
-      g.gain.setValueAtTime(.15, ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime+.40);
-      o.start(ctx.currentTime); o.stop(ctx.currentTime+.40);
-    }
-  }catch(e){}
-}
-
-/* ═══════════════════════════════════════════════
+}/* ═══════════════════════════════════════════════
    GO TO GAME
 ═══════════════════════════════════════════════ */
 function goGame(){
