@@ -1144,7 +1144,10 @@ function _buildLobby(p){
   var badge=document.createElement('div');badge.id='_sg-badge';
   badge.title='Profile ပြင်ရန် နှိပ်ပါ';
   badge.addEventListener('click',_openEdit);
-  var nm=p?p.name:(localStorage.getItem('kk_gnm')||'Player');
+  var nm=p?p.name:(localStorage.getItem('kk_gnm')||'');
+  /* Pre-fill name input from auth session or guest localStorage */
+  var ni=$('inp-name');
+  if(ni&&!ni.value&&nm)ni.value=nm;
   var avH=p&&p.avatar
     ?'<img src="'+_x(p.avatar)+'" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid '+GL.goldBd+';box-shadow:0 0 8px rgba(212,168,67,.18)" onerror="this.style.display=\'none\'">'
     :'<span style="width:32px;height:32px;border-radius:50%;background:'+GL.goldDm+';flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.05rem;border:1px solid '+GL.goldBd+'">👤</span>';
@@ -1293,10 +1296,19 @@ if(typeof _oAR==='function'){
 
 /* ═══════════════════════════════ INIT ═════════════════════════════════ */
 _css();
-if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',function(){_buildLobby(_kp);});
-}else{
+function _doInit(){
   _buildLobby(_kp);
+  /* Always pre-fill name input regardless of badge state */
+  var ni=$('inp-name');
+  if(ni&&!ni.value){
+    var _nm=(_kp&&_kp.name)||localStorage.getItem('kk_gnm')||'';
+    if(_nm&&!_nm.startsWith('Guest·'))ni.value=_nm;
+  }
+}
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',_doInit);
+}else{
+  _doInit();
 }
 window._kkPlayer=_kp;
 window._sgOpenEdit=_openEdit;
