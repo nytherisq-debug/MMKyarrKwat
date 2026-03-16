@@ -646,6 +646,23 @@ window._sgAddFriend=async function(){
   var btn=$('_sg-addbtn');if(btn){btn.disabled=true;btn.textContent='…';}
   var sb=_sb();
   if(!sb){_msg('_sg-addmsg','er','❌ Supabase မရပါ');if(btn&&$('_sg-m')){btn.disabled=false;btn.textContent='ခေါ်မည်';}return;}
+  /* ── Pre-flight: ensure caller's own user_code is written to DB ──
+     Handles edge case where user sees their ID locally but DB hasn't received it yet */
+  if(user&&prof&&prof.user_code){
+    try{
+      var selfCheck=await sb.from('profiles').select('user_code').eq('id',user.id).single();
+      if(!selfCheck.data?.user_code){
+        /* Our own code not in DB yet — write it now before searching */
+        _msg('_sg-addmsg','info','⏳ ID ကို DB မှာ သိမ်းနေသည်…');
+        await sb.from('profiles')
+          .update({user_code:prof.user_code,updated_at:new Date().toISOString()})
+          .eq('id',user.id)
+          .is('user_code',null);
+        /* brief wait then continue */
+        await new Promise(function(r){setTimeout(r,500);});
+      }
+    }catch(e){/* non-fatal */}
+  }
   try{
     var tg=await sb.from('profiles').select('id,username').eq('user_code',code).single();
     if(tg.error||!tg.data){_msg('_sg-addmsg','er','❌ ID မတွေ့ပါ: '+code);if(btn&&$('_sg-m')){btn.disabled=false;btn.textContent='ခေါ်မည်';}return;}
