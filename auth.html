@@ -343,17 +343,16 @@ function SB(){
    — same concept as PUBG/ML guest ID
 ═══════════════════════════════════════════════ */
 function getGuestID(){
-  /* Wrapped in try/catch — private browsing mode throws SecurityError */
+  /* KKG + 5 chars — permanent, same KK format as auth users */
   try{
     let id = localStorage.getItem(CFG.LS_GID);
-    if(!id){
-      id = 'G' + _randChars(7);
+    if(!id || (!id.startsWith('KKG') && !id.startsWith('KK'))){
+      id = 'KKG' + _randChars(5).toUpperCase();
       try{ localStorage.setItem(CFG.LS_GID, id); }catch(e){}
     }
-    return id || ('G' + _randChars(7));
+    return id;
   }catch(e){
-    /* Private browsing: generate session-scoped guest ID */
-    if(!window._sgGuestIdFallback) window._sgGuestIdFallback = 'G' + _randChars(7);
+    if(!window._sgGuestIdFallback) window._sgGuestIdFallback = 'KKG' + _randChars(5).toUpperCase();
     return window._sgGuestIdFallback;
   }
 }
@@ -361,7 +360,7 @@ function getGuestName(){
   try{
     let nm = localStorage.getItem(CFG.LS_GNM);
     if(!nm){
-      nm = 'Guest·' + getGuestID().slice(1,5);
+      nm = 'Guest·' + getGuestID().slice(3,7);
       try{ localStorage.setItem(CFG.LS_GNM, nm); }catch(e){}
     }
     return nm;
@@ -393,7 +392,6 @@ function _randChars(n){
   if(mode === 'logout'){
     history.replaceState({}, '', window.location.pathname);
     localStorage.setItem(CFG.LS_MODE, 'auth');
-  if(_user) _startInviteListenerAuth();
     showScr('scr-auth');
     _listenAuth();
     return;
@@ -443,7 +441,7 @@ function _sessionExpiredRedirect(){
   }, 1800);
 }
 
-function _listenAuth(){
+async function _listenAuth(){
   if(_listening) return;
   _listening = true;
   SB().auth.onAuthStateChange(async(evt, sess)=>{
@@ -664,7 +662,7 @@ async function _loadProfile(){
   const nm = m.full_name || m.name || m.username || _user.email?.split('@')[0] || 'Player';
 
   /* Deterministic code: same UID → same 8-char code on ANY device, ALWAYS */
-  function _detCode(uid){
+  async function _detCode(uid){
     let h = 0x811c9dc5;
     for(let i=0;i<uid.length;i++){ h ^= uid.charCodeAt(i); h = (h*0x01000193)>>>0; }
     const C='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -834,7 +832,7 @@ let _authCurrentDM = null;  /* uid of open DM thread */
 }/* ═══════════════════════════════════════════════
    GO TO GAME
 ═══════════════════════════════════════════════ */
-function goGame(){
+async function goGame(){
   /* ── Sync player data to sessionStorage for game to consume ── */
   try{
     let player;
@@ -849,12 +847,19 @@ function goGame(){
         email     : _user.email      || null,
       };
     } else {
-      /* Guest */
+      /* Guest — register in guest_profiles so auth users can find them */
+      const _gid = getGuestID();
+      const _gnm = localStorage.getItem(CFG.LS_GNM) || getGuestName();
+      try{
+        await SB().from('guest_profiles')
+          .upsert({id:_gid, display_name:_gnm, updated_at:new Date().toISOString()},
+                  {onConflict:'id', ignoreDuplicates:false});
+      }catch(e){ console.warn('guest_profiles upsert:',e); }
       player = {
         type      : 'guest',
-        id        : getGuestID(),
+        id        : _gid,
         uid       : null,
-        name      : localStorage.getItem(CFG.LS_GNM) || getGuestName(),
+        name      : _gnm,
         avatar    : null,
         email     : null,
       };
