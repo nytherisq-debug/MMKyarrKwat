@@ -100,7 +100,7 @@ function _css(){
 /* ── Header ── */
 ._sg-hdr{padding:18px 20px 0;display:flex;align-items:center;gap:10px}
 ._sg-htitle{
-  flex:1;font-family:'Cinzel Decorative',serif;font-size:.86rem;font-weight:700;letter-spacing:.06em;
+  flex:1;font-family:\'Cinzel Decorative\',serif;font-size:.86rem;font-weight:700;letter-spacing:.06em;
   background:linear-gradient(90deg,#D4A843,#F0CC72,#D4A843);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
@@ -112,14 +112,14 @@ function _css(){
 }
 ._sg-hclose:hover{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#fca5a5}
 ._sg-body{padding:14px 18px 20px;display:flex;flex-direction:column;gap:12px}
-._sg-lbl{font-size:.58rem;color:rgba(212,168,67,.52);letter-spacing:2px;text-transform:uppercase;font-family:'Outfit',sans-serif;font-weight:600}
+._sg-lbl{font-size:.58rem;color:rgba(212,168,67,.52);letter-spacing:2px;text-transform:uppercase;font-family:\'Outfit\',sans-serif;font-weight:600}
 
 /* ── Inputs ── */
 ._sg-inp{
   width:100%;padding:9px 13px;border-radius:10px;outline:none;
   background:rgba(255,255,255,.04);
   border:1px solid ${GL.border};border-top:1px solid ${GL.hi};
-  color:#F0E8D8;font-family:'Outfit',sans-serif;font-size:.86rem;
+  color:#F0E8D8;font-family:\'Outfit\',sans-serif;font-size:.86rem;
   backdrop-filter:${GL.bl.md};-webkit-backdrop-filter:${GL.bl.md};
   box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
   transition:border-color .2s,box-shadow .2s;
@@ -129,7 +129,7 @@ function _css(){
 ._sg-inp:focus{border-color:${GL.goldBd};box-shadow:0 0 0 3px rgba(212,168,67,.08)}
 
 /* ── Msg ── */
-._sg-msg{padding:8px 12px;border-radius:9px;font-size:.72rem;line-height:1.5;display:none;font-family:'Outfit',sans-serif}
+._sg-msg{padding:8px 12px;border-radius:9px;font-size:.72rem;line-height:1.5;display:none;font-family:\'Outfit\',sans-serif}
 ._sg-msg.on{display:block}
 ._sg-msg.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.24);color:#6ee7b7}
 ._sg-msg.er{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.24);color:#fca5a5}
@@ -140,7 +140,7 @@ function _css(){
   width:100%;padding:10px 16px;border:none;border-radius:12px;cursor:pointer;
   background:linear-gradient(135deg,#4A2A04,#C0902A 35%,#E0B848 50%,#C08828 65%,#6A4008);
   border:1px solid rgba(255,255,255,.20);border-top:1px solid rgba(255,255,255,.32);
-  color:#060300;font-family:'Outfit',sans-serif;font-size:.86rem;font-weight:700;
+  color:#060300;font-family:\'Outfit\',sans-serif;font-size:.86rem;font-weight:700;
   box-shadow:0 4px 18px rgba(200,150,42,.22),inset 0 1px 0 rgba(255,255,255,.18);
   transition:all .2s cubic-bezier(.16,1,.3,1);overflow:hidden;
 }
@@ -149,14 +149,14 @@ function _css(){
 ._sg-bglass{
   width:100%;padding:9px 16px;border-radius:10px;cursor:pointer;
   background:${GL.bg};border:1px solid ${GL.border};border-top:1px solid ${GL.hi};
-  color:rgba(200,180,255,.65);font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:600;
+  color:rgba(200,180,255,.65);font-family:\'Outfit\',sans-serif;font-size:.78rem;font-weight:600;
   backdrop-filter:${GL.bl.md};transition:all .2s;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
 }
 ._sg-bglass:hover{background:rgba(255,255,255,.08);border-color:${GL.goldBd};color:${GL.goldHi}}
 ._sg-bsm{
   padding:5px 11px;border-radius:8px;cursor:pointer;
-  font-family:'Outfit',sans-serif;font-size:.65rem;font-weight:600;
+  font-family:\'Outfit\',sans-serif;font-size:.65rem;font-weight:600;
   border:1px solid;transition:all .16s;white-space:nowrap;
 }
 ._sg-badd{color:#6ee7b7;border-color:rgba(16,185,129,.28);background:rgba(16,185,129,.07)}
@@ -198,7 +198,7 @@ function _css(){
 ._sg-tabs{display:flex;border-bottom:1px solid rgba(212,168,67,.08);margin:0 -18px;padding:0 18px}
 ._sg-tab{
   flex:1;padding:9px 0;background:none;border:none;cursor:pointer;
-  font-family:'Outfit',sans-serif;font-size:.72rem;font-weight:600;
+  font-family:\'Outfit\',sans-serif;font-size:.72rem;font-weight:600;
   color:rgba(180,148,70,.45);border-bottom:2px solid transparent;margin-bottom:-1px;
   transition:all .18s;position:relative;
 }
@@ -243,7 +243,7 @@ function _css(){
 ._sg-sdot.off{background:rgba(255,255,255,.22)}
 ._sg-binv{
   padding:5px 11px;border-radius:8px;cursor:pointer;
-  font-family:'Outfit',sans-serif;font-size:.65rem;font-weight:700;
+  font-family:\'Outfit\',sans-serif;font-size:.65rem;font-weight:700;
   border:1px solid rgba(99,179,237,.35);
   color:rgba(147,210,255,.85);background:rgba(99,179,237,.09);
   transition:all .16s;white-space:nowrap;flex-shrink:0;
@@ -258,9 +258,9 @@ function _css(){
 }
 ._sg-fp-av{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2.5px solid ${GL.goldBd};box-shadow:0 0 18px rgba(212,168,67,.25),0 4px 16px rgba(0,0,0,.5)}
 ._sg-fp-avfb{width:64px;height:64px;border-radius:50%;background:rgba(212,168,67,.07);display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:2.5px solid ${GL.goldBd}}
-._sg-fp-name{font-size:.84rem;font-weight:700;color:#F0E8D8;font-family:'Outfit',sans-serif;text-align:center}
-._sg-fp-id{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:${GL.r.full};background:${GL.goldDm};border:1px solid ${GL.goldBd};font-size:.68rem;font-family:'Outfit',monospace;font-weight:700;color:${GL.goldHi};letter-spacing:.07em}
-._sg-fp-status{display:flex;align-items:center;gap:5px;font-size:.65rem;font-family:'Outfit',sans-serif}
+._sg-fp-name{font-size:.84rem;font-weight:700;color:#F0E8D8;font-family:\'Outfit\',sans-serif;text-align:center}
+._sg-fp-id{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:${GL.r.full};background:${GL.goldDm};border:1px solid ${GL.goldBd};font-size:.68rem;font-family:\'Outfit\',monospace;font-weight:700;color:${GL.goldHi};letter-spacing:.07em}
+._sg-fp-status{display:flex;align-items:center;gap:5px;font-size:.65rem;font-family:\'Outfit\',sans-serif}
 ._sg-fp-btns{display:flex;gap:8px;width:100%;margin-top:4px}
 ._sg-fp-btns button{flex:1}
 ._sg-fri-cl{cursor:pointer}
@@ -343,11 +343,11 @@ function _css(){
 }
 ._sg-fw-title{
   font-size:.74rem;font-weight:700;color:rgba(200,180,140,.82);
-  font-family:'Outfit',sans-serif;
+  font-family:\'Outfit\',sans-serif;
 }
 ._sg-fw-sub{
   font-size:.58rem;color:rgba(180,148,70,.45);
-  font-family:'Outfit',sans-serif;margin-top:1px;
+  font-family:\'Outfit\',sans-serif;margin-top:1px;
 }
 /* Online count pill */
 ._sg-fw-pill{
@@ -374,7 +374,7 @@ function _css(){
 ._sg-empty{
   text-align:center;padding:22px 16px;
   font-size:.73rem;color:rgba(180,148,70,.38);
-  font-family:'Outfit',sans-serif;line-height:1.7;
+  font-family:\'Outfit\',sans-serif;line-height:1.7;
 }
 ._sg-empty small{display:block;font-size:.62rem;opacity:.75;margin-top:3px}
 
@@ -391,7 +391,7 @@ function _css(){
 ._sg-sadd{
   padding:9px 14px;border-radius:10px;border:none;cursor:pointer;
   background:linear-gradient(135deg,#0E5C1A,#16A34A);
-  color:#fff;font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:700;
+  color:#fff;font-family:\'Outfit\',sans-serif;font-size:.78rem;font-weight:700;
   box-shadow:0 2px 12px rgba(22,163,74,.25);
   transition:all .18s;white-space:nowrap;flex-shrink:0;
 }
@@ -473,14 +473,14 @@ async function _openEdit(){
         </div>
         <input type="file" id="_sg-avinp" accept="image/jpeg,image/png,image/webp,image/gif"
           style="display:none" onchange="window._sgUploadAv(this)">
-        <div style="font-size:.58rem;color:rgba(212,168,67,.32);font-family:'Outfit',sans-serif">ပုံနှိပ်ပြောင်းနိုင် · 3MB အောက်</div>
+        <div style="font-size:.58rem;color:rgba(212,168,67,.32);font-family:\'Outfit\',sans-serif">ပုံနှိပ်ပြောင်းနိုင် · 3MB အောက်</div>
       </div>
       <div>
         <div class="_sg-lbl" style="margin-bottom:6px">🪪 Player ID</div>
         <div onclick="window._sgCopyId('${_x(code)}')" style="
           display:inline-flex;align-items:center;gap:8px;padding:6px 13px;
           border-radius:${GL.r.full};background:${GL.goldDm};border:1px solid ${GL.goldBd};
-          cursor:pointer;font-size:.72rem;font-family:'Outfit',monospace;font-weight:700;
+          cursor:pointer;font-size:.72rem;font-family:\'Outfit\',monospace;font-weight:700;
           color:${GL.goldHi};letter-spacing:.08em;transition:background .16s;
         " onmouseover="this.style.background='rgba(212,168,67,.28)'"
            onmouseout="this.style.background='${GL.goldDm}'">
@@ -493,7 +493,7 @@ async function _openEdit(){
         <input class="_sg-inp" id="_sg-nm" maxlength="20" value="${_x(nm)}" placeholder="Username...">
         <button class="_sg-bgold" id="_sg-savebtn" onclick="window._sgSaveAuth()">✓ &nbsp;Username သိမ်းမည်</button>
       </div>
-      <div style="font-size:.60rem;color:rgba(180,148,70,.40);text-align:center;font-family:'Outfit',sans-serif">${_x(user.email||'')}</div>
+      <div style="font-size:.60rem;color:rgba(180,148,70,.40);text-align:center;font-family:\'Outfit\',sans-serif">${_x(user.email||'')}</div>
       <div class="_sg-msg" id="_sg-emsg"></div>
       <button class="_sg-bglass" onclick="window._sgClose()">← ပြန်မည်</button>
     </div>`);
@@ -797,13 +797,13 @@ function _renderFriendTab(){
         ?'<img src="'+_x(g.avatar_url)+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:1.5px solid '+GL.goldBd+'" loading="lazy">'
         :'<div style="width:38px;height:38px;border-radius:50%;background:rgba(212,168,67,.08);display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(212,168,67,.18);font-size:1rem">👤</div>';
       return '<div class="_sg-fri _sg-fri-cl" style="animation-delay:'+(idx*0.04)+'s"'+
-        ' onclick="window._sgOpenGuestFriProfile(''+_x(g.user_code)+'')">'+
+        ' onclick="window._sgOpenGuestFriProfile(\''+_x(g.user_code)+'\')">'+
         '<div class="_sg-fav-ring">'+avH+'<div class="_sg-sdot off"></div></div>'+
         '<div style="flex:1;min-width:0">'+
-          '<div style="font-size:.76rem;font-weight:700;color:#F0E8D8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Outfit',sans-serif">'+_x(g.username||'–')+'</div>'+
-          '<div style="font-size:.55rem;color:rgba(180,148,70,.40);font-family:'Outfit',monospace;margin-top:2px">'+_x(g.user_code||'')+'</div>'+
+          '<div style="font-size:.76rem;font-weight:700;color:#F0E8D8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:\'Outfit\',sans-serif">'+_x(g.username||'\u2013')+'</div>'+
+          '<div style="font-size:.55rem;color:rgba(180,148,70,.40);font-family:\'Outfit\',monospace;margin-top:2px">'+_x(g.user_code||'')+'</div>'+
         '</div>'+
-        '<button class="_sg-binv" onclick="event.stopPropagation();window._sgInviteFri(''+_x(g.username||g.user_code||'')+'')">📨 Invite</button>'+
+        '<button class="_sg-binv" onclick="event.stopPropagation();window._sgInviteFri(\''+_x(g.username||g.user_code||'')+'\')">📨 Invite</button>'+
       '</div>';
     }).join('');
     return;
@@ -820,17 +820,17 @@ function _renderFriendTab(){
     var p=f.requester_id===myId?f.adr:f.req;if(!p)return'';
     var on=_online.has(p.id);
     return '<div class="_sg-fri _sg-fri-cl" style="animation-delay:'+(idx*0.04)+'s"'+
-      ' onclick="window._sgOpenFriProfile(''+f.id+'')">'+
+      ' onclick="window._sgOpenFriProfile(\''+f.id+'\')">'+
       '<div class="_sg-fav-ring">'+_friAv(p,38)+'<div class="_sg-sdot '+(on?'on':'off')+'"></div></div>'+
       '<div style="flex:1;min-width:0">'+
-        '<div style="font-size:.76rem;font-weight:700;color:#F0E8D8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Outfit',sans-serif">'+_x(p.username||'–')+'</div>'+
+        '<div style="font-size:.76rem;font-weight:700;color:#F0E8D8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:\'Outfit\',sans-serif">'+_x(p.username||'–')+'</div>'+
         '<div style="display:flex;align-items:center;gap:5px;margin-top:2px">'+
           '<span class="'+(on?'_sg-don':'_sg-doff')+'"></span>'+
-          '<span style="font-size:.60rem;color:'+(on?GL.ok:'rgba(255,255,255,.28)')+';font-family:'Outfit',sans-serif">'+(on?'Online':'Offline')+'</span>'+
-          (p.user_code?'<span style="font-size:.55rem;color:rgba(180,148,70,.40);font-family:'Outfit',monospace;margin-left:4px">'+_x(p.user_code)+'</span>':'')+
+          '<span style="font-size:.60rem;color:'+(on?GL.ok:'rgba(255,255,255,.28)')+';font-family:\'Outfit\',sans-serif">'+(on?'Online':'Offline')+'</span>'+
+          (p.user_code?'<span style="font-size:.55rem;color:rgba(180,148,70,.40);font-family:\'Outfit\',monospace;margin-left:4px">'+_x(p.user_code)+'</span>':'')+
         '</div>'+
       '</div>'+
-      '<button class="_sg-binv" onclick="event.stopPropagation();window._sgInviteFri(''+_x(p.username||p.user_code||'')+'')">📨 Invite</button>'+
+      '<button class="_sg-binv" onclick="event.stopPropagation();window._sgInviteFri(\''+_x(p.username||p.user_code||'')+'\')">📨 Invite</button>'+
     '</div>';
   }).join('');
 }
@@ -900,7 +900,7 @@ window._sgOpenFriProfile=function(fid){
   var p=f.requester_id===myId?f.adr:f.req;if(!p)return;
   var on=_online.has(p.id);
   var avH=p.avatar_url
-    ?'<img class="_sg-fp-av" src="'+_x(p.avatar_url)+'" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">'+'<div class="_sg-fp-avfb" style="display:none">👤</div>'
+    ?'<img class="_sg-fp-av" src="'+_x(p.avatar_url)+'" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'+'<div class="_sg-fp-avfb" style="display:none">👤</div>'
     :'<div class="_sg-fp-avfb">👤</div>';
   _open(`
     <div class="_sg-hdr">
@@ -1046,7 +1046,7 @@ async function _openFriends(){
       <div class="_sg-hdr"><div class="_sg-htitle">Friends</div>
         <div class="_sg-hclose" onclick="window._sgClose()">✕</div></div>
       <div class="_sg-body">
-        <div style="padding:8px 12px;border-radius:9px;background:rgba(212,168,67,.07);border:1px solid rgba(212,168,67,.18);font-size:.70rem;color:rgba(212,168,67,.7);font-family:'Outfit',sans-serif;line-height:1.6">
+        <div style="padding:8px 12px;border-radius:9px;background:rgba(212,168,67,.07);border:1px solid rgba(212,168,67,.18);font-size:.70rem;color:rgba(212,168,67,.7);font-family:\'Outfit\',sans-serif;line-height:1.6">
           👤 Guest mode — သူငယ်ချင်းတွေ ဒီ device မှာ သိမ်းသည်<br>
           <span style="font-size:.62rem;opacity:.75">Gmail ဝင်ရောက်ရင် online status ကြည့်နိုင်မည်</span>
         </div>
