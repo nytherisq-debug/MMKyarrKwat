@@ -241,6 +241,30 @@ function _css(){
 }
 ._sg-sdot.on{background:${GL.ok};animation:_sg-breathe 2s ease-in-out infinite}
 ._sg-sdot.off{background:rgba(255,255,255,.22)}
+._sg-binv{
+  padding:5px 11px;border-radius:8px;cursor:pointer;
+  font-family:'Outfit',sans-serif;font-size:.65rem;font-weight:700;
+  border:1px solid rgba(99,179,237,.35);
+  color:rgba(147,210,255,.85);background:rgba(99,179,237,.09);
+  transition:all .16s;white-space:nowrap;flex-shrink:0;
+}
+._sg-binv:hover{background:rgba(99,179,237,.18);border-color:rgba(99,179,237,.55);color:#bee3f8}
+._sg-fpcard{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:18px 16px 14px;
+  background:rgba(255,255,255,.025);
+  border:1px solid ${GL.border};border-top:1px solid ${GL.hi};
+  border-radius:16px;animation:_sg-up .3s cubic-bezier(.16,1,.3,1)both;
+}
+._sg-fp-av{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2.5px solid ${GL.goldBd};box-shadow:0 0 18px rgba(212,168,67,.25),0 4px 16px rgba(0,0,0,.5)}
+._sg-fp-avfb{width:64px;height:64px;border-radius:50%;background:rgba(212,168,67,.07);display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:2.5px solid ${GL.goldBd}}
+._sg-fp-name{font-size:.84rem;font-weight:700;color:#F0E8D8;font-family:'Outfit',sans-serif;text-align:center}
+._sg-fp-id{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:${GL.r.full};background:${GL.goldDm};border:1px solid ${GL.goldBd};font-size:.68rem;font-family:'Outfit',monospace;font-weight:700;color:${GL.goldHi};letter-spacing:.07em}
+._sg-fp-status{display:flex;align-items:center;gap:5px;font-size:.65rem;font-family:'Outfit',sans-serif}
+._sg-fp-btns{display:flex;gap:8px;width:100%;margin-top:4px}
+._sg-fp-btns button{flex:1}
+._sg-fri-cl{cursor:pointer}
+._sg-fri-cl:active{transform:scale(.99)}
 
 /* ── Profile badge ── */
 #_sg-badge{
@@ -646,7 +670,38 @@ async function _startPresence(user){
 window._sgAddFriend=async function(){
   var code=($('_sg-addinp')?.value||'').trim().toUpperCase();
   if(!code||code.length<4){_msg('_sg-addmsg','er','⚠️ Player ID ထည့်ပါ');return;}
-  var user=await _getUser();if(!user)return;
+  var user=await _getUser();
+  var isGuest=(!_kp)||(_kp.type!=='auth');
+
+  /* ── GUEST MODE: save to localStorage ── */
+  if(!user||isGuest){
+    var gid=_kp?.id||'';
+    if(code===gid){_msg('_sg-addmsg','er','⚠️ ကိုယ့် ID မဖြစ်နိုင်');return;}
+    if(_getGuestFriends().find(function(x){return x.user_code===code;})){
+      _msg('_sg-addmsg','info','✓ ရှိပြီးသား သူငယ်ချင်း');return;
+    }
+    var sb=_sb();
+    var btn=$('_sg-addbtn');if(btn){btn.disabled=true;btn.textContent='…';}
+    try{
+      var pRes=sb?await sb.from('profiles').select('username,avatar_url,user_code').eq('user_code',code).maybeSingle():null;
+      var pData=pRes?.data;
+      var gProf={user_code:code,username:pData?.username||code,avatar_url:pData?.avatar_url||null};
+      _addGuestFriend(gProf);
+      var inp=$('_sg-addinp');if(inp)inp.value='';
+      _msg('_sg-addmsg','ok','✓ '+_x(gProf.username)+' သူငယ်ချင်း ထည့်ပြီးပါပြီ');
+      _renderFriendTab();
+      setTimeout(function(){window._sgSetTab('fri');},800);
+    }catch(e){
+      _addGuestFriend({user_code:code,username:code,avatar_url:null});
+      var inp=$('_sg-addinp');if(inp)inp.value='';
+      _msg('_sg-addmsg','ok','✓ '+code+' ထည့်ပြီး (offline mode)');
+      _renderFriendTab();
+    }
+    if(btn&&$('_sg-m')){btn.disabled=false;btn.textContent='ထည့်မည်';}
+    return;
+  }
+
+  if(!user)return;
   var prof=await _getProf();
   if(prof&&code===prof.user_code){_msg('_sg-addmsg','er','⚠️ ကိုယ့် ID မဖြစ်နိုင်');return;}
   var btn=$('_sg-addbtn');if(btn){btn.disabled=true;btn.textContent='…';}
@@ -727,6 +782,33 @@ function _friAv(p,size){
 function _renderFriendTab(){
   var box=$('_sg-ftab');if(!box)return;
   var myId=_authUser?.id||_kp?.uid||'';
+  var isGuest=(!myId)||(_kp&&_kp.type!=='auth');
+
+  /* Guest mode — localStorage friends */
+  if(isGuest){
+    var gfri=_getGuestFriends();
+    if(!gfri.length){
+      box.innerHTML='<div class="_sg-empty">သူငယ်ချင်း မရှိသေးပါ<small>Add tab မှ Player ID ဖြင့် ထည့်ပါ</small></div>';
+      return;
+    }
+    box.innerHTML=gfri.map(function(g,idx){
+      var avH=g.avatar_url
+        ?'<img src="'+_x(g.avatar_url)+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:1.5px solid '+GL.goldBd+'" loading="lazy">'
+        :'<div style="width:38px;height:38px;border-radius:50%;background:rgba(212,168,67,.08);display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(212,168,67,.18);font-size:1rem">👤</div>';
+      return '<div class="_sg-fri _sg-fri-cl" style="animation-delay:'+(idx*0.04)+'s"'+
+        ' onclick="window._sgOpenGuestFriProfile(''+_x(g.user_code)+'')">'+
+        '<div class="_sg-fav-ring">'+avH+'<div class="_sg-sdot off"></div></div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-size:.76rem;font-weight:700;color:#F0E8D8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Outfit',sans-serif">'+_x(g.username||'–')+'</div>'+
+          '<div style="font-size:.55rem;color:rgba(180,148,70,.40);font-family:'Outfit',monospace;margin-top:2px">'+_x(g.user_code||'')+'</div>'+
+        '</div>'+
+        '<button class="_sg-binv" onclick="event.stopPropagation();window._sgInviteFri(''+_x(g.username||g.user_code||'')+'')">📨 Invite</button>'+
+      '</div>';
+    }).join('');
+    return;
+  }
+
+  /* Auth mode — DB friends */
   if(!_flist.length){
     box.innerHTML='<div class="_sg-empty">သူငယ်ချင်း မရှိသေးပါ<small>Add tab မှ Player ID ဖြင့် ထည့်ပါ</small></div>';
     return;
@@ -736,19 +818,18 @@ function _renderFriendTab(){
   box.innerHTML=[...onl,...off].map(function(f,idx){
     var p=f.requester_id===myId?f.adr:f.req;if(!p)return'';
     var on=_online.has(p.id);
-    return '<div class="_sg-fri" style="animation-delay:'+(idx*0.04)+'s">'+
-      '<div class="_sg-fav-ring">'+_friAv(p,38)+
-        '<div class="_sg-sdot '+(on?'on':'off')+'"></div>'+
-      '</div>'+
+    return '<div class="_sg-fri _sg-fri-cl" style="animation-delay:'+(idx*0.04)+'s"'+
+      ' onclick="window._sgOpenFriProfile(''+f.id+'')">'+
+      '<div class="_sg-fav-ring">'+_friAv(p,38)+'<div class="_sg-sdot '+(on?'on':'off')+'"></div></div>'+
       '<div style="flex:1;min-width:0">'+
-        '<div style="font-size:.76rem;font-weight:700;color:#F0E8D8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:\'Outfit\',sans-serif">'+_x(p.username||'–')+'</div>'+
+        '<div style="font-size:.76rem;font-weight:700;color:#F0E8D8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Outfit',sans-serif">'+_x(p.username||'–')+'</div>'+
         '<div style="display:flex;align-items:center;gap:5px;margin-top:2px">'+
           '<span class="'+(on?'_sg-don':'_sg-doff')+'"></span>'+
-          '<span style="font-size:.60rem;color:'+(on?GL.ok:'rgba(255,255,255,.28)')+';font-family:\'Outfit\',sans-serif">'+(on?'Online':'Offline')+'</span>'+
-          (p.user_code?'<span style="font-size:.55rem;color:rgba(180,148,70,.40);font-family:\'Outfit\',monospace;margin-left:4px">'+_x(p.user_code)+'</span>':'')+
+          '<span style="font-size:.60rem;color:'+(on?GL.ok:'rgba(255,255,255,.28)')+';font-family:'Outfit',sans-serif">'+(on?'Online':'Offline')+'</span>'+
+          (p.user_code?'<span style="font-size:.55rem;color:rgba(180,148,70,.40);font-family:'Outfit',monospace;margin-left:4px">'+_x(p.user_code)+'</span>':'')+
         '</div>'+
       '</div>'+
-      '<button class="_sg-bsm _sg-brem" onclick="window._sgDelFri(\''+f.id+'\')">ဖယ်ရှား</button>'+
+      '<button class="_sg-binv" onclick="event.stopPropagation();window._sgInviteFri(''+_x(p.username||p.user_code||'')+'')">📨 Invite</button>'+
     '</div>';
   }).join('');
 }
@@ -809,6 +890,123 @@ function _updateReqBadge(){
   if(el){var n=_reqs.inc.length;el.style.display=n?'':'none';el.textContent=n;}
 }
 
+/* ══ FRIEND PROFILE MODAL ══ */
+window._sgOpenFriProfile=function(fid){
+  /* Find friend in _flist */
+  var myId=_authUser?.id||_kp?.uid||'';
+  var f=_flist.find(function(x){return x.id===fid;});
+  if(!f)return;
+  var p=f.requester_id===myId?f.adr:f.req;if(!p)return;
+  var on=_online.has(p.id);
+  var avH=p.avatar_url
+    ?'<img class="_sg-fp-av" src="'+_x(p.avatar_url)+'" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">'+'<div class="_sg-fp-avfb" style="display:none">👤</div>'
+    :'<div class="_sg-fp-avfb">👤</div>';
+  _open(`
+    <div class="_sg-hdr">
+      <div class="_sg-htitle">Friend Profile</div>
+      <div class="_sg-hclose" onclick="window._sgClose()">✕</div>
+    </div>
+    <div class="_sg-body">
+      <div class="_sg-fpcard">
+        `+avH+`
+        <div class="_sg-fp-name">`+_x(p.username||'–')+`</div>
+        `+(p.user_code?'<div class="_sg-fp-id">🪪 '+_x(p.user_code)+'</div>':'')+`
+        <div class="_sg-fp-status">
+          <span class="`+(on?'_sg-don':'_sg-doff')+`"></span>
+          <span style="color:`+(on?GL.ok:'rgba(255,255,255,.35)')+`">`+(on?'Online · ကစားနေသည်':'Offline')+`</span>
+        </div>
+      </div>
+      <div class="_sg-fp-btns">
+        <button class="_sg-bgold" onclick="window._sgInviteFri('`+_x(p.username||p.user_code||'')+`');window._sgClose()">
+          📨 Room Invite
+        </button>
+        <button class="_sg-brem _sg-bsm" style="flex:0.5;border-radius:10px;padding:10px"
+          onclick="if(confirm('`+_x(p.username||'–')+` ကို သူငယ်ချင်းစာရင်းမှ ဖယ်ရှားမည်လား?'))window._sgDelFri('`+fid+`')">
+          ဖယ်ရှား
+        </button>
+      </div>
+      <button class="_sg-bglass" onclick="window._sgClose()">← ပြန်မည်</button>
+    </div>`);
+};
+
+/* ══ GUEST FRIEND PROFILE MODAL ══ */
+window._sgOpenGuestFriProfile=function(code){
+  var gfri=_getGuestFriends();
+  var g=gfri.find(function(x){return x.user_code===code;});if(!g)return;
+  var avH=g.avatar_url
+    ?'<img class="_sg-fp-av" src="'+_x(g.avatar_url)+'" loading="lazy">'
+    :'<div class="_sg-fp-avfb">👤</div>';
+  _open(`
+    <div class="_sg-hdr">
+      <div class="_sg-htitle">Friend Profile</div>
+      <div class="_sg-hclose" onclick="window._sgClose()">✕</div>
+    </div>
+    <div class="_sg-body">
+      <div class="_sg-fpcard">
+        `+avH+`
+        <div class="_sg-fp-name">`+_x(g.username||'–')+`</div>
+        <div class="_sg-fp-id">🪪 `+_x(g.user_code)+`</div>
+        <div class="_sg-fp-status">
+          <span class="_sg-doff"></span>
+          <span style="color:rgba(255,255,255,.35)">Status unknown (Guest mode)</span>
+        </div>
+      </div>
+      <div class="_sg-fp-btns">
+        <button class="_sg-bgold" onclick="window._sgInviteFri('`+_x(g.username||g.user_code)+`');window._sgClose()">
+          📨 Room Invite
+        </button>
+        <button class="_sg-brem _sg-bsm" style="flex:0.5;border-radius:10px;padding:10px"
+          onclick="if(confirm('`+_x(g.username||'–')+` ကို ဖယ်ရှားမည်လား?')){window._sgRemoveGuestFri('`+_x(code)+`');window._sgClose()}">
+          ဖယ်ရှား
+        </button>
+      </div>
+      <button class="_sg-bglass" onclick="window._sgClose()">← ပြန်မည်</button>
+    </div>`);
+};
+
+/* ══ ROOM INVITE ══ */
+window._sgInviteFri=function(name){
+  /* Copy current lobby room code if exists, else just show hint */
+  var rc=($('inp-code')||{}).value||'';
+  if(rc&&rc.length>=4){
+    var txt='မြန်မာ ကျားကွက် - Room: '+rc;
+    navigator.clipboard?.writeText(txt)
+      .then(function(){
+        var t=document.getElementById('toast');
+        if(t){t.textContent='📋 '+_x(name)+' ထံ Room Code ကူးပြီး: '+rc;t.style.opacity='1';t.style.bottom='80px';setTimeout(function(){t.style.opacity='0';t.style.bottom='-60px';},2800);}
+      }).catch(function(){});
+  } else {
+    var t=document.getElementById('toast');
+    if(t){t.textContent='💡 Room ဖန်တီးပြီးမှ Invite link ကူးနိုင်သည်';t.style.opacity='1';t.style.bottom='80px';setTimeout(function(){t.style.opacity='0';t.style.bottom='-60px';},2800);}
+  }
+};
+
+/* ══ GUEST FRIEND SYSTEM (localStorage) ══ */
+/* ML style: guests can add friends locally, carry over on account link */
+var _GF_KEY='kk_gfri';
+
+function _getGuestFriends(){
+  try{var r=localStorage.getItem(_GF_KEY);return r?JSON.parse(r):[];}catch(e){return[];}
+}
+function _saveGuestFriends(arr){
+  try{localStorage.setItem(_GF_KEY,JSON.stringify(arr));}catch(e){}
+}
+function _addGuestFriend(profile){
+  /* profile = {user_code, username, avatar_url} */
+  var list=_getGuestFriends();
+  if(list.find(function(x){return x.user_code===profile.user_code;}))return false;
+  list.push({user_code:profile.user_code,username:profile.username||'',avatar_url:profile.avatar_url||null,added_at:Date.now()});
+  _saveGuestFriends(list);
+  return true;
+}
+window._sgRemoveGuestFri=function(code){
+  var list=_getGuestFriends().filter(function(x){return x.user_code!==code;});
+  _saveGuestFriends(list);
+  _renderFriendTab();
+  /* update widget sub text */
+  var sub=$('_sg-fw-sub');if(sub)sub.textContent=list.length?'သူငယ်ချင်း '+list.length+' ဦး (Guest)':'သူငယ်ချင်း ထည့်မည်';
+};
+
 window._sgSetTab=function(t){
   ['fri','add','req'].forEach(function(x){
     var tb=$('_sg-tab-'+x);var bd=$('_sg-'+x+'tab');
@@ -847,11 +1045,31 @@ async function _openFriends(){
       <div class="_sg-hdr"><div class="_sg-htitle">Friends</div>
         <div class="_sg-hclose" onclick="window._sgClose()">✕</div></div>
       <div class="_sg-body">
-        <div style="text-align:center;padding:20px 0;font-size:.78rem;color:rgba(180,148,70,.50);font-family:'Outfit',sans-serif;line-height:1.8">
-          Gmail ဖြင့် ဝင်ရောက်မှသာ<br>Friends feature ကို သုံးနိုင်သည်
+        <div style="padding:8px 12px;border-radius:9px;background:rgba(212,168,67,.07);border:1px solid rgba(212,168,67,.18);font-size:.70rem;color:rgba(212,168,67,.7);font-family:'Outfit',sans-serif;line-height:1.6">
+          👤 Guest mode — သူငယ်ချင်းတွေ ဒီ device မှာ သိမ်းသည်<br>
+          <span style="font-size:.62rem;opacity:.75">Gmail ဝင်ရောက်ရင် online status ကြည့်နိုင်မည်</span>
         </div>
-        <button class="_sg-bglass" onclick="window._sgClose()">← ပြန်မည်</button>
-      </div>`);
+        <div class="_sg-tabs">
+          <button class="_sg-tab on" id="_sg-tab-fri" onclick="window._sgSetTab('fri')">👥 သူငယ်ချင်း</button>
+          <button class="_sg-tab" id="_sg-tab-add" onclick="window._sgSetTab('add')">➕ ထည့်မည်</button>
+        </div>
+        <div class="_sg-tab-body on" id="_sg-fritab">
+          <div id="_sg-ftab" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;scrollbar-width:thin;padding-top:4px"></div>
+        </div>
+        <div class="_sg-tab-body" id="_sg-addtab">
+          <div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">
+            <div class="_sg-lbl">Player ID ဖြင့် ရှာမည်</div>
+            <div class="_sg-srow">
+              <input class="_sg-inp" id="_sg-addinp" maxlength="8" placeholder="e.g. KK3A7F2B"
+                style="text-transform:uppercase;letter-spacing:2px"
+                onkeydown="if(event.key==='Enter')window._sgAddFriend()">
+              <button class="_sg-sadd" id="_sg-addbtn" onclick="window._sgAddFriend()">ထည့်မည်</button>
+            </div>
+            <div class="_sg-msg" id="_sg-addmsg"></div>
+          </div>
+        </div>
+      </div>`,
+      function(){ _renderFriendTab(); });
     return;
   }
   _open(`
@@ -991,7 +1209,11 @@ function _buildLobby(p){
       });
     });
   } else {
-    var sub=$('_sg-fw-sub');if(sub)sub.textContent='Gmail ဖြင့် ဝင်ရောက်မှ ရနိုင်သည်';
+    var sub=$('_sg-fw-sub');
+    if(sub){
+      var gfri=_getGuestFriends();
+      sub.textContent=gfri.length?'သူငယ်ချင်း '+gfri.length+' ဦး (Guest)':'သူငယ်ချင်း ထည့်မည်';
+    }
     var pill=$('_sg-fw-pill');if(pill){pill.style.opacity='.4';}
     var stack=$('_sg-av-stack');if(stack)stack.innerHTML='<div class="_sg-stk-av" style="font-size:.7rem;color:rgba(212,168,67,.38)">👥</div>';
   }
