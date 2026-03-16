@@ -1136,9 +1136,11 @@ function _buildLobby(p){
          ||document.querySelector('[class*="lobby"]');
   if(!lbox){
     if(window._sgBuildRetry===undefined)window._sgBuildRetry=0;
-    if(window._sgBuildRetry<10){window._sgBuildRetry++;setTimeout(function(){_buildLobby(p);},200);}
+    if(window._sgBuildRetry<20){window._sgBuildRetry++;setTimeout(function(){_buildLobby(p);},150);}
+    else{console.warn('[session-guard] .lbox not found after 3s');}
     return;
   }
+  console.log('[session-guard] .lbox found, inserting badge...');
 
   /* ── Profile Badge ── */
   var badge=document.createElement('div');badge.id='_sg-badge';
@@ -1209,6 +1211,7 @@ function _buildLobby(p){
   var anchor=Array.from(lbox.querySelectorAll('.llbl')).find(function(el){return el.textContent.includes('သင့်အမည်');})||lbox.querySelector('.linp');
   if(anchor){lbox.insertBefore(badge,anchor);lbox.insertBefore(fw,anchor);}
   else{lbox.appendChild(badge);lbox.appendChild(fw);}
+  console.log('[session-guard] badge + friends widget inserted ✓');
 
   /* Auto-start for auth */
   if(p&&p.type==='auth'){
@@ -1295,6 +1298,8 @@ if(typeof _oAR==='function'){
 }
 
 /* ═══════════════════════════════ INIT ═════════════════════════════════ */
+/* Diagnostic: prove this file loaded */
+try{console.log('[session-guard v4] loaded. _kp=',_kp?'auth:'+_kp.type:'null');}catch(e){}
 _css();
 function _doInit(){
   _buildLobby(_kp);
