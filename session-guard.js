@@ -29,7 +29,8 @@ var _sb=function(){return(typeof window.SB==='function')?window.SB():null;};
 var _kp=null;
 try{var _r=sessionStorage.getItem('kk_player');if(_r)_kp=JSON.parse(_r);}catch(e){}
 /* ── New feature state ── */       /* {uid: count} unread DMs */
-var _inviteCh=null;     /* invite realtime channel */         /* DM realtime channel */
+var _inviteCh=null;     /* invite realtime channel */
+window._pendingInvite=null; /* pending invite data for accept/decline */         /* DM realtime channel */
 var _statusCh=null;     /* in-match status channel */
 var _currentDMFriend=null; /* uid of open DM thread */
 var _friendStatus={};   /* {uid: 'lobby'|'in_match'} */
@@ -610,7 +611,7 @@ function _msg(id,t,html){
   var el=$(id);if(!el)return;
   el.className='_sg-msg on '+t;el.innerHTML=html;
 }
-window._sgClose=_close;
+/* _sgClose defined below with DM cleanup */
 
 /* ═══════════════════════════ PROFILE EDIT ═════════════════════════════ */
 async function _openEdit(){
@@ -1084,7 +1085,7 @@ function _renderFriendTab(){
           '<div style="font-size:.76rem;font-weight:700;color:#F0E8D8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:\'Outfit\',sans-serif">'+_x(g.username||'\u2013')+'</div>'+
           '<div style="display:flex;align-items:center;gap:5px;margin-top:2px">'+'<span style="font-size:.56rem;color:rgba(180,148,70,.55);background:rgba(212,168,67,.08);border:1px solid rgba(212,168,67,.18);border-radius:4px;padding:1px 5px;font-family:\'Outfit\',sans-serif">👤 Guest</span>'+'<span style="font-size:.54rem;color:rgba(180,148,70,.35);font-family:\'Outfit\',monospace">'+_x(g.user_code||'')+'</span>'+'</div>'+
         '</div>'+
-        '<button class="_sg-binv" onclick="event.stopPropagation();window._sgInviteFri(\''+_x(g.username||g.user_code||'')+'\')">📨 Invite</button>'+
+        '<button class="_sg-binv" onclick="event.stopPropagation();window._sgInviteFri(null,\''+_x(g.username||g.user_code||'')+'\')">📨 Invite</button>'+
       '</div>';
     }).join('');
     return;
@@ -1379,60 +1380,80 @@ window._sgSendDM=async function(toUid){
 
 /* Start listening for incoming invites (runs after user verified) */
 async function _startInviteListener(user){
-  if(_inviteCh)return;
+  if(_inviteCh)return;  /* already subscribed */
   var sb=_sb();if(!sb||!user)return;
-  _inviteCh=sb.channel('kk-inv-'+user.id);
+  _inviteCh=sb.channel('kk-inv-'+user.id,{config:{broadcast:{ack:false}}});
   _inviteCh
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'room_invites',
         filter:'to_uid=eq.'+user.id},
       function(payload){
+        console.log('[invite] received:',payload.new);
         if(payload.new&&payload.new.status==='pending')_showInviteOverlay(payload.new);
       })
-    .subscribe();
+    .subscribe(function(status){
+      console.log('[invite listener] status:',status);
+      if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){
+        /* Reset so it can re-subscribe on next open */
+        _inviteCh=null;
+      }
+    });
 }
 
 /* Show accept/decline overlay for incoming invite */
 function _showInviteOverlay(inv){
-  /* Don't interrupt if already in an active game */
-  if(window.roomId&&window.roomId!=='AI'){return;}
+  /* Store pending invite data globally so onclick can access without string escaping */
+  window._pendingInvite={id:inv.id,room_code:inv.room_code};
   _ensureBd();
   var bd=$('_sg-bd');
   bd.innerHTML=
     '<div class="_sg-mw"><div class="_sg-mc" id="_sg-m">'+
-      '<div class="_sg-hdr"><div class="_sg-htitle">📨 Room Invite</div></div>'+
+      '<div class="_sg-hdr">'+
+        '<div class="_sg-htitle">📨 Room Invite</div>'+
+        '<div class="_sg-hclose" onclick="window._sgDeclineInvite()">✕</div>'+
+      '</div>'+
       '<div class="_sg-body">'+
-        '<div style="text-align:center;padding:18px 0 10px">'+
-          '<div style="font-size:2rem;margin-bottom:10px">🎮</div>'+
+        '<div style="text-align:center;padding:18px 0 12px">'+
+          '<div style="font-size:2.2rem;margin-bottom:10px">🎮</div>'+
           '<div style="font-size:.88rem;font-weight:700;color:#F0E8D8;margin-bottom:5px">'+_x(inv.from_name||'Friend')+'</div>'+
           '<div style="font-size:.70rem;color:rgba(180,148,70,.55);margin-bottom:14px">Room ကို ဖိတ်ခေါ်သည်</div>'+
-          '<div style="font-family:\'Orbitron\',monospace;font-size:1.6rem;color:#F0CC72;letter-spacing:10px;font-weight:700;padding:10px;background:rgba(212,168,67,.08);border-radius:10px;border:1px solid rgba(212,168,67,.2)">'+_x(inv.room_code)+'</div>'+
+          '<div style="font-family:Orbitron,monospace;font-size:1.6rem;color:#F0CC72;letter-spacing:8px;font-weight:700;padding:12px;background:rgba(212,168,67,.08);border-radius:12px;border:1px solid rgba(212,168,67,.2)">'+_x(inv.room_code)+'</div>'+
         '</div>'+
         '<div class="_sg-fp-btns">'+
-          '<button class="_sg-bgold" onclick="window._sgAcceptInvite(\''+inv.id+'\',\''+_x(inv.room_code)+'\')">✅ လက်ခံ</button>'+
-          '<button class="_sg-brem _sg-bsm" style="flex:0.5;border-radius:10px;padding:10px" onclick="window._sgDeclineInvite(\''+inv.id+'\')">❌ ငြင်းမည်</button>'+
+          '<button class="_sg-bgold" onclick="window._sgAcceptInvite()">✅ လက်ခံ</button>'+
+          '<button class="_sg-brem _sg-bsm" style="flex:0.5;border-radius:10px;padding:10px" onclick="window._sgDeclineInvite()">❌ ငြင်းမည်</button>'+
         '</div>'+
       '</div>'+
     '</div></div>';
   bd.classList.add('on');
 }
 
-window._sgAcceptInvite=async function(inviteId,roomCode){
+window._sgAcceptInvite=async function(){
+  var inv=window._pendingInvite;
+  if(!inv){_close();return;}
+  window._pendingInvite=null;
   var sb=_sb();
-  if(sb){try{await sb.from('room_invites').update({status:'accepted'}).eq('id',inviteId);}catch(e){}}
-  window._sgClose&&window._sgClose();
-  /* Pre-fill room code and join */
-  var inp=$('inp-code');
-  if(inp){inp.value=roomCode;}
-  if(typeof window.joinRoom==='function'){
-    /* Small delay to let modal close */
-    setTimeout(function(){window.joinRoom();},100);
-  }
+  if(sb){try{await sb.from('room_invites').update({status:'accepted'}).eq('id',inv.id);}catch(e){console.warn('accept invite update:',e);}}
+  _close();
+  /* Pre-fill inp-name from _kp if empty */
+  var ni=$('inp-name');
+  if(ni&&!ni.value&&_kp&&_kp.name)ni.value=_kp.name;
+  /* Pre-fill room code */
+  var ci=$('inp-code');
+  if(ci)ci.value=inv.room_code;
+  /* Join after modal fully closes */
+  setTimeout(function(){
+    if(typeof window.joinRoom==='function')window.joinRoom();
+  },150);
 };
 
-window._sgDeclineInvite=async function(inviteId){
-  var sb=_sb();
-  if(sb){try{await sb.from('room_invites').update({status:'declined'}).eq('id',inviteId);}catch(e){}}
-  window._sgClose&&window._sgClose();
+window._sgDeclineInvite=async function(){
+  var inv=window._pendingInvite;
+  window._pendingInvite=null;
+  if(inv){
+    var sb=_sb();
+    if(sb){try{await sb.from('room_invites').update({status:'declined'}).eq('id',inv.id);}catch(e){}}
+  }
+  _close();
 };
 
 /* Toast helper (works in index.html via game toast OR standalone) */
@@ -1567,7 +1588,7 @@ window._sgOpenGuestFriProfile=function(code){
         </div>
       </div>
       <div class="_sg-fp-btns">
-        <button class="_sg-bgold" onclick="window._sgInviteFri('`+_x(g.username||g.user_code)+`');window._sgClose()">
+        <button class="_sg-bgold" onclick="window._sgInviteFri(null,'`+_x(g.username||g.user_code)+`');window._sgClose()">
           📨 Room Invite
         </button>
         <button class="_sg-brem _sg-bsm" style="flex:0.5;border-radius:10px;padding:10px"
@@ -1580,19 +1601,39 @@ window._sgOpenGuestFriProfile=function(code){
 };
 
 /* ══ ROOM INVITE ══ */
-window._sgInviteFri=function(name){
-  /* Copy current lobby room code if exists, else just show hint */
-  var rc=($('inp-code')||{}).value||'';
-  if(rc&&rc.length>=4){
-    var txt='မြန်မာ ကျားကွက် - Room: '+rc;
-    navigator.clipboard?.writeText(txt)
-      .then(function(){
-        var t=document.getElementById('toast');
-        if(t){t.textContent='📋 '+_x(name)+' ထံ Room Code ကူးပြီး: '+rc;t.style.opacity='1';t.style.bottom='80px';setTimeout(function(){t.style.opacity='0';t.style.bottom='-60px';},2800);}
-      }).catch(function(){});
-  } else {
-    var t=document.getElementById('toast');
-    if(t){t.textContent='💡 Room ဖန်တီးပြီးမှ Invite link ကူးနိုင်သည်';t.style.opacity='1';t.style.bottom='80px';setTimeout(function(){t.style.opacity='0';t.style.bottom='-60px';},2800);}
+window._sgInviteFri=async function(toUid,toName){
+  /* Get active room code — works both from lobby and in-game */
+  var rc=window.roomId&&window.roomId!=='AI'?window.roomId:'';
+  if(!rc){rc=($('inp-code')||{}).value||'';}
+  if(!rc||rc.length<4){
+    _sgToast('💡 Room ဖန်တီးပြီးမှသာ Invite ပို့နိုင်သည်');
+    return;
+  }
+  if(!toUid){
+    /* Guest row only passes name — just show room code toast */
+    _sgToast('🏠 Room Code: '+rc+' — '+_x(toName||'Friend')+' ထံ ပေးပို့ပါ');
+    try{navigator.clipboard.writeText(rc);}catch(e){}
+    window._sgClose&&window._sgClose();
+    return;
+  }
+  var user=await _getUser();
+  if(!user){_sgToast('❌ Login မဝင်ရသေးပါ');return;}
+  var sb=_sb();if(!sb){_sgToast('❌ ချိတ်ဆက်မရပါ');return;}
+  try{
+    /* Remove stale pending invite first */
+    await sb.from('room_invites').delete()
+      .eq('from_uid',user.id).eq('to_uid',toUid).eq('status','pending');
+    var fromName=(_kp&&_kp.name)||'Player';
+    var{error}=await sb.from('room_invites').insert({
+      from_uid:user.id,to_uid:toUid,
+      from_name:fromName,room_code:rc,status:'pending'
+    });
+    if(error){_sgToast('❌ Invite မပို့ရပါ: '+(error.message||''));return;}
+    _sgToast('📨 '+_x(toName||'Friend')+' ထံ Invite ပို့ပြီး ✓');
+    window._sgClose&&window._sgClose();
+  }catch(e){
+    console.error('_sgInviteFri:',e);
+    _sgToast('❌ '+(e.message||'Invite မပို့ရပါ'));
   }
 };
 
