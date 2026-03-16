@@ -840,7 +840,15 @@ async function _openEdit(){
   var user = _isGuest ? null : await _getUser();
   var prof = _isGuest ? null : await _getProf();
   if(!user){
-    var _gid=_kp?.id||localStorage.getItem('kk_gid')||'';
+    var _gid=_ensureGuestId();
+    /* Sync generated ID back into _kp + sessionStorage so badge shows it */
+    if(_kp&&!_kp.id){
+      _kp.id=_gid;
+      try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}
+      /* Update badge ID tag */
+      var _bidtag=document.querySelector('#_sg-badge ._sg-bidtag');
+      if(_bidtag)_bidtag.textContent='· '+_gid;
+    }
     var _gnm=_x(_kp?.name||localStorage.getItem('kk_gnm')||'');
     _open(`
       <div class="_sg-hdr"><div class="_sg-htitle">Guest Profile</div>
@@ -891,7 +899,11 @@ async function _openEdit(){
     return;
   }
   var nm=prof?.username||user.email?.split('@')[0]||'Player';
-  var code=prof?.user_code||_kp?.id||'––––––';
+  var code=prof?.user_code||_kp?.id||null;
+  /* Cached in localStorage as fallback */
+  var _lsCk='kk_uc_'+user.id;
+  if(!code){try{code=localStorage.getItem(_lsCk)||null;}catch(e){}}
+  var codeReady=!!code;
   var av=prof?.avatar_url||user.user_metadata?.avatar_url||null;
   var avH=av
     ?'<img src="'+_x(av)+'" style="width:72px;height:72px;border-radius:50%;object-fit:cover;display:block" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="_sg-avfb" style="display:none">👤</div>'
@@ -910,15 +922,9 @@ async function _openEdit(){
       </div>
       <div>
         <div class="_sg-lbl" style="margin-bottom:6px">🪪 Player ID</div>
-        <div onclick="window._sgCopyId('${_x(code)}')" style="
-          display:inline-flex;align-items:center;gap:8px;padding:6px 13px;
-          border-radius:${GL.r.full};background:${GL.goldDm};border:1px solid ${GL.goldBd};
-          cursor:pointer;font-size:.72rem;font-family:\'Outfit\',monospace;font-weight:700;
-          color:${GL.goldHi};letter-spacing:.08em;transition:background .16s;
-        " onmouseover="this.style.background='rgba(212,168,67,.28)'"
-           onmouseout="this.style.background='${GL.goldDm}'">
-          🪪 <span id="_sg-idlbl">${_x(code)}</span>
-          <span style="font-size:.48rem;opacity:.4">ကူးရန်</span>
+        <div id="_sg-idpill" class="_sg-gid-pill" style="cursor:pointer" onclick="window._sgCopyId(document.getElementById('_sg-idlbl').dataset.code||'')">
+          🪪 <span id="_sg-idlbl" data-code="${_x(code||'')}">${code?_x(code):'<span class="_sg-spin" style="margin:0 4px"></span>'}</span>
+          <span style="font-size:.46rem;opacity:.4">ကူးရန်</span>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px">
@@ -929,7 +935,33 @@ async function _openEdit(){
       <div style="font-size:.60rem;color:rgba(180,148,70,.40);text-align:center;font-family:\'Outfit\',sans-serif">${_x(user.email||'')}</div>
       <div class="_sg-msg" id="_sg-emsg"></div>
       <button class="_sg-bglass" onclick="window._sgClose()">← ပြန်မည်</button>
-    </div>`);
+    </div>`,
+    /* onReady — if code missing, fetch/generate from DB and fill pill */
+    codeReady ? null : async function(){
+      var sb=_sb();if(!sb||!$('_sg-idlbl'))return;
+      try{
+        var r=await sb.from('profiles').select('user_code').eq('id',user.id).single();
+        var fc=r.data?.user_code;
+        if(!fc){
+          /* Generate deterministically and write to DB */
+          fc=_detCode(user.id);
+          try{await sb.from('profiles').update({user_code:fc,updated_at:new Date().toISOString()}).eq('id',user.id);}catch(e){}
+        }
+        /* Cache */
+        try{localStorage.setItem(_lsCk,fc);}catch(e){}
+        if(_authProf)_authProf.user_code=fc;
+        if(_kp){_kp.id=fc;try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}}
+        /* Update pill if modal still open */
+        var lbl=$('_sg-idlbl');
+        if(lbl){
+          lbl.dataset.code=fc;
+          lbl.innerHTML=_x(fc);
+        }
+      }catch(e){
+        var lbl=$('_sg-idlbl');
+        if(lbl)lbl.innerHTML='<span style="color:rgba(239,68,68,.7);font-size:.62rem">မရနိုင်ပါ</span>';
+      }
+    });
 }
 
 window._sgSaveGuest=async function(){
@@ -1045,6 +1077,32 @@ window._sgConfirmDel=function(type,id,nm,code){
     window._sgClose&&window._sgClose();
   }
 };
+
+/* ── Deterministic user_code from UID — same algo as auth.html ── */
+function _detCode(uid){
+  var h=0x811c9dc5;
+  for(var i=0;i<uid.length;i++){h^=uid.charCodeAt(i);h=(Math.imul(h,0x01000193))>>>0;}
+  var C='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',code='KK',n=h;
+  for(var j=0;j<6;j++){code+=C[n%C.length];n=Math.floor(n/C.length)||(h>>>j);}
+  return code;
+}
+
+/* ── Guest permanent ID — generate once, store forever ── */
+function _ensureGuestId(){
+  try{
+    var id=localStorage.getItem('kk_gid')||'';
+    if(!id||(!id.startsWith('KKG')&&!id.startsWith('KK'))){
+      var C='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',s='KKG';
+      for(var i=0;i<5;i++)s+=C[Math.floor(Math.random()*C.length)];
+      id=s;
+      localStorage.setItem('kk_gid',id);
+    }
+    return id;
+  }catch(e){
+    if(!window._sgGuestIdFb)window._sgGuestIdFb='KKG'+Math.random().toString(36).slice(2,7).toUpperCase();
+    return window._sgGuestIdFb;
+  }
+}
 
 /* ═══════════════════════════ FRIENDS SYSTEM ═══════════════════════════ */
 var _flist=[],_reqs={inc:[],out:[]},_online=new Set(),_pch=null;
@@ -2407,7 +2465,15 @@ function _buildLobby(p){
   var tag=p&&p.type==='auth'
     ?'<span style="color:'+GL.ok+';font-size:.56rem;font-family:\'Outfit\',sans-serif">✓ Gmail</span>'
     :'<span style="color:rgba(180,148,70,.45);font-size:.56rem;font-family:\'Outfit\',sans-serif">👤 Guest</span>';
-  var idTag=p&&p.id?'<span style="color:rgba(212,168,67,.38);font-size:.56rem;font-family:\'Outfit\',monospace;letter-spacing:.05em">· '+_x(p.id)+'</span>':'';
+  /* Ensure guest has a permanent ID before building badge */
+  if(p&&p.type!=='auth'&&!p.id){
+    p.id=_ensureGuestId();
+    if(_kp)_kp.id=p.id;
+    try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}
+  }
+  var idTag=p&&p.id
+    ?'<span class="_sg-bidtag" style="color:rgba(212,168,67,.38);font-size:.56rem;font-family:\'Outfit\',monospace;letter-spacing:.05em">· '+_x(p.id)+'</span>'
+    :'<span class="_sg-bidtag"></span>';
   /* Gmail link chip — only for guest */
   var linkChip=(p&&p.type!=='auth')
     ?'<div class="_sg-gmail-chip" id="_sg-link-chip" title="Gmail ချိတ်ဆက်မည်">🔗 Gmail</div>'
