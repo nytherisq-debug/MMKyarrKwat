@@ -600,6 +600,12 @@ function goToSignIn(){
 function goBackToGuest(){
   localStorage.removeItem('kk_link_pending');
   localStorage.removeItem('kk_upgrade_nm');
+  /* Return to game if already in guest mode, else show auth screen */
+  if(localStorage.getItem(CFG.LS_MODE)==='guest'){
+    window.location.replace(CFG.base + CFG.game);
+  } else {
+    showScr('scr-auth');
+  }
 }
 
 /* Initiate Google OAuth from link screen */
@@ -681,13 +687,13 @@ async function _loadProfile(){
   const m  = _user.user_metadata || {};
   const nm = m.full_name || m.name || m.username || _user.email?.split('@')[0] || 'Player';
 
-  /* Deterministic code: same UID → same 8-char code on ANY device, ALWAYS */
-  async function _detCode(uid){
-    let h = 0x811c9dc5;
-    for(let i=0;i<uid.length;i++){ h ^= uid.charCodeAt(i); h = (h*0x01000193)>>>0; }
-    const C='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let code='KK', n=h;
-    for(let i=0;i<6;i++){ code+=C[n%C.length]; n=Math.floor(n/C.length)||(h>>>i); }
+  /* Deterministic code: same UID → same 8-char code on ANY device, ALWAYS
+     MUST match _detCode() in session-guard.js exactly */
+  function _detCode(uid){
+    var h=0x811c9dc5;
+    for(var i=0;i<uid.length;i++){h^=uid.charCodeAt(i);h=(Math.imul(h,0x01000193))>>>0;}
+    var C='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',code='KK',n=h;
+    for(var j=0;j<6;j++){code+=C[n%C.length];n=Math.floor(n/C.length)||(h>>>j);}
     return code;
   }
 
