@@ -874,202 +874,108 @@ async function doLogout(){
 ═══════════════════════════════════════════════ */
 async function _loadProfile(){
   if(!_user) return;
-  /*
-   * PERMANENT ID — MLBB/PUBG style
-   * ─────────────────────────────────────────────────────────────────
-   * RULE: user_code must be CONFIRMED in DB before being shown.
-   *       If DB write fails → keep retrying → never show unconfirmed code.
-   *
-   * FAILURE MODES HANDLED:
-   *   A. profiles table missing user_code column → caught, warn, fallback
-   *   B. INSERT race (23505) → re-fetch instead
-   *   C. UPDATE silently ignored → check returned error explicitly
-   *   D. Network timeout → retry up to 2 times with backoff
-   *   E. Complete DB failure → deterministic offline display (Friend search
-   *      will fail until DB reconnects — by design, unavoidable)
-   * ─────────────────────────────────────────────────────────────────
-   */
-  const _lsCk = 'kk_uc_' + _user.id;
 
-  /* Deterministic: same UID → same code on any device */
+  const _lsCk = 'kk_uc_' + _user.id;
+  const m  = _user.user_metadata || {};
+  const nm = m.full_name || m.name || m.username || _user.email?.split('@')[0] || 'Player';
+
+  /* Deterministic code: same UID → same 8-char code on ANY device, ALWAYS */
   function _detCode(uid){
     let h = 0x811c9dc5;
-    for(let i = 0; i < uid.length; i++){
-      h ^= uid.charCodeAt(i);
-      h = (h * 0x01000193) >>> 0;
-    }
-    const C = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let code = 'KK', n = h;
-    for(let i = 0; i < 6; i++){ code += C[n % C.length]; n = Math.floor(n / C.length) || (h >>> i); }
+    for(let i=0;i<uid.length;i++){ h ^= uid.charCodeAt(i); h = (h*0x01000193)>>>0; }
+    const C='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code='KK', n=h;
+    for(let i=0;i<6;i++){ code+=C[n%C.length]; n=Math.floor(n/C.length)||(h>>>i); }
     return code;
   }
 
-  /* Best offline display code: localStorage > deterministic */
-  function _bestCode(){
-    return localStorage.getItem(_lsCk) || _detCode(_user.id);
-  }
-
-  /* Execute a Supabase call, check for error, throw if error */
-  async function _sbCall(fn){
-    const res = await fn();
-    if(res?.error) throw res.error;
-    return res?.data ?? null;
-  }
-
-  /* Retry up to N times on any error */
-  async function _retry(fn, n){
-    let last;
-    for(let i = 0; i <= n; i++){
-      try{ return await fn(); }
-      catch(e){ last = e; if(i < n) await new Promise(r => setTimeout(r, 500 * (i + 1))); }
-    }
-    throw last;
-  }
-
   const detCode = _detCode(_user.id);
-  const m = _user.user_metadata || {};
-  const nm = m.full_name || m.name || m.username || _user.email?.split('@')[0] || 'Player';
 
   try{
-    /* ── STEP 1: Fetch existing profile ── */
-    let data = null;
-    try{
-      data = await _retry(() => _sbCall(() =>
-        SB().from('profiles').select('*').eq('id', _user.id).single()
-      ), 2);
-    }catch(e){
-      /* PGRST116 = row not found → proceed to INSERT */
-      if(e?.code !== 'PGRST116') throw e;
-      data = null;
+    /* ══════════════════════════════════════════════════
+       SINGLE RULE: UPSERT on every login.
+       - Inserts if row doesn't exist
+       - Updates user_code if null (because we specify it)
+       - Does NOT overwrite existing user_code (merge logic below)
+       ══════════════════════════════════════════════════ */
+
+    /* Step 1: fetch current profile to check if user_code already set */
+    const {data:existing} = await SB()
+      .from('profiles').select('*').eq('id',_user.id).single();
+
+    /* If row exists with a valid user_code → use it, no write needed */
+    if(existing?.user_code){
+      _prof = existing;
+      localStorage.setItem(_lsCk, existing.user_code);
+      /* Still do upgrade check */
+      await _doUpgrade(existing);
+      return;
     }
 
-    /* ── STEP 2: New user → INSERT ── */
-    if(!data){
-      try{
-        data = await _sbCall(() =>
-          SB().from('profiles')
-            .insert({ id:_user.id, username:nm,
-                      avatar_url:m.avatar_url||null,
-                      user_code:detCode,
-                      updated_at:new Date().toISOString() })
-            .select().single()
-        );
-      }catch(ie){
-        if(ie?.code === '23505'){
-          /* Race: another tab/device already inserted → re-fetch */
-          data = await _retry(() => _sbCall(() =>
-            SB().from('profiles').select('*').eq('id', _user.id).single()
-          ), 2);
-        } else if(ie?.code === '42703'){
-          /* Column user_code does not exist in profiles table.
-             Write profile without user_code, then try ALTER via a known function,
-             or just surface the error clearly. */
-          console.error('SCHEMA ERROR: profiles table missing user_code column.', ie.message);
-          console.error('Run in Supabase SQL Editor: ALTER TABLE profiles ADD COLUMN user_code text unique;');
-          /* Try insert without user_code so profile at least exists */
-          try{
-            data = await _sbCall(() =>
-              SB().from('profiles')
-                .insert({ id:_user.id, username:nm,
-                          avatar_url:m.avatar_url||null,
-                          updated_at:new Date().toISOString() })
-                .select().single()
-            );
-          }catch(e2){
-            if(e2?.code!=='23505') throw e2;
-            data = await _retry(() => _sbCall(() =>
-              SB().from('profiles').select('*').eq('id', _user.id).single()
-            ), 2);
-          }
-        } else {
-          /* Other real error — escalate */
-          throw ie;
-        }
-      }
+    /* Row missing OR user_code null → UPSERT with detCode */
+    /* UPSERT = INSERT or UPDATE on conflict. No .single() = no PGRST116. */
+    const upsertPayload = {
+      id         : _user.id,
+      username   : existing?.username || nm,
+      avatar_url : existing?.avatar_url || m.avatar_url || null,
+      user_code  : detCode,
+      updated_at : new Date().toISOString(),
+    };
+
+    const {data:upserted, error:ue} = await SB()
+      .from('profiles')
+      .upsert(upsertPayload, {onConflict:'id'})
+      .select();
+
+    if(ue){
+      /* UPSERT failed — log and fall through to re-fetch */
+      console.error('[_loadProfile] UPSERT failed:', ue.code, ue.message);
     }
 
-    /* ── STEP 3: Existing row with null user_code (legacy) ── */
-    if(data && !data.user_code){
-      /* Step 3a: Plain UPDATE (no conditional — we already confirmed null) */
-      let wrote = false;
-      const upRes = await SB().from('profiles')
-        .update({ user_code:detCode, updated_at:new Date().toISOString() })
-        .eq('id', _user.id)
-        .select('user_code')
-        .single();
+    /* Re-fetch to get the authoritative DB value */
+    const {data:fresh, error:fe} = await SB()
+      .from('profiles').select('*').eq('id',_user.id).single();
 
-      if(!upRes.error && upRes.data?.user_code){
-        /* UPDATE confirmed in DB */
-        data = { ...data, user_code: upRes.data.user_code };
-        wrote = true;
-      }
+    let data = fresh || existing || {
+      id:_user.id, username:nm,
+      avatar_url:m.avatar_url||null,
+      user_code: detCode,
+    };
 
-      if(!wrote){
-        /* Step 3b: UPDATE silently failed (RLS blocks, or returned no rows).
-           Try UPSERT as hard fallback — merges with existing row. */
-        console.warn('user_code plain UPDATE failed, trying UPSERT:', upRes.error?.message);
-        const upRes2 = await SB().from('profiles')
-          .upsert({
-            id         : _user.id,
-            user_code  : detCode,
-            updated_at : new Date().toISOString()
-          }, { onConflict: 'id', ignoreDuplicates: false })
-          .select('user_code')
-          .single();
+    /* Guarantee user_code is never null in _prof */
+    if(!data.user_code) data = {...data, user_code: detCode};
 
-        if(!upRes2.error && upRes2.data?.user_code){
-          data = { ...data, user_code: upRes2.data.user_code };
-          wrote = true;
-          console.log('user_code written via UPSERT:', upRes2.data.user_code);
-        }
-      }
+    /* Cache to localStorage */
+    localStorage.setItem(_lsCk, data.user_code);
 
-      if(!wrote){
-        /* Step 3c: Both UPDATE and UPSERT failed.
-           Most likely cause: RLS policy not configured.
-           Run in Supabase SQL Editor:
-             ALTER TABLE profiles ADD COLUMN IF NOT EXISTS user_code text unique;
-             CREATE POLICY "profiles update own" ON profiles FOR UPDATE
-               USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
-           For now: inject detCode locally so ID is visible (Friend search still fails) */
-        console.error('PERMANENT ID WRITE FAILED. Check RLS policies on profiles table.');
-        console.error('Required SQL: CREATE POLICY "profiles update own" ON profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);');
-        data = { ...data, user_code: detCode };
-      }
-    }
-
-    /* ── STEP 4: Final null guarantee ── */
-    if(data && !data.user_code) data = { ...data, user_code: detCode };
-
-    /* ── STEP 5: Cache confirmed code to localStorage ── */
-    if(data?.user_code) localStorage.setItem(_lsCk, data.user_code);
-
-    /* ── STEP 6: Guest → Auth name upgrade ── */
-    const _upgradeNm = localStorage.getItem('kk_upgrade_nm');
-    if(_upgradeNm){
-      const defaultNm = m.full_name || m.name || m.username || _user.email?.split('@')[0];
-      if(data && data.username === defaultNm){
-        try{
-          await SB().from('profiles')
-            .update({ username:_upgradeNm, updated_at:new Date().toISOString() })
-            .eq('id', _user.id);
-          data = { ...data, username:_upgradeNm };
-        }catch(e){ console.warn('upgrade name:', e); }
-      }
-      localStorage.removeItem('kk_upgrade_nm');
-    }
-
+    await _doUpgrade(data);
     _prof = data;
 
   }catch(e){
-    console.warn('_loadProfile error:', e.message || e);
+    console.warn('[_loadProfile]', e?.message||e);
     if(!_prof){
       _prof = {
         id:_user.id, username:nm,
         avatar_url:m.avatar_url||null,
-        user_code:_bestCode(),
+        user_code: localStorage.getItem(_lsCk) || detCode,
       };
     }
+  }
+
+  async function _doUpgrade(data){
+    /* Guest → Auth name upgrade */
+    const upgNm = localStorage.getItem('kk_upgrade_nm');
+    if(!upgNm){ return; }
+    const defaultNm = m.full_name||m.name||m.username||_user.email?.split('@')[0];
+    if(data.username === defaultNm){
+      try{
+        await SB().from('profiles')
+          .update({username:upgNm, updated_at:new Date().toISOString()})
+          .eq('id',_user.id);
+        data.username = upgNm;
+      }catch(e){ console.warn('upgrade name:', e); }
+    }
+    localStorage.removeItem('kk_upgrade_nm');
   }
 }
 
@@ -1276,8 +1182,15 @@ async function addFriend(){
   const btn = document.getElementById('btn-add');
   btn.disabled = true; btn.textContent = '…';
   try{
-    const {data:tg, error:te} = await SB().from('profiles').select('id,username').eq('user_code', code).single();
-    if(te || !tg){ toast('❌ ID မတွေ့ပါ: ' + code); btn.disabled=false; btn.textContent='ထည့်မည်'; return; }
+    /* Search profiles by user_code */
+    const {data:tg, error:te} = await SB()
+      .from('profiles').select('id,username').eq('user_code', code).maybeSingle();
+    if(te){ toast('❌ DB Error: ' + te.message); btn.disabled=false; btn.textContent='ထည့်မည်'; return; }
+    if(!tg){
+      /* Not found — show helpful message */
+      toast('❌ ID မတွေ့ပါ: ' + code + ' — သူ ပြန်ဝင်ပြီး ထပ်ကြိုးစားပါ');
+      btn.disabled=false; btn.textContent='ထည့်မည်'; return;
+    }
     const {data:ex} = await SB().from('friendships').select('id,status')
       .or(`and(requester_id.eq.${_user.id},addressee_id.eq.${tg.id}),and(requester_id.eq.${tg.id},addressee_id.eq.${_user.id})`)
       .maybeSingle();
