@@ -776,10 +776,14 @@ function _showProfileGuest(){
 
   /* Edit name visible for guest too — saves to localStorage */
 
-  /* Friends tabs hidden */
-  document.getElementById('p-tabs').style.display  = 'none';
-  document.getElementById('ps-fri').classList.remove('on');
+  /* Guest: show friends tab (localStorage-based, ML style) */
+  document.getElementById('p-tabs').style.display  = '';
+  document.getElementById('ps-fri').classList.add('on');
   document.getElementById('ps-req').classList.remove('on');
+  document.getElementById('pt-fri').classList.add('on');
+  document.getElementById('pt-req').classList.remove('on');
+  /* Guest friend list (localStorage) */
+  _renderGuestFriends();
 
   showScr('scr-profile');
 }
@@ -1067,9 +1071,11 @@ async function uploadAvatar(inp){
     const puRes = SB().storage.from('avatars').getPublicUrl(path);
     const publicUrl = puRes?.data?.publicUrl || puRes?.publicUrl;
     if(!publicUrl) throw new Error('Public URL ရယူမရပါ');
-    const url = publicUrl + '?t=' + Date.now();
-    await SB().from('profiles').update({avatar_url:url, updated_at:new Date().toISOString()}).eq('id', _user.id);
-    if(_prof) _prof.avatar_url = url;
+    /* Store CLEAN URL in DB — others will see avatar without cache-busting issues */
+    const cleanUrl = publicUrl;
+    const url = publicUrl + '?t=' + Date.now(); /* local display only */
+    await SB().from('profiles').update({avatar_url:cleanUrl, updated_at:new Date().toISOString()}).eq('id', _user.id);
+    if(_prof) _prof.avatar_url = cleanUrl;
     const img = document.getElementById('av-img');
     img.src = url; img.alt = ''; img.onerror = ()=>{ img.src=''; img.alt='👤'; };
     toast('✓ ပုံ ပြောင်းပြီးပါပြီ');
@@ -1115,6 +1121,82 @@ async function loadFriends(){
     _flist = data || [];
     _renderFriends();
   }catch(e){ console.warn('loadFriends:', e); }
+
+
+/* ═══════════════════════════════════════════════
+   GUEST FRIEND SYSTEM (auth-3.html)
+   ML style: guests store friends in localStorage
+═══════════════════════════════════════════════ */
+const _GF_KEY = 'kk_gfri';
+function _getGuestFriends(){
+  try{ return JSON.parse(localStorage.getItem(_GF_KEY)||'[]'); }catch(e){ return []; }
+}
+function _saveGuestFriends(arr){
+  try{ localStorage.setItem(_GF_KEY, JSON.stringify(arr)); }catch(e){}
+}
+
+function _renderGuestFriends(){
+  const box = document.getElementById('fri-list');
+  if(!box) return;
+  const list = _getGuestFriends();
+  if(!list.length){
+    box.innerHTML='<div class="fri-empty">သူငယ်ချင်း မရှိသေးပါ<small>Player ID ဖြင့် ထည့်ပါ</small></div>';
+    return;
+  }
+  box.innerHTML = list.map(g => {
+    const av = g.avatar_url
+      ? `<img class="fav" src="${_x(g.avatar_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextSibling&&(this.nextSibling.style.display='flex')"><div class="fav-fb" style="display:none">👤</div>`
+      : `<div class="fav-fb">👤</div>`;
+    return `<div class="fri">
+      ${av}
+      <div class="finfo">
+        <div class="fnm">${_x(g.username||'–')}</div>
+        <div class="fid">${_x(g.user_code||'')}</div>
+        <div class="fst"><span class="fpend">👤 Guest Friend</span></div>
+      </div>
+      <div class="fbts">
+        <button class="fbtn fb-rem" onclick="removeGuestFriend('${_x(g.user_code)}')">ဖယ်ရှား</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function removeGuestFriend(code){
+  const list = _getGuestFriends().filter(x => x.user_code !== code);
+  _saveGuestFriends(list);
+  _renderGuestFriends();
+}
+
+async function addGuestFriend(){
+  const code = document.getElementById('add-inp').value.trim().toUpperCase();
+  if(!code || code.length < 4){ toast('⚠️ Player ID ထည့်ပါ'); return; }
+  const myGid = getGuestID();
+  if(code === myGid){ toast('⚠️ ကိုယ့် ID မဖြစ်နိုင်ပါ'); return; }
+  if(_getGuestFriends().find(x => x.user_code === code)){ toast('✓ ရှိပြီးသား သူငယ်ချင်း'); return; }
+  const btn = document.getElementById('btn-add');
+  btn.disabled = true; btn.textContent = '…';
+  try{
+    /* Try to fetch profile from DB for name+avatar */
+    const {data:p} = await SB().from('profiles').select('username,avatar_url,user_code').eq('user_code',code).maybeSingle();
+    const gProf = { user_code:code, username:p?.username||code, avatar_url:p?.avatar_url||null };
+    const list = _getGuestFriends();
+    list.push(gProf);
+    _saveGuestFriends(list);
+    document.getElementById('add-inp').value = '';
+    toast('✓ ' + _x(gProf.username) + ' သူငယ်ချင်း ထည့်ပြီးပါပြီ');
+    _renderGuestFriends();
+  }catch(e){
+    /* Offline fallback */
+    const list = _getGuestFriends();
+    list.push({user_code:code, username:code, avatar_url:null});
+    _saveGuestFriends(list);
+    document.getElementById('add-inp').value = '';
+    toast('✓ ' + code + ' ထည့်ပြီး (offline)');
+    _renderGuestFriends();
+  }
+  btn.disabled = false; btn.textContent = 'ထည့်မည်';
+}
+
 }
 
 async function loadReqs(){
@@ -1175,7 +1257,8 @@ function _friHTML(fid, p, online, type){
 
 /* ── Friend actions ── */
 async function addFriend(){
-  if(!_user){ toast('⚠️ Account ဖြင့် ဝင်ရောက်မှသာ ရနိုင်သည်'); return; }
+  /* Route guest to localStorage-based friend add */
+  if(!_user){ await addGuestFriend(); return; }
   const code = document.getElementById('add-inp').value.trim().toUpperCase();
   if(!code || code.length < 4){ toast('⚠️ Player ID ထည့်ပါ'); return; }
   if(_prof && code === _prof.user_code){ toast('⚠️ ကိုယ့် ID မဖြစ်နိုင်ပါ'); return; }
