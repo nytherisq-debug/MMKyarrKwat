@@ -990,21 +990,51 @@ async function _loadProfile(){
 
     /* ── STEP 3: Existing row with null user_code (legacy) ── */
     if(data && !data.user_code){
-      /* Explicit error check on UPDATE */
+      /* Step 3a: Plain UPDATE (no conditional — we already confirmed null) */
+      let wrote = false;
       const upRes = await SB().from('profiles')
         .update({ user_code:detCode, updated_at:new Date().toISOString() })
         .eq('id', _user.id)
-        .is('user_code', null)
-        .select().single();
+        .select('user_code')
+        .single();
 
-      if(upRes.error){
-        /* Update failed — DB may not have user_code column yet */
-        console.warn('user_code UPDATE failed:', upRes.error);
-        /* Still inject locally so user can see their ID */
+      if(!upRes.error && upRes.data?.user_code){
+        /* UPDATE confirmed in DB */
+        data = { ...data, user_code: upRes.data.user_code };
+        wrote = true;
+      }
+
+      if(!wrote){
+        /* Step 3b: UPDATE silently failed (RLS blocks, or returned no rows).
+           Try UPSERT as hard fallback — merges with existing row. */
+        console.warn('user_code plain UPDATE failed, trying UPSERT:', upRes.error?.message);
+        const upRes2 = await SB().from('profiles')
+          .upsert({
+            id         : _user.id,
+            user_code  : detCode,
+            updated_at : new Date().toISOString()
+          }, { onConflict: 'id', ignoreDuplicates: false })
+          .select('user_code')
+          .single();
+
+        if(!upRes2.error && upRes2.data?.user_code){
+          data = { ...data, user_code: upRes2.data.user_code };
+          wrote = true;
+          console.log('user_code written via UPSERT:', upRes2.data.user_code);
+        }
+      }
+
+      if(!wrote){
+        /* Step 3c: Both UPDATE and UPSERT failed.
+           Most likely cause: RLS policy not configured.
+           Run in Supabase SQL Editor:
+             ALTER TABLE profiles ADD COLUMN IF NOT EXISTS user_code text unique;
+             CREATE POLICY "profiles update own" ON profiles FOR UPDATE
+               USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+           For now: inject detCode locally so ID is visible (Friend search still fails) */
+        console.error('PERMANENT ID WRITE FAILED. Check RLS policies on profiles table.');
+        console.error('Required SQL: CREATE POLICY "profiles update own" ON profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);');
         data = { ...data, user_code: detCode };
-      } else {
-        /* Update succeeded — use what DB returned */
-        data = upRes.data || { ...data, user_code: detCode };
       }
     }
 
