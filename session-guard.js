@@ -549,8 +549,9 @@ window._sgUploadAv=async function(inp){
     var puRes=sb.storage.from('avatars').getPublicUrl(path);
     var pub=puRes?.data?.publicUrl||puRes?.publicUrl;
     if(!pub)throw new Error('URL ရမရပါ');
+    /* Store CLEAN url in DB so other users get it without timestamp */
     var url=pub+'?t='+Date.now();
-    await sb.from('profiles').update({avatar_url:url,updated_at:new Date().toISOString()}).eq('id',user.id);
+    await sb.from('profiles').update({avatar_url:pub,updated_at:new Date().toISOString()}).eq('id',user.id);
     if(_authProf)_authProf.avatar_url=url;
     if(_kp){_kp.avatar=url;try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}}
     var m=$('_sg-m');
@@ -1129,7 +1130,15 @@ async function _openFriends(){
 /* ═══════════════════════════ LOBBY WIDGET BUILD ═══════════════════════ */
 function _buildLobby(p){
   if($('_sg-badge'))return;
-  var lbox=document.querySelector('.lbox');if(!lbox)return;
+  var lbox=document.querySelector('.lbox')
+         ||document.querySelector('.lobby-box')
+         ||document.querySelector('#lbox')
+         ||document.querySelector('[class*="lobby"]');
+  if(!lbox){
+    if(window._sgBuildRetry===undefined)window._sgBuildRetry=0;
+    if(window._sgBuildRetry<10){window._sgBuildRetry++;setTimeout(function(){_buildLobby(p);},200);}
+    return;
+  }
 
   /* ── Profile Badge ── */
   var badge=document.createElement('div');badge.id='_sg-badge';
@@ -1284,7 +1293,11 @@ if(typeof _oAR==='function'){
 
 /* ═══════════════════════════════ INIT ═════════════════════════════════ */
 _css();
-_buildLobby(_kp);
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',function(){_buildLobby(_kp);});
+}else{
+  _buildLobby(_kp);
+}
 window._kkPlayer=_kp;
 window._sgOpenEdit=_openEdit;
 
