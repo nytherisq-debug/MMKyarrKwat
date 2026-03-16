@@ -412,7 +412,13 @@ window._sgClose=_close;
 
 /* ═══════════════════════════ PROFILE EDIT ═════════════════════════════ */
 async function _openEdit(){
-  var user=await _getUser(),prof=await _getProf();
+  /* BUG FIX: Check _kp.type FIRST.
+     If player arrived as Guest (_kp.type!=='auth'), always show Guest modal
+     even if a stale Gmail Supabase session exists in the browser.
+     Do NOT call _getUser() for guests — it would return the cached Gmail user. */
+  var _isGuest = !_kp || _kp.type !== 'auth';
+  var user = _isGuest ? null : await _getUser();
+  var prof = _isGuest ? null : await _getProf();
   if(!user){
     _open(`
       <div class="_sg-hdr"><div class="_sg-htitle">Profile ပြင်မည်</div>
@@ -646,22 +652,27 @@ window._sgAddFriend=async function(){
   var btn=$('_sg-addbtn');if(btn){btn.disabled=true;btn.textContent='…';}
   var sb=_sb();
   if(!sb){_msg('_sg-addmsg','er','❌ Supabase မရပါ');if(btn&&$('_sg-m')){btn.disabled=false;btn.textContent='ခေါ်မည်';}return;}
-  /* ── Pre-flight: ensure caller's own user_code is written to DB ──
-     Handles edge case where user sees their ID locally but DB hasn't received it yet */
+  /* ── Pre-flight: confirm own user_code is in DB before searching ──
+     User may see their ID locally (deterministic fallback) but DB hasn't stored it.
+     Try UPDATE then UPSERT to ensure it's persisted before the search. */
   if(user&&prof&&prof.user_code){
     try{
       var selfCheck=await sb.from('profiles').select('user_code').eq('id',user.id).single();
       if(!selfCheck.data?.user_code){
-        /* Our own code not in DB yet — write it now before searching */
         _msg('_sg-addmsg','info','⏳ ID ကို DB မှာ သိမ်းနေသည်…');
-        await sb.from('profiles')
+        /* Try UPDATE first */
+        var wr=await sb.from('profiles')
           .update({user_code:prof.user_code,updated_at:new Date().toISOString()})
-          .eq('id',user.id)
-          .is('user_code',null);
-        /* brief wait then continue */
-        await new Promise(function(r){setTimeout(r,500);});
+          .eq('id',user.id).select('user_code').single();
+        if(!wr.data?.user_code){
+          /* UPDATE failed → UPSERT */
+          await sb.from('profiles')
+            .upsert({id:user.id,user_code:prof.user_code,updated_at:new Date().toISOString()},
+                    {onConflict:'id',ignoreDuplicates:false});
+        }
+        await new Promise(function(r){setTimeout(r,600);});
       }
-    }catch(e){/* non-fatal */}
+    }catch(e){console.warn('pre-flight write:',e);}
   }
   try{
     var tg=await sb.from('profiles').select('id,username').eq('user_code',code).single();
@@ -920,7 +931,13 @@ function _buildLobby(p){
       '<div class="_sg-bnm" style="font-size:.76rem;font-weight:700;color:#F0E8D8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:\'Outfit\',sans-serif">'+_x(nm)+'</div>'+
       '<div style="display:flex;align-items:center;gap:5px;margin-top:1px;flex-wrap:wrap">'+tag+(idTag?'&nbsp;'+idTag:'')+'</div>'+
     '</div>'+
-    '<div style="font-size:.68rem;color:rgba(212,168,67,.32);flex-shrink:0">✎</div>';
+    '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">'+
+    '<div style="font-size:.68rem;color:rgba(212,168,67,.32)">✎</div>'+
+    ((_kp&&_kp.type==='auth')
+      ? '<div id="_sg-logout-btn" style="font-size:.54rem;color:rgba(252,165,165,.55);cursor:pointer;font-family:Outfit,sans-serif;white-space:nowrap">Sign Out</div>'
+      : '<div id="_sg-signin-btn" style="font-size:.54rem;color:rgba(16,185,129,.65);cursor:pointer;font-family:Outfit,sans-serif;white-space:nowrap">→ Sign In</div>'
+    )+
+    '</div>';
 
   /* ── Premium Friends Widget ── */
   var fw=document.createElement('div');fw.id='_sg-fw';
@@ -938,6 +955,27 @@ function _buildLobby(p){
       '<div class="_sg-fw-chev">▾</div>'+
     '</div>';
 
+  /* Wire Sign In / Log Out buttons after badge inserted */
+  setTimeout(function(){
+    var signinBtn=$('_sg-signin-btn');
+    if(signinBtn){
+      signinBtn.addEventListener('click',function(e){
+        e.stopPropagation();
+        /* Navigate to auth.html — clears guest mode */
+        try{localStorage.setItem('kk_mode','auth');}catch(x){}
+        var base=window.location.pathname.replace(/[^/]*$/,'');
+        window.location.href=window.location.origin+base+'auth.html';
+      });
+    }
+    var logoutBtn=$('_sg-logout-btn');
+    if(logoutBtn){
+      logoutBtn.addEventListener('click',function(e){
+        e.stopPropagation();
+        var base=window.location.pathname.replace(/[^/]*$/,'');
+        window.location.href=window.location.origin+base+'auth.html?mode=logout';
+      });
+    }
+  },80);
   var anchor=Array.from(lbox.querySelectorAll('.llbl')).find(function(el){return el.textContent.includes('သင့်အမည်');})||lbox.querySelector('.linp');
   if(anchor){lbox.insertBefore(badge,anchor);lbox.insertBefore(fw,anchor);}
   else{lbox.appendChild(badge);lbox.appendChild(fw);}
