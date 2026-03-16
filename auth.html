@@ -387,12 +387,32 @@ function _randChars(n){
 })();
 
 (async()=>{
+  const _params = new URLSearchParams(window.location.search);
+  const mode  = _params.get('mode');
+  const _link = _params.get('link');
+
   /* Handle ?mode=logout — clear auth, show auth screen */
-  const mode = new URLSearchParams(window.location.search).get('mode');
   if(mode === 'logout'){
     history.replaceState({}, '', window.location.pathname);
     localStorage.setItem(CFG.LS_MODE, 'auth');
     showScr('scr-auth');
+    _listenAuth();
+    return;
+  }
+
+  /* Handle ?link=1 — guest clicked "Link Gmail" from session-guard modal.
+     Show scr-link immediately (no session check needed). */
+  if(_link === '1'){
+    history.replaceState({}, '', window.location.pathname);
+    /* Populate previews */
+    const _gnm = localStorage.getItem(CFG.LS_GNM) || getGuestName();
+    const _gid = localStorage.getItem(CFG.LS_GID) || getGuestID();
+    const nmEl  = document.getElementById('link-nm-preview');
+    const gidEl = document.getElementById('link-gid-preview');
+    if(nmEl)  nmEl.textContent  = _gnm;
+    if(gidEl) gidEl.textContent = _gid;
+    localStorage.setItem('kk_link_pending', '1');
+    showScr('scr-link');
     _listenAuth();
     return;
   }
