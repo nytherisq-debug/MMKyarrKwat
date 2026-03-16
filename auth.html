@@ -875,29 +875,20 @@ async function doLogout(){
 async function _loadProfile(){
   if(!_user) return;
   /*
-   * PERMANENT ID LOGIC — MLBB / PUBG style
-   * ─────────────────────────────────────────────────────────────────
-   * Gmail  → ID lives in Supabase DB (auth UID bound).
-   *          Same ID on every device, every session.
-   *          localStorage = READ-ONLY offline cache.
-   *          NEVER generates a new random code if one already exists.
-   *
-   * Guest  → ID lives in localStorage of THIS device only.
-   *          (handled by getGuestID — separate key kk_gid)
-   * ─────────────────────────────────────────────────────────────────
-   * Failure hierarchy (so ID is NEVER shown as ------):
-   *   1. DB row with user_code          ← authoritative, always wins
-   *   2. DB write succeeded, re-fetched ← write path
-   *   3. localStorage cached code       ← offline / same device fallback
-   *   4. Deterministic code from UID    ← last resort, consistent across all devices
-   *      (same UID → same code always, even without DB)
-   * ─────────────────────────────────────────────────────────────────
+   * PERMANENT ID — MLBB/PUBG style
+   * ──────────────────────────────────────────────────────────────
+   * Rule 1: DB is the ONLY source of truth for user_code.
+   *         ID is NEVER shown until it is confirmed in DB.
+   * Rule 2: deterministic code = always same UID → same code.
+   *         Used as the value to write — never random.
+   * Rule 3: Retry up to 3 times if DB write/read fails.
+   * Rule 4: localStorage = read-only display cache (offline only).
+   * ──────────────────────────────────────────────────────────────
    */
   const _lsCk = 'kk_uc_' + _user.id;
 
-  /* ── Deterministic fallback: same UID → same code, always ──
-     Uses a simple hash of the user UUID so it's device-independent.
-     This is the LAST resort — we still try to persist to DB first. */
+  /* Deterministic code: same UID always → same 8-char code.
+     Device-independent — works without localStorage. */
   function _deterministicCode(uid){
     let h = 0x811c9dc5;
     for(let i = 0; i < uid.length; i++){
@@ -910,92 +901,120 @@ async function _loadProfile(){
     return code;
   }
 
-  /* Stable code: DB-stored > localStorage-cached > deterministic */
+  /* Best available code: DB confirmed > localStorage cache > deterministic.
+     Only used as offline DISPLAY fallback — never written back to DB from here. */
   function _bestCode(dbCode){
     return dbCode
         || localStorage.getItem(_lsCk)
         || _deterministicCode(_user.id);
   }
 
+  /* Retry helper — wraps a DB call up to N times with short delay */
+  async function _retry(fn, retries){
+    let lastErr;
+    for(let i = 0; i <= retries; i++){
+      try{ return await fn(); }
+      catch(e){
+        lastErr = e;
+        if(i < retries) await new Promise(r => setTimeout(r, 600 * (i + 1)));
+      }
+    }
+    throw lastErr;
+  }
+
+  const detCode = _deterministicCode(_user.id); /* stable code for this user */
+
   try{
     const m  = _user.user_metadata || {};
     const nm = m.full_name || m.name || m.username || _user.email?.split('@')[0] || 'Player';
 
-    /* ── STEP 1: Fetch existing profile row ── */
-    let {data, error} = await SB().from('profiles').select('*').eq('id', _user.id).single();
+    /* ── STEP 1: Fetch existing profile (retry x2) ── */
+    let data, fetchErr;
+    try{
+      const res = await _retry(async() =>
+        SB().from('profiles').select('*').eq('id', _user.id).single()
+      , 2);
+      data = res.data; fetchErr = res.error;
+    }catch(e){ fetchErr = e; }
 
-    if(error && error.code !== 'PGRST116') throw error;  /* PGRST116 = not found */
+    if(fetchErr && fetchErr.code !== 'PGRST116') throw fetchErr;
 
-    /* ── STEP 2: New user — INSERT once ── */
+    /* ── STEP 2: New user — INSERT (retry x2) ── */
     if(!data){
-      /* Use deterministic code as the seed so even if DB write fails,
-         subsequent fetches on any device will generate the same code */
-      const newCode = _deterministicCode(_user.id);
-      const {data:ins, error:ie} = await SB().from('profiles')
-        .insert({
-          id         : _user.id,
-          username   : nm,
-          avatar_url : m.avatar_url || null,
-          user_code  : newCode,
-          updated_at : new Date().toISOString()
-        })
-        .select()
-        .single();
+      let insData, insErr;
+      try{
+        const res = await _retry(async() =>
+          SB().from('profiles')
+            .insert({
+              id         : _user.id,
+              username   : nm,
+              avatar_url : m.avatar_url || null,
+              user_code  : detCode,   /* deterministic — same on any device */
+              updated_at : new Date().toISOString()
+            })
+            .select()
+            .single()
+        , 2);
+        insData = res.data; insErr = res.error;
+      }catch(e){ insErr = e; }
 
-      if(ie && ie.code !== '23505') throw ie;  /* 23505 = race — row already exists */
+      if(insErr && insErr.code !== '23505') throw insErr; /* 23505 = race, row exists */
 
-      if(ins && ins.user_code){
-        /* INSERT + SELECT succeeded */
-        data = ins;
+      if(insData?.user_code){
+        /* INSERT + SELECT succeeded — code is now in DB ✓ */
+        data = insData;
       } else {
-        /* Either: race condition (another tab inserted first)
-           OR: RLS blocks SELECT after INSERT → re-fetch */
-        const {data:rf, error:rfe} = await SB().from('profiles').select('*').eq('id', _user.id).single();
-        if(rfe && rfe.code !== 'PGRST116') throw rfe;
-        data = rf || { id:_user.id, username:nm, avatar_url:m.avatar_url||null, user_code:newCode };
+        /* Race condition or RLS blocks SELECT-after-INSERT → re-fetch */
+        try{
+          const rf = await _retry(async() =>
+            SB().from('profiles').select('*').eq('id', _user.id).single()
+          , 2);
+          data = rf.data;
+        }catch(e){ /* will be handled below */ }
+        /* If re-fetch also fails, build minimal local object with detCode */
+        if(!data) data = { id:_user.id, username:nm, avatar_url:m.avatar_url||null, user_code:detCode };
       }
     }
 
     /* ── STEP 3: Existing user with null user_code (legacy row) ── */
     if(data && !data.user_code){
-      /* Use deterministic code — so both tabs get the same value simultaneously */
-      const fixCode = _deterministicCode(_user.id);
-
-      /* Attempt conditional write — only touches user_code=null rows */
-      await SB().from('profiles')
-        .update({ user_code: fixCode, updated_at: new Date().toISOString() })
-        .eq('id', _user.id)
-        .is('user_code', null);
+      /* Write deterministic code (not random) → consistent across all devices */
+      try{
+        await _retry(async() =>
+          SB().from('profiles')
+            .update({ user_code: detCode, updated_at: new Date().toISOString() })
+            .eq('id', _user.id)
+            .is('user_code', null)   /* conditional: only write if still null */
+        , 2);
+      }catch(e){ console.warn('user_code update failed (non-fatal):', e); }
 
       /* Re-fetch to get what DB actually stored */
-      const {data:r3} = await SB().from('profiles').select('*').eq('id', _user.id).single();
+      try{
+        const r3 = await _retry(async() =>
+          SB().from('profiles').select('*').eq('id', _user.id).single()
+        , 2);
+        if(r3.data?.user_code){
+          data = r3.data;                              /* DB has it ✓ */
+        } else if(r3.data){
+          data = { ...r3.data, user_code: detCode };   /* RLS blocked write — inject locally */
+        }
+      }catch(e){ data = { ...data, user_code: detCode }; }
 
-      /* FIX (was: data = r3 || fallback — r3 could be truthy but r3.user_code still null) */
-      if(r3?.user_code){
-        data = r3;
-      } else if(r3){
-        /* DB returned row but user_code still null (RLS blocked write or race)
-           → inject the deterministic code locally so the user sees their ID */
-        data = { ...r3, user_code: fixCode };
-      } else {
-        data = { ...data, user_code: fixCode };
-      }
-
-      if(data.user_code) localStorage.setItem(_lsCk, data.user_code);
+      if(data?.user_code) localStorage.setItem(_lsCk, data.user_code);
     }
 
-    /* ── STEP 4: Final null-user_code guarantee ──
-       If after all steps user_code is STILL null (complete DB failure),
-       use the hierarchy: localStorage cache → deterministic UID hash.
-       This means ID is NEVER shown as ------ on ANY device. */
+    /* ── STEP 4: Final guarantee — user_code is NEVER null after this line ── */
     if(data && !data.user_code){
-      data = { ...data, user_code: _bestCode(null) };
+      /* DB is unavailable or RLS is misconfigured.
+         Show deterministic code so user can still share their ID.
+         NOTE: Friend search will fail until DB is fixed — expected. */
+      data = { ...data, user_code: detCode };
     }
 
-    /* ── STEP 5: Cache authoritative code to localStorage ── */
+    /* ── STEP 5: Cache to localStorage for offline display ── */
     if(data?.user_code) localStorage.setItem(_lsCk, data.user_code);
 
-    /* ── STEP 6: Guest → Auth upgrade — carry over custom guest name ── */
+    /* ── STEP 6: Guest → Auth name upgrade ── */
     const _upgradeNm = localStorage.getItem('kk_upgrade_nm');
     if(_upgradeNm){
       const defaultNm = m.full_name || m.name || m.username || _user.email?.split('@')[0];
@@ -1015,15 +1034,15 @@ async function _loadProfile(){
   }catch(e){
     console.warn('_loadProfile error:', e);
     if(!_prof){
-      /* Offline / DB-down fallback.
-         _bestCode() returns: localStorage cache → deterministic UID hash.
-         Same UID always produces the same deterministic code → permanent across devices. */
+      /* Complete DB failure — show deterministic code offline.
+         Same UID → same code → user can tell friends their ID verbally.
+         Friend search won't work until DB reconnects. */
       const m = _user.user_metadata || {};
       _prof = {
         id         : _user.id,
         username   : m.full_name || m.name || _user.email?.split('@')[0] || 'Player',
         avatar_url : m.avatar_url || null,
-        user_code  : _bestCode(null),  /* NEVER null — deterministic from UID */
+        user_code  : _bestCode(null),
       };
     }
   }
@@ -1237,7 +1256,18 @@ async function addFriend(){
     const {data:ex} = await SB().from('friendships').select('id,status')
       .or(`and(requester_id.eq.${_user.id},addressee_id.eq.${tg.id}),and(requester_id.eq.${tg.id},addressee_id.eq.${_user.id})`)
       .maybeSingle();
-    if(ex){ toast(ex.status==='accepted' ? 'ရှိပြီးသား သူငယ်ချင်း' : 'ခေါ်ချက် ပို့ပြီးပါပြီ'); btn.disabled=false; btn.textContent='ထည့်မည်'; return; }
+    if(ex){
+      if(ex.status==='accepted'){
+        toast('✓ ရှိပြီးသား သူငယ်ချင်း');
+      } else if(ex.requester_id === _user.id){
+        toast('⏳ ခေါ်ချက် ပို့ပြီးသား — ပြန်ဖြေဆိုမည်ကို စောင့်နေသည်');
+      } else {
+        /* They already sent ME a request — prompt to accept */
+        toast('💡 သူများကပဲ ခေါ်ထားသည် — ခေါ်ချက် Tab မှ လက်ခံနိုင်သည်');
+        setTab('req'); /* switch to requests tab */
+      }
+      btn.disabled=false; btn.textContent='ထည့်မည်'; return;
+    }
     const {error} = await SB().from('friendships').insert({requester_id:_user.id, addressee_id:tg.id, status:'pending'});
     if(error) throw error;
     document.getElementById('add-inp').value = '';
@@ -1311,16 +1341,43 @@ function _startPresence(){
 
   /* friend request watch channel (unique per user to avoid conflicts) */
   _fwch = SB().channel('kk-frw-' + _user.id);
-  _fwch.on('postgres_changes',
-    {event:'INSERT', schema:'public', table:'friendships', filter:`addressee_id=eq.${_user.id}`},
-    async(payload)=>{
-      if(payload.new?.status === 'pending'){
-        const {data:p} = await SB().from('profiles').select('username').eq('id', payload.new.requester_id).single();
-        _notifyRequest(p?.username || 'Someone');
-        await loadReqs();
+  _fwch
+    /* New incoming request */
+    .on('postgres_changes',
+      {event:'INSERT', schema:'public', table:'friendships', filter:`addressee_id=eq.${_user.id}`},
+      async(payload)=>{
+        if(payload.new?.status === 'pending'){
+          const {data:p} = await SB().from('profiles').select('username').eq('id', payload.new.requester_id).single();
+          _notifyRequest(p?.username || 'Someone');
+          await loadReqs();
+        }
       }
-    }
-  ).subscribe();
+    )
+    /* Request accepted — refresh friends list so my Pending → Friends */
+    .on('postgres_changes',
+      {event:'UPDATE', schema:'public', table:'friendships'},
+      async(payload)=>{
+        if(payload.new?.status === 'accepted'){
+          const involved = payload.new.requester_id === _user.id
+                        || payload.new.addressee_id === _user.id;
+          if(involved){
+            await Promise.all([loadFriends(), loadReqs()]);
+          }
+        }
+      }
+    )
+    /* Request deleted — remove from my lists */
+    .on('postgres_changes',
+      {event:'DELETE', schema:'public', table:'friendships'},
+      async(payload)=>{
+        const involved = payload.old?.requester_id === _user.id
+                      || payload.old?.addressee_id === _user.id;
+        if(involved){
+          await Promise.all([loadFriends(), loadReqs()]);
+        }
+      }
+    )
+    .subscribe();
 }
 
 function _stopPresence(){
