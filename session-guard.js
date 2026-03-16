@@ -221,11 +221,21 @@ function _css(){
 ._sg-fri{
   display:flex;align-items:center;gap:10px;
   padding:9px 11px;border-radius:12px;
-  background:${GL.bg};border:1px solid ${GL.border};border-top:1px solid ${GL.hi};
-  transition:background .16s;
+  background:${GL.bg};
+  border:1px solid ${GL.border};border-top:1px solid ${GL.hi};
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 2px 8px rgba(0,0,0,.2);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  transition:all .2s cubic-bezier(.16,1,.3,1);
   animation:_sg-in .22s ease both;position:relative;overflow:hidden;
 }
-._sg-fri:hover{background:rgba(255,255,255,.06)}
+._sg-fri:hover{
+  background:rgba(255,255,255,.07);
+  border-color:rgba(212,168,67,.20);
+  border-top-color:rgba(255,255,255,.16);
+  transform:translateY(-1px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 4px 16px rgba(0,0,0,.28);
+}
+._sg-fri:active{transform:scale(.98);box-shadow:inset 0 2px 6px rgba(0,0,0,.3);transition:all .08s ease;}
 ._sg-fav-ring{
   position:relative;flex-shrink:0;
   width:38px;height:38px;
@@ -247,13 +257,38 @@ function _css(){
 ._sg-sdot.on{background:${GL.ok};animation:_sg-breathe 2s ease-in-out infinite}
 ._sg-sdot.off{background:rgba(255,255,255,.22)}
 ._sg-binv{
-  padding:5px 11px;border-radius:8px;cursor:pointer;
-  font-family:\'Outfit\',sans-serif;font-size:.65rem;font-weight:700;
-  border:1px solid rgba(99,179,237,.35);
-  color:rgba(147,210,255,.85);background:rgba(99,179,237,.09);
-  transition:all .16s;white-space:nowrap;flex-shrink:0;
+  padding:7px 14px;border-radius:10px;cursor:pointer;
+  font-family:\'Outfit\',sans-serif;font-size:.68rem;font-weight:700;
+  letter-spacing:.3px;
+  border:1px solid rgba(99,179,237,.30);
+  border-top:1px solid rgba(255,255,255,.18);
+  color:rgba(147,210,255,.9);
+  background:rgba(99,179,237,.10);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 2px 8px rgba(0,0,0,.25);
+  transition:all .22s cubic-bezier(.16,1,.3,1);
+  white-space:nowrap;flex-shrink:0;
+  position:relative;overflow:hidden;
 }
-._sg-binv:hover{background:rgba(99,179,237,.18);border-color:rgba(99,179,237,.55);color:#bee3f8}
+._sg-binv::before{
+  content:\'\';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.07) 0%,transparent 60%);
+  pointer-events:none;
+}
+._sg-binv:hover{
+  background:rgba(99,179,237,.20);
+  border-color:rgba(99,179,237,.55);
+  border-top-color:rgba(255,255,255,.28);
+  color:#bee3f8;
+  transform:translateY(-1px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 4px 14px rgba(99,179,237,.18);
+}
+._sg-binv:active{
+  transform:scale(.95) translateY(0);
+  background:rgba(99,179,237,.25);
+  box-shadow:inset 0 2px 4px rgba(0,0,50,.3),0 1px 4px rgba(0,0,0,.2);
+  transition:all .08s ease;
+}
 ._sg-fpcard{
   display:flex;flex-direction:column;align-items:center;gap:10px;
   padding:18px 16px 14px;
