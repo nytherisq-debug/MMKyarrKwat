@@ -325,6 +325,15 @@ const CFG = {
 ═══════════════════════════════════════════════ */
 let _sb   = null;
 let _user = null;   /* Supabase user (null for guest) */
+
+/* Deterministic KK code from UID — module-scope so goGame() can also call it */
+function _detCode(uid){
+  var h=0x811c9dc5;
+  for(var i=0;i<uid.length;i++){h^=uid.charCodeAt(i);h=(Math.imul(h,0x01000193))>>>0;}
+  var C='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',code='KK',n=h;
+  for(var j=0;j<6;j++){code+=C[n%C.length];n=Math.floor(n/C.length)||(h>>>j);}
+  return code;
+}
 let _prof = null;   /* profiles row                   */
 let _pch  = null;   /* presence channel               */
 let _fwch = null;   /* friendships watch channel      */
@@ -686,42 +695,26 @@ async function _loadProfile(){
   const _lsCk = 'kk_uc_' + _user.id;
   const m  = _user.user_metadata || {};
   const nm = m.full_name || m.name || m.username || _user.email?.split('@')[0] || 'Player';
-
-  /* Deterministic code: same UID → same 8-char code on ANY device, ALWAYS
-     MUST match _detCode() in session-guard.js exactly */
-  function _detCode(uid){
-    var h=0x811c9dc5;
-    for(var i=0;i<uid.length;i++){h^=uid.charCodeAt(i);h=(Math.imul(h,0x01000193))>>>0;}
-    var C='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',code='KK',n=h;
-    for(var j=0;j<6;j++){code+=C[n%C.length];n=Math.floor(n/C.length)||(h>>>j);}
-    return code;
-  }
-
   const detCode = _detCode(_user.id);
 
-  try{
-    /* ══════════════════════════════════════════════════
-       SINGLE RULE: UPSERT on every login.
-       - Inserts if row doesn't exist
-       - Updates user_code if null (because we specify it)
-       - Does NOT overwrite existing user_code (merge logic below)
-       ══════════════════════════════════════════════════ */
+  /* Validate user_code format: must be KK + exactly 6 uppercase alphanumeric chars */
+  function _validCode(c){ return typeof c==='string' && /^KK[A-Z0-9]{6}$/.test(c); }
 
-    /* Step 1: fetch current profile to check if user_code already set */
+  try{
+    /* Step 1: fetch current profile */
     const {data:existing} = await SB()
       .from('profiles').select('*').eq('id',_user.id).single();
 
-    /* If row exists with a valid user_code → use it, no write needed */
-    if(existing?.user_code){
+    /* If row exists with a VALID user_code → use it, no write needed */
+    if(existing && _validCode(existing.user_code)){
       _prof = existing;
       localStorage.setItem(_lsCk, existing.user_code);
-      /* Still do upgrade check */
       await _doUpgrade(existing);
       return;
     }
 
-    /* Row missing OR user_code null → UPSERT with detCode */
-    /* UPSERT = INSERT or UPDATE on conflict. No .single() = no PGRST116. */
+    /* Row missing OR user_code null/invalid (e.g. "[object Promise]" from old bug)
+       → UPSERT with fresh detCode */
     const upsertPayload = {
       id         : _user.id,
       username   : existing?.username || nm,
@@ -863,14 +856,29 @@ async function goGame(){
   try{
     let player;
     if(_user && _prof){
-      /* Authenticated user */
+      /* Authenticated user — validate user_code format before sending to game */
+      const _validKK = (c) => typeof c==='string' && /^KK[A-Z0-9]{6}$/.test(c);
+      let _code = _prof.user_code;
+      if(!_validKK(_code)){
+        /* Bad/missing code — try localStorage cache first, then generate */
+        const _lsCk = 'kk_uc_' + _user.id;
+        const _cached = localStorage.getItem(_lsCk);
+        _code = _validKK(_cached) ? _cached : _detCode(_user.id);
+        /* Write valid code back to _prof and DB (fire-and-forget) */
+        _prof.user_code = _code;
+        localStorage.setItem(_lsCk, _code);
+        SB().from('profiles')
+          .update({user_code:_code, updated_at:new Date().toISOString()})
+          .eq('id',_user.id)
+          .then(()=>{}).catch(()=>{});
+      }
       player = {
-        type      : 'auth',
-        id        : _prof.user_code  || null,
-        uid       : _user.id,
-        name      : _prof.username   || _user.email?.split('@')[0] || 'Player',
-        avatar    : _prof.avatar_url || _user.user_metadata?.avatar_url || null,
-        email     : _user.email      || null,
+        type  : 'auth',
+        id    : _code,
+        uid   : _user.id,
+        name  : _prof.username   || _user.email?.split('@')[0] || 'Player',
+        avatar: _prof.avatar_url || _user.user_metadata?.avatar_url || null,
+        email : _user.email      || null,
       };
     } else {
       /* Guest — register in guest_profiles so auth users can find them */
