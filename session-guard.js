@@ -1304,20 +1304,18 @@ async function _startPresence(user){
         _renderReqTab();_updateReqBadge();_refreshWidget();
       })
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'friendships'},
-      async function(payload){
-        var n=payload.new||{};
-        if(n.requester_id===user.id||n.addressee_id===user.id){
-          await _loadAll();
-          _renderFriendTab();_renderReqTab();_updateReqBadge();_refreshWidget();
-        }
+      async function(){
+        /* payload.new can be null under RLS — always reload on any friendship update */
+        await _loadAll();
+        _renderFriendTab();_renderReqTab();_updateReqBadge();_refreshWidget();
       })
     .on('postgres_changes',{event:'DELETE',schema:'public',table:'friendships'},
-      async function(payload){
-        var o=payload.old||{};
-        if(o.requester_id===user.id||o.addressee_id===user.id){
-          await _loadAll();
-          _renderFriendTab();_renderReqTab();_updateReqBadge();_refreshWidget();
-        }
+      async function(){
+        /* payload.old is often null/empty under RLS — always reload.
+           This fires for BOTH sides of a friendship deletion, so the
+           removed friend's list also clears immediately (ML-style). */
+        await _loadAll();
+        _renderFriendTab();_renderReqTab();_updateReqBadge();_refreshWidget();
       })
     .subscribe();
   /* Store so it gets cleaned up with presence */
@@ -2073,46 +2071,24 @@ window._sgInviteFri=async function(toUid,toName){
       return;
     }
     rc=_genRoomCode();
-    /* Pre-fill name if blank */
+    /* Pre-fill name + code */
     var ni=document.getElementById('inp-name');
     if(ni&&!ni.value&&_kp&&_kp.name)ni.value=_kp.name;
-    /* Pre-fill room code */
     var ci=document.getElementById('inp-code');
     if(ci)ci.value=rc;
-    /* Create the room — joinRoom() usually doesn't return a Promise.
-       After calling it, VERIFY the room actually exists in DB before
-       sending invite — retry every 300ms up to 3 seconds. */
+    /* Call joinRoom so the inviter creates + enters the room */
     if(typeof window.joinRoom==='function'){
       try{
         var _jr=window.joinRoom();
         if(_jr&&typeof _jr.then==='function'){await _jr;}
       }catch(e){console.warn('[invite] joinRoom:',e);}
     }
-    /* Poll DB until room is confirmed (max 3s) */
-    if(_sb()){
-      var _confirmed=false;
-      for(var _t=0;_t<10&&!_confirmed;_t++){
-        await new Promise(function(r){setTimeout(r,300);});
-        try{
-          var _chk=await _sb().from('rooms').select('id').eq('code',rc).maybeSingle();
-          if(_chk&&_chk.data){_confirmed=true;}
-        }catch(e){/* table name may differ — fall through after attempts */}
-        if(_t===9&&!_confirmed){
-          /* Last resort: try common room table names */
-          try{
-            var _chk2=await _sb().from('game_rooms').select('id').eq('code',rc).maybeSingle();
-            if(_chk2&&_chk2.data)_confirmed=true;
-          }catch(e2){}
-        }
-      }
-      if(!_confirmed){
-        /* Room not verified — still send invite but warn */
-        console.warn('[invite] room not confirmed in DB after 3s, sending anyway');
-      }
-    } else {
-      /* No Supabase client — just wait 1500ms */
-      await new Promise(function(r){setTimeout(r,1500);});
-    }
+    /* Wait 1800ms — reliable fixed delay that covers:
+         - joinRoom() async DB write (~300-500ms)
+         - Supabase propagation (~200ms)
+         - Slow 3G/4G mobile networks (+500ms buffer)
+       Do NOT poll game-specific table names (they vary per game). */
+    await new Promise(function(r){setTimeout(r,1800);});
   }
 
   /* Guest-only path (no uid) — just copy room code */
@@ -2232,28 +2208,16 @@ window._sgAcceptInvite=async function(){
   var sb=_sb();
   if(sb){try{await sb.from('room_invites').update({status:'accepted'}).eq('id',inv.id);}catch(e){console.warn('accept invite update:',e);}}
   _close();
-  /* Pre-fill inp-name from _kp if empty */
+  /* Pre-fill name + room code */
   var ni=$('inp-name');
   if(ni&&!ni.value&&_kp&&_kp.name)ni.value=_kp.name;
-  /* Pre-fill room code and join with retry */
   var ci=$('inp-code');
   if(ci)ci.value=inv.room_code;
-  /* Close modal, then attempt join. If joinRoom fails (room not ready),
-     retry once after 1500ms additional wait. */
-  var _invRoomCode=inv.room_code;
+  /* Wait 1000ms before joining — inviter waited 1800ms before sending,
+     so room is guaranteed to be in DB by the time we call joinRoom(). */
   setTimeout(function(){
-    if(typeof window.joinRoom!=='function')return;
-    window.joinRoom();
-    /* If game shows "Room မတွေ့ပါ" error, the room might still be propagating.
-       Schedule a single retry after 1500ms as fallback. */
-    setTimeout(function(){
-      var errEl=document.getElementById('join-err')||document.querySelector('[id*="err"],[class*="error"]');
-      if(errEl&&errEl.textContent&&errEl.textContent.includes('မတွေ့')){
-        var ci2=$('inp-code');if(ci2)ci2.value=_invRoomCode;
-        window.joinRoom();
-      }
-    },1500);
-  },400);
+    if(typeof window.joinRoom==='function')window.joinRoom();
+  },1000);
 };
 
 window._sgDeclineInvite=async function(){
