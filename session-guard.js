@@ -108,20 +108,15 @@ function _css(){
   pointer-events:all;visibility:visible;
 }
 
-/* ── Modal wrap (conic spinning border) ── */
+/* ── Modal wrap (static premium gold border) ── */
 ._sg-mw{
   position:relative;z-index:9001;border-radius:26px;padding:1.5px;
   animation:_sg-enter-up .38s cubic-bezier(0,0,.2,1) both;
+  background:linear-gradient(135deg,rgba(212,168,67,.55) 0%,rgba(240,204,114,.25) 50%,rgba(212,168,67,.55) 100%);
 }
 ._sg-mw::before{
   content:'';position:absolute;inset:0;border-radius:26px;z-index:-1;
-  background:conic-gradient(from var(--_sg-ang),
-    rgba(212,168,67,0) 0%,
-    rgba(212,168,67,.45) 30%,
-    rgba(240,204,114,.88) 50%,
-    rgba(212,168,67,.45) 70%,
-    rgba(212,168,67,0) 100%);
-  animation:_sg-spin-bd 4s linear infinite;
+  background:rgba(5,3,16,.98);
 }
 
 /* ── Modal card ── */
@@ -147,10 +142,8 @@ function _css(){
 ._sg-hdr{padding:18px 20px 0;display:flex;align-items:center;gap:10px;position:relative}
 ._sg-htitle{
   flex:1;font-family:'Cinzel Decorative',serif;font-size:.86rem;font-weight:700;letter-spacing:.06em;
-  background:linear-gradient(90deg,#C8920A,#F0CC72,#D4A843,#F0CC72,#C8920A);
-  background-size:200% auto;
+  background:linear-gradient(135deg,#C8920A,#F0CC72,#D4A843);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  animation:_sg-shimx 6s ease-in-out infinite;
 }
 ._sg-hclose{
   width:28px;height:28px;border-radius:50%;cursor:pointer;flex-shrink:0;
@@ -686,26 +679,6 @@ function _css(){
 ._sg-blink:hover{background:rgba(16,185,129,.14);border-color:rgba(16,185,129,.46);transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(16,185,129,.16),0 6px 20px rgba(16,185,129,.16)}
 ._sg-blink:active{transform:scale(.96);transition:all .07s}
 
-/* ── Liquid Glass Back Button ── */
-#_sg-back-btn{
-  position:fixed;top:14px;left:14px;z-index:800;
-  display:none;align-items:center;gap:6px;
-  padding:9px 17px;border-radius:999px;
-  background:rgba(255,255,255,.11);
-  border:1px solid rgba(255,255,255,.24);border-top:1px solid rgba(255,255,255,.40);
-  backdrop-filter:blur(24px) saturate(200%);-webkit-backdrop-filter:blur(24px) saturate(200%);
-  box-shadow:0 4px 28px rgba(0,0,0,.40),inset 0 1px 0 rgba(255,255,255,.20),inset 0 -1px 0 rgba(0,0,0,.12),0 0 0 1px rgba(255,255,255,.06);
-  cursor:pointer;font-family:'Outfit',sans-serif;font-size:.74rem;font-weight:700;
-  color:rgba(240,232,216,.92);letter-spacing:.02em;
-  transition:all .24s cubic-bezier(0,0,.2,1);overflow:hidden;
-}
-#_sg-back-btn.on{display:flex;animation:_sg-back-in .42s cubic-bezier(0,0,.2,1) both}
-#_sg-back-btn::before{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,rgba(255,255,255,.16) 0%,transparent 55%);pointer-events:none}
-#_sg-back-btn::after{content:'';position:absolute;top:0;left:-80%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);animation:_sg-back-shim 3.8s ease-in-out infinite;pointer-events:none}
-#_sg-back-btn:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.36);border-top-color:rgba(255,255,255,.54);transform:translateY(-2px) scale(1.03);box-shadow:0 8px 36px rgba(0,0,0,.50),inset 0 1px 0 rgba(255,255,255,.28)}
-#_sg-back-btn:active{transform:scale(.95);background:rgba(255,255,255,.07);transition:all .07s}
-#_sg-back-arrow{font-size:.88rem;line-height:1;transition:transform .22s cubic-bezier(0,0,.2,1);display:inline-block}
-#_sg-back-btn:hover #_sg-back-arrow{transform:translateX(-3px)}
 
 ._sg-link-cta{
   position:relative;width:100%;padding:13px 16px;border-radius:14px;cursor:pointer;overflow:hidden;
@@ -1174,13 +1147,15 @@ async function _startPresence(user){
     .on('broadcast',{event:'online'},function(d){
       if(d.payload&&d.payload.uid&&d.payload.uid!==user.id){
         _online.add(d.payload.uid);
-        _refreshWidget();_renderFriendTab();_renderOnlineCount();
+        if(!_patchFriendRow(d.payload.uid,true))_renderFriendTab();
+        _refreshWidget();_renderOnlineCount();
       }
     })
     .on('broadcast',{event:'offline'},function(d){
       if(d.payload&&d.payload.uid){
         _online.delete(d.payload.uid);
-        _refreshWidget();_renderFriendTab();_renderOnlineCount();
+        if(!_patchFriendRow(d.payload.uid,false))_renderFriendTab();
+        _refreshWidget();_renderOnlineCount();
       }
     })
     .subscribe(async function(s){
@@ -1200,11 +1175,13 @@ async function _startPresence(user){
     })
     .on('presence',{event:'join'},function(d){
       if(d.key&&d.key!==user.id)_online.add(d.key);
-      _refreshWidget();_renderFriendTab();_renderOnlineCount();
+      if(!_patchFriendRow(d.key,true))_renderFriendTab();
+      _refreshWidget();_renderOnlineCount();
     })
     .on('presence',{event:'leave'},function(d){
       if(d.key)_online.delete(d.key);
-      _refreshWidget();_renderFriendTab();_renderOnlineCount();
+      if(!_patchFriendRow(d.key,false))_renderFriendTab();
+      _refreshWidget();_renderOnlineCount();
     })
     .subscribe(async function(s){
       if(s==='SUBSCRIBED'){
@@ -1582,6 +1559,28 @@ function _renderGuestReqTab(){
 }
 
 /* Update guest request badge */
+
+/* ── Targeted DOM update — Mobile Legends style, no full re-render flicker ── */
+function _patchFriendRow(uid,isOnline,statusOverride){
+  if(!uid)return false;
+  var row=document.querySelector('._sg-fri-cl[data-uid="'+uid+'"]');
+  if(!row)return false;
+  /* Avatar ring dot */
+  var sdot=row.querySelector('._sg-sdot');
+  if(sdot)sdot.className='_sg-sdot '+(isOnline?'on':'off');
+  /* Inline status dots */
+  row.querySelectorAll('._sg-don,._sg-doff').forEach(function(el){
+    el.className=isOnline?'_sg-don':'_sg-doff';
+  });
+  /* Status text */
+  var stEl=row.querySelector('[data-sg-st]');
+  if(stEl){
+    var st=statusOverride||(isOnline?'Online':'Offline');
+    stEl.textContent=st;
+    stEl.style.color=st==='🎮 In Match'?'rgba(245,158,11,.85)':(isOnline?GL.ok:'rgba(255,255,255,.28)');
+  }
+  return true;
+}
 function _updateGuestReqBadge(){
   var el=$('_sg-greq-badge');
   if(el){el.style.display=_guestReqsInc.length?'':'none';el.textContent=_guestReqsInc.length;}
@@ -1599,6 +1598,9 @@ function _friAv(p,size){
     '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:rgba(212,168,67,.08);display:none;align-items:center;justify-content:center;border:1.5px solid rgba(212,168,67,.18);font-size:'+Math.round(size*0.45)+'px;flex-shrink:0">👤</div>';
 }
 
+
+
+
 function _renderFriendTab(){
   var box=$('_sg-ftab');if(!box)return;
   var myId=_authUser?.id||_kp?.uid||'';
@@ -1609,7 +1611,7 @@ function _renderFriendTab(){
      No inline delete button — remove via profile modal only.  */
   function _row(cfg,idx){
     var unread=cfg.chatUnread?'<span class="_sg-unread">'+cfg.chatUnread+'</span>':'';
-    return '<div class="_sg-fri _sg-fri-cl" style="animation-delay:'+(idx*0.04)+'s"'+
+    return '<div class="_sg-fri _sg-fri-cl" data-uid="'+(cfg.uid||'')+'" style="animation-delay:'+(idx*0.04)+'s"'+
       ' onclick="'+cfg.onclick+'">'+
       '<div class="_sg-fav-ring">'+cfg.av+'<div class="_sg-sdot '+(cfg.dot||'off')+'"></div></div>'+
       '<div style="flex:1;min-width:0">'+
@@ -1663,6 +1665,7 @@ function _renderFriendTab(){
         onclick:'window._sgOpenGuestFriProfile(\''+_x(g.user_code)+'\')',
         inviteClick:inviteClick,chatClick:chatClick,
         chatUid:isGmail?_x(g.uid):'',
+        uid:isGmail?g.uid:'',
         chatUnread:isGmail&&_dmUnread[g.uid]?_dmUnread[g.uid]:0
       },idx);
     }).join('');
@@ -1708,12 +1711,13 @@ function _renderFriendTab(){
       dot:on?'on':'off',
       subHtml:
         '<span class="'+(on?'_sg-don':'_sg-doff')+'"></span>'+
-        '<span style="font-size:.60rem;color:'+statusColor+';font-family:\'Outfit\',sans-serif">'+status+'</span>'+
+        '<span data-sg-st style="font-size:.60rem;color:'+statusColor+';font-family:\'Outfit\',sans-serif">'+status+'</span>'+
         (p.user_code?'<span style="font-size:.55rem;color:rgba(180,148,70,.40);font-family:\'Outfit\',monospace;margin-left:4px">'+_x(p.user_code)+'</span>':''),
       onclick:'window._sgOpenFriProfile(\''+f.id+'\')',
       inviteClick:'window._sgInviteFri(\''+p.id+'\',\''+_x(p.username||p.user_code||'')+'\')',
       chatClick:'window._sgOpenDM(\''+p.id+'\')',
       chatUid:p.id,
+      uid:p.id,
       chatUnread:_dmUnread[p.id]||0
     },idx);
   }).join('');
@@ -1741,13 +1745,14 @@ function _renderFriendTab(){
       av:avH,name:nm,dot:on?'on':'off',
       subHtml:isGmail
         ?'<span class="'+(on?'_sg-don':'_sg-doff')+'"></span>'+
-          '<span style="font-size:.60rem;color:'+(on?GL.ok:'rgba(255,255,255,.28)')+';font-family:\'Outfit\',sans-serif">'+(on?'Online':'Offline')+'</span>'+
+          '<span data-sg-st style="font-size:.60rem;color:'+(on?GL.ok:'rgba(255,255,255,.28)')+';font-family:\'Outfit\',sans-serif">'+(on?'Online':'Offline')+'</span>'+
           '<span style="font-size:.55rem;color:rgba(180,148,70,.40);font-family:\'Outfit\',monospace;margin-left:4px">'+uc+'</span>'
         :'<span class="_sg-gtag">👤 Guest</span>'+
           '<span style="font-size:.54rem;color:rgba(180,148,70,.35);font-family:\'Outfit\',monospace">'+uc+'</span>',
       onclick:'window._sgOpenGuestFriProfile(\''+_x(g.user_code)+'\')',
       inviteClick:inviteClick,chatClick:chatClick,
       chatUid:isGmail?_x(uid):'',
+      uid:uid||'',
       chatUnread:uid&&_dmUnread[uid]?_dmUnread[uid]:0
     },aidx);
   }).join('');
@@ -2027,18 +2032,21 @@ window._sgInviteFri=async function(toUid,toName){
       _sgToast('💡 Room Code မရှိပါ — ကိုယ်တိုင် ပေးပို့ပါ');
       return;
     }
-    /* Auto-create room — inviter becomes host (Blue) */
+    /* Silent room creation — stay on lobby, block waiting screen */
     var ni=document.getElementById('inp-name');
     if(ni&&!ni.value&&_kp&&_kp.name)ni.value=_kp.name;
     if(typeof window.createRoom==='function'){
+      /* Patch showScr: block 'waiting' transition so lobby stays visible */
+      var _oScr=window.showScr;
+      window.showScr=function(s){if(s==='waiting')return;return _oScr&&_oScr.call(this,s);};
       try{
         var _cr=window.createRoom();
         if(_cr&&typeof _cr.then==='function'){await _cr;}
       }catch(e){console.warn('[invite] createRoom:',e);}
+      finally{window.showScr=_oScr;}
     }
-    /* Wait for DB propagation */
-    await new Promise(function(r){setTimeout(r,1200);});
-    /* Read the room code that createRoom() assigned */
+    /* Wait for Supabase propagation */
+    await new Promise(function(r){setTimeout(r,1000);});
     rc=window.roomId||'';
     if(!rc||rc.length<4){_sgToast('❌ Room ဖန်တီးမရပါ — ထပ်ကြိုးစားပါ');return;}
   }
@@ -2067,6 +2075,15 @@ window._sgInviteFri=async function(toUid,toName){
       if(res.error){_sgToast('❌ Invite မပို့ရပါ: '+(res.error.message||''));return;}
       _sgToast('📨 '+_x(toName||'Friend')+' ထံ Invite ပို့ပြီး ✓');
       window._sgClose&&window._sgClose();
+      /* Subtle lobby hint while waiting for accept */
+      setTimeout(function(){
+        var _ls=document.getElementById('lobby-st');
+        if(_ls&&!window.roomId&&!window.over){_ls.textContent='⏳ '+_x(toName||'Friend')+' · Invite လက်ခံမည်ကို စောင့်နေသည်...';}
+        setTimeout(function(){
+          var _ls2=document.getElementById('lobby-st');
+          if(_ls2&&(_ls2.textContent||'').includes('စောင့်'))_ls2.textContent='';
+        },50000);
+      },200);
     }catch(e){
       console.error('_sgInviteFri:',e);
       _sgToast('❌ '+(e.message||'Invite မပို့ရပါ'));
@@ -2104,30 +2121,59 @@ window._sgInviteFri=async function(toUid,toName){
   }
 };
 
+/* Check DB for pending invites that arrived before listener subscribed */
+async function _checkPendingInvites(user){
+  if(!user||window._pendingInvite)return;
+  var sb=_sb();if(!sb)return;
+  try{
+    var res=await sb.from('room_invites')
+      .select('*')
+      .eq('to_uid',user.id)
+      .eq('status','pending')
+      .order('created_at',{ascending:false})
+      .limit(1);
+    if(res.data&&res.data.length>0){
+      var inv=res.data[0];
+      /* Ignore stale invites older than 5 minutes */
+      if(Date.now()-new Date(inv.created_at).getTime()<300000){
+        setTimeout(function(){
+          if(!window._pendingInvite)_showInviteOverlay(inv);
+        },500);
+      }
+    }
+  }catch(e){/* no pending or RLS restricted */}
+}
+
 /* Start listening for incoming invites (runs after user verified) */
 async function _startInviteListener(user){
-  if(_inviteCh)return;  /* already subscribed */
+  if(_inviteCh)return;
   var sb=_sb();if(!sb||!user)return;
   _inviteCh=sb.channel('kk-inv-'+user.id,{config:{broadcast:{ack:false}}});
   _inviteCh
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'room_invites',
         filter:'to_uid=eq.'+user.id},
       function(payload){
-        console.log('[invite] received:',payload.new);
         if(payload.new&&payload.new.status==='pending')_showInviteOverlay(payload.new);
       })
     .subscribe(function(status){
-      console.log('[invite listener] status:',status);
+      if(status==='SUBSCRIBED'){
+        /* Check for invites that arrived during the subscription gap */
+        _checkPendingInvites(user);
+      }
       if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){
-        /* Reset so it can re-subscribe on next open */
         _inviteCh=null;
+        setTimeout(function(){
+          _getUser().then(function(u){if(u)_startInviteListener(u);});
+        },4000);
       }
     });
 }
 
 /* Show accept/decline overlay for incoming invite */
 function _showInviteOverlay(inv){
-  /* Store pending invite data globally so onclick can access without string escaping */
+  /* Don't pop overlay while user is actively in a game */
+  if(window.roomId&&window.roomId!=='AI'&&!window.over)return;
+  /* Store pending invite data globally */
   window._pendingInvite={id:inv.id,room_code:inv.room_code};
   _ensureBd();
   var bd=$('_sg-bd');
@@ -2244,8 +2290,9 @@ async function _startStatusListener(user,friendUids){
       if(!row)return;
       if(friendUids.indexOf(row.uid)>=0){
         _friendStatus[row.uid]=row.status||'lobby';
-        /* Re-render friend list to update badge */
-        _renderFriendTab();
+        var _isOnl=_online.has(row.uid);
+        var _stTxt=row.status==='in_match'?'🎮 In Match':(_isOnl?'Online':'Offline');
+        if(!_patchFriendRow(row.uid,_isOnl,_stTxt))_renderFriendTab();
       }
     })
     .subscribe();
@@ -2477,12 +2524,21 @@ window._sgSetGuestTab=function(t){
 };
 
 /* ── Premium Friends Widget update ── */
+var _lastWidgetHash='';
 function _refreshWidget(){
   var stack=$('_sg-av-stack');if(!stack)return;
   var myId=_authUser?.id||_kp?.uid||'';
   var onl=_flist.filter(function(f){var o=f.requester_id===myId?f.addressee_id:f.requester_id;return _online.has(o);});
   var off=_flist.filter(function(f){var o=f.requester_id===myId?f.addressee_id:f.requester_id;return !_online.has(o);});
   var show=[...onl,...off].slice(0,3);
+  /* Hash-check — skip DOM rebuild if online state hasn't changed */
+  var _wHash=show.map(function(f){
+    var p=f.requester_id===myId?f.adr:f.req;
+    var oId=f.requester_id===myId?f.addressee_id:f.requester_id;
+    return (p?p.id:'')+(_online.has(oId)?'1':'0');
+  }).join('|');
+  if(_wHash===_lastWidgetHash){_renderOnlineCount();return;}
+  _lastWidgetHash=_wHash;
   stack.innerHTML=show.map(function(f,i){
     var p=f.requester_id===myId?f.adr:f.req;if(!p)return'';
     var on=_online.has(p.id);
@@ -2602,6 +2658,8 @@ async function _openFriends(){
       _startInviteListener(user);
       _startGuestReqListener(user);
       _renderFriendTab();_renderReqTab();_updateReqBadge();
+      /* Check for pending invite when modal opens */
+      _checkPendingInvites(user);
     });
 }
 
@@ -2618,7 +2676,6 @@ function _buildLobby(p){
     else{console.warn('[session-guard] .lbox not found after 3s');}
     return;
   }
-  console.log('[session-guard] .lbox found, inserting badge...');
 
   /* ── Profile Badge ── */
   var badge=document.createElement('div');badge.id='_sg-badge';
@@ -2707,7 +2764,6 @@ function _buildLobby(p){
   var anchor=Array.from(lbox.querySelectorAll('.llbl')).find(function(el){return el.textContent.includes('သင့်အမည်');})||lbox.querySelector('.linp');
   if(anchor){lbox.insertBefore(badge,anchor);lbox.insertBefore(fw,anchor);}
   else{lbox.appendChild(badge);lbox.appendChild(fw);}
-  console.log('[session-guard] badge + friends widget inserted ✓');
 
   /* Auto-start for auth */
   if(p&&p.type==='auth'){
@@ -2760,29 +2816,8 @@ function _cleanAv(){
 }
 
 /* ═══════════════════════ LIQUID GLASS BACK BUTTON ═════════════════════ */
-function _showBackBtn(){
-  var btn=document.getElementById('_sg-back-btn');
-  if(!btn){
-    btn=document.createElement('button');
-    btn.id='_sg-back-btn';
-    btn.setAttribute('aria-label','ပြန်မည်');
-    btn.innerHTML=
-      '<span id="_sg-back-arrow">&#8592;</span>'+
-      '<span>ပြန်မည်</span>';
-    btn.addEventListener('click',function(){
-      if(typeof window.doLeave==='function')window.doLeave();
-    });
-    document.body.appendChild(btn);
-  }
-  /* Re-trigger animation on each show */
-  btn.classList.remove('on');
-  void btn.offsetWidth; /* reflow */
-  btn.classList.add('on');
-}
-function _hideBackBtn(){
-  var btn=document.getElementById('_sg-back-btn');
-  if(btn)btn.classList.remove('on');
-}
+function _showBackBtn(){/* removed per design — index.html handles navigation */}
+function _hideBackBtn(){/* removed per design */}
 
 /* ═════════════════════════ WRAP INDEX FUNCTIONS ═══════════════════════ */
 var _oSG=window.showGame;
@@ -2794,8 +2829,7 @@ if(typeof _oSG==='function'){
     if(!window.spectatorMode&&window.roomId&&window.roomId!=='AI'){
       _updateMyStatus('in_match',window.roomId);
     }
-    /* Show liquid glass back button */
-    _showBackBtn();
+    /* Back button removed — game uses its own navigation */
   };
 }
 var _oDL=window.doLeave;
@@ -2803,8 +2837,6 @@ if(typeof _oDL==='function'){
   window.doLeave=async function(){
     _cleanAv();
     _updateMyStatus('lobby',null);
-    /* Hide back button */
-    _hideBackBtn();
     return _oDL.apply(this,arguments);
   };
 }
@@ -2864,10 +2896,13 @@ function _doInit(){
       if(typeof window.joinRoom==='function')window.joinRoom();
     },1200);
   }
-  /* Start invite listener in index.html if user is authenticated */
+  /* Start invite listener + check for missed pending invites */
   if(_kp&&_kp.type==='auth'){
     _getUser().then(function(u){
-      if(u){_startInviteListener(u);}
+      if(!u)return;
+      _startInviteListener(u);
+      /* Small delay — let the listener subscribe before querying */
+      setTimeout(function(){_checkPendingInvites(u);},2500);
     });
   }
 }
