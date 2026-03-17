@@ -44,6 +44,14 @@ var GL={
 var $=function(id){return document.getElementById(id);};
 var _x=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
 var _sb=function(){return(typeof window.SB==='function')?window.SB():null;};
+/* Safe game-state reader — works for both `let` (index.html) and `var` globals.
+   `let` vars don't appear on `window`, so use _sgState() bridge when available. */
+function _kkSt(){return(typeof window._sgState==='function')?window._sgState():{
+  roomId:_kkRoom()||'',over:_kkSt().over||false,
+  myColor:_kkSt().myColor||null,isHost:window.isHost||false,
+  leaving:window.leaving||false,aiMode:window.aiMode||false,
+  spectatorMode:_kkSt().spectatorMode||false};}
+function _kkRoom(){return _kkSt().roomId;}
 var _kp=null;
 try{var _r=sessionStorage.getItem('kk_player');if(_r)_kp=JSON.parse(_r);}catch(e){}
 var _inviteCh=null;     /* invite realtime channel */
@@ -142,8 +150,9 @@ function _css(){
 ._sg-hdr{padding:18px 20px 0;display:flex;align-items:center;gap:10px;position:relative}
 ._sg-htitle{
   flex:1;font-family:'Cinzel Decorative',serif;font-size:.86rem;font-weight:700;letter-spacing:.06em;
-  background:linear-gradient(135deg,#C8920A,#F0CC72,#D4A843);
+  background:linear-gradient(120deg,#C8920A 0%,#F0CC72 45%,#D4A843 100%);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  /* No animation — static gold gradient, premium and clean */
 }
 ._sg-hclose{
   width:28px;height:28px;border-radius:50%;cursor:pointer;flex-shrink:0;
@@ -1142,19 +1151,26 @@ async function _startPresence(user){
 
   /* ── BROADCAST channel for INSTANT online/offline ── */
   /* This fires in < 200ms vs presence which can take 5-30s */
+  /* Debounced render — coalesces rapid online/offline events into one DOM pass */
+  var _bcastRenderTimer=null;
+  function _debouncedRender(){
+    clearTimeout(_bcastRenderTimer);
+    _bcastRenderTimer=setTimeout(function(){_bcastRenderTimer=null;_renderFriendTab();},320);
+  }
   var _bcast=sb.channel('kk-online-bcast');
   _bcast
     .on('broadcast',{event:'online'},function(d){
       if(d.payload&&d.payload.uid&&d.payload.uid!==user.id){
         _online.add(d.payload.uid);
-        if(!_patchFriendRow(d.payload.uid,true))_renderFriendTab();
+        /* Patch in-place first (no flicker); fall back to debounced full render */
+        if(!_patchFriendRow(d.payload.uid,true))_debouncedRender();
         _refreshWidget();_renderOnlineCount();
       }
     })
     .on('broadcast',{event:'offline'},function(d){
       if(d.payload&&d.payload.uid){
         _online.delete(d.payload.uid);
-        if(!_patchFriendRow(d.payload.uid,false))_renderFriendTab();
+        if(!_patchFriendRow(d.payload.uid,false))_debouncedRender();
         _refreshWidget();_renderOnlineCount();
       }
     })
@@ -1175,12 +1191,12 @@ async function _startPresence(user){
     })
     .on('presence',{event:'join'},function(d){
       if(d.key&&d.key!==user.id)_online.add(d.key);
-      if(!_patchFriendRow(d.key,true))_renderFriendTab();
+      if(!_patchFriendRow(d.key,true))_debouncedRender();
       _refreshWidget();_renderOnlineCount();
     })
     .on('presence',{event:'leave'},function(d){
       if(d.key)_online.delete(d.key);
-      if(!_patchFriendRow(d.key,false))_renderFriendTab();
+      if(!_patchFriendRow(d.key,false))_debouncedRender();
       _refreshWidget();_renderOnlineCount();
     })
     .subscribe(async function(s){
@@ -1199,12 +1215,13 @@ async function _startPresence(user){
   if(_pch._heartbeat)clearInterval(_pch._heartbeat);
   _pch._heartbeat=setInterval(function(){
     if(!_pch||!_pch._sgBcast)return;
+    /* Broadcast online — instant signal to peers */
     try{_pch._sgBcast.send({type:'broadcast',event:'online',payload:{uid:user.id,ts:Date.now()}});}catch(e){}
-    /* Also re-track presence to prevent timeout */
+    /* Re-track presence — Supabase presence expires after ~30s without re-track */
     _getProf().then(function(prof){
       try{_pch.track({user_id:user.id,username:prof?.username||'',ts:Date.now()});}catch(e){}
     });
-  },5000);
+  },20000);  /* 20s — keeps presence alive without causing flicker */
 
   /* ── Visibility: re-announce online / announce offline (guard against duplicate add) ── */
   if(!_pch._sgVisAdded){
@@ -2022,8 +2039,8 @@ function _genRoomCode(){
 }
 
 window._sgInviteFri=async function(toUid,toName){
-  /* Get active room code — works from lobby (inp-code) or in-game (window.roomId) */
-  var rc=window.roomId&&window.roomId!=='AI'?window.roomId:'';
+  /* Get active room code — works from lobby (inp-code) or in-game (_kkRoom()) */
+  var rc=_kkRoom()&&_kkRoom()!=='AI'?_kkRoom():'';
   if(!rc){rc=(document.getElementById('inp-code')||{}).value||'';}
 
   /* No room yet — auto-generate code and create room for inviter */
@@ -2032,23 +2049,42 @@ window._sgInviteFri=async function(toUid,toName){
       _sgToast('💡 Room Code မရှိပါ — ကိုယ်တိုင် ပေးပို့ပါ');
       return;
     }
-    /* Silent room creation — stay on lobby, block waiting screen */
+    /* Silent room creation — lobby stays visible, waiting screen suppressed */
     var ni=document.getElementById('inp-name');
     if(ni&&!ni.value&&_kp&&_kp.name)ni.value=_kp.name;
     if(typeof window.createRoom==='function'){
-      /* Patch showScr: block 'waiting' transition so lobby stays visible */
+      /* Patch showScr to suppress waiting-screen; patch $s to suppress w-code display */
       var _oScr=window.showScr;
+      var _o$s=window.$s;
       window.showScr=function(s){if(s==='waiting')return;return _oScr&&_oScr.call(this,s);};
+      if(typeof window.$s==='function'){
+        window.$s=function(id,v){
+          if(id==='w-code'||id==='lobby-st')return;
+          return _o$s.call(this,id,v);
+        };
+      }
       try{
         var _cr=window.createRoom();
         if(_cr&&typeof _cr.then==='function'){await _cr;}
       }catch(e){console.warn('[invite] createRoom:',e);}
-      finally{window.showScr=_oScr;}
+      finally{
+        window.showScr=_oScr;
+        if(typeof _o$s==='function')window.$s=_o$s;
+      }
     }
-    /* Wait for Supabase propagation */
-    await new Promise(function(r){setTimeout(r,1000);});
-    rc=window.roomId||'';
-    if(!rc||rc.length<4){_sgToast('❌ Room ဖန်တီးမရပါ — ထပ်ကြိုးစားပါ');return;}
+    /* Poll until _kkRoom() is set (max 3s, 100ms ticks) */
+    var _pw=0;
+    while(!_kkRoom()&&_pw<30){
+      await new Promise(function(r){setTimeout(r,100);});
+      _pw++;
+    }
+    rc=_kkRoom()||'';
+    if(!rc||rc.length<4){
+      _sgToast('❌ Room ဖန်တီးမရပါ — ထပ်ကြိုးစားပါ');
+      /* Clear any 'ဖန်တီးနေသည်' text from lobby-st */
+      var _lsc=$('lobby-st');if(_lsc)_lsc.textContent='';
+      return;
+    }
   }
 
   /* Guest-only path (no uid) — just copy room code */
@@ -2078,7 +2114,7 @@ window._sgInviteFri=async function(toUid,toName){
       /* Subtle lobby hint while waiting for accept */
       setTimeout(function(){
         var _ls=document.getElementById('lobby-st');
-        if(_ls&&!window.roomId&&!window.over){_ls.textContent='⏳ '+_x(toName||'Friend')+' · Invite လက်ခံမည်ကို စောင့်နေသည်...';}
+        if(_ls&&!_kkRoom()&&!_kkSt().over){_ls.textContent='⏳ '+_x(toName||'Friend')+' · Invite လက်ခံမည်ကို စောင့်နေသည်...';}
         setTimeout(function(){
           var _ls2=document.getElementById('lobby-st');
           if(_ls2&&(_ls2.textContent||'').includes('စောင့်'))_ls2.textContent='';
@@ -2172,7 +2208,7 @@ async function _startInviteListener(user){
 /* Show accept/decline overlay for incoming invite */
 function _showInviteOverlay(inv){
   /* Don't pop overlay while user is actively in a game */
-  if(window.roomId&&window.roomId!=='AI'&&!window.over)return;
+  if(_kkRoom()&&_kkRoom()!=='AI'&&!_kkSt().over)return;
   /* Store pending invite data globally */
   window._pendingInvite={id:inv.id,room_code:inv.room_code};
   _ensureBd();
@@ -2206,28 +2242,45 @@ window._sgAcceptInvite=async function(){
   var sb=_sb();
   if(sb){try{await sb.from('room_invites').update({status:'accepted'}).eq('id',inv.id);}catch(e){console.warn('accept invite update:',e);}}
   _close();
-  /* Pre-fill name — try _kp first, fall back to localStorage */
+  /* Clear any lobby-st hints */
+  var _ls=$('lobby-st');if(_ls)_ls.textContent='';
+  /* Pre-fill name from kk_player or localStorage */
   var ni=$('inp-name');
   if(ni&&!ni.value){
     var _nm=(_kp&&_kp.name)||localStorage.getItem('kk_gnm')||'';
     if(_nm)ni.value=_nm;
   }
   var _rc=inv.room_code;
-  /* Retry up to 3x — room may still be propagating when invite arrives */
   var _tries=0;
+  /* joinRoom is async — wrap in retrying poller */
   async function _tryJoin(){
     _tries++;
-    var ci=$('inp-code');
-    if(ci)ci.value=_rc;
+    /* Set inp-code value for joinRoom to read */
+    var ci=$('inp-code');if(ci)ci.value=_rc;
+    /* Show status feedback */
+    var _lss=$('lobby-st');if(_lss)_lss.textContent='⏳ Room ဝင်နေသည် ('+_rc+')…';
     if(typeof window.joinRoom==='function'){
-      await window.joinRoom();
-      /* joinRoom clears roomId on failure — retry with backoff */
-      if(!window.roomId&&_tries<3){
-        await new Promise(function(r){setTimeout(r,900*_tries);});
-        await _tryJoin();
-      }
+      try{await window.joinRoom();}catch(e){console.warn('[accept] joinRoom:',e);}
+    }
+    if(_kkRoom()){
+      /* Success — joinRoom set roomId; game will start via handleMsg('join') */
+      var _lss2=$('lobby-st');if(_lss2)_lss2.textContent='';
+      return;
+    }
+    if(_tries<4){
+      /* Retry with increasing backoff — room may still be propagating */
+      var delay=_tries===1?1200:_tries===2?2000:3000;
+      var _lss3=$('lobby-st');if(_lss3)_lss3.textContent='⏳ Room ရှာနေသည်… ('+_tries+'/3)';
+      await new Promise(function(r){setTimeout(r,delay);});
+      await _tryJoin();
+    }else{
+      var _lss4=$('lobby-st');
+      if(_lss4)_lss4.textContent='❌ Room မတွေ့ပါ — Inviter ထံ Code တိုက်ရိုက် တောင်းပါ';
+      _sgToast('❌ Room ဝင်မရပါ — Inviter ကို ပြန်ဆက်သွယ်ပါ');
+      setTimeout(function(){var _ls5=$('lobby-st');if(_ls5&&_ls5.textContent.includes('Room'))_ls5.textContent='';},5000);
     }
   }
+  /* Initial 600ms delay — let DB listener settle after update */
   setTimeout(_tryJoin,600);
 };
 
@@ -2793,7 +2846,7 @@ window._sgOpenFriends=_openFriends;
 
 /* ═══════════════════════════ GAME INJECT ══════════════════════════════ */
 function _applyGame(p){
-  if(window.spectatorMode)return;
+  if(_kkSt().spectatorMode)return;
   if(p.avatar){
     var av=$('my-av');
     if(av){
@@ -2826,8 +2879,8 @@ if(typeof _oSG==='function'){
     _oSG.apply(this,arguments);
     if(_kp)_applyGame(_kp);
     /* Update in-match status */
-    if(!window.spectatorMode&&window.roomId&&window.roomId!=='AI'){
-      _updateMyStatus('in_match',window.roomId);
+    if(!_kkSt().spectatorMode&&_kkRoom()&&_kkRoom()!=='AI'){
+      _updateMyStatus('in_match',_kkRoom());
     }
     /* Back button removed — game uses its own navigation */
   };
@@ -2857,7 +2910,7 @@ if(typeof _oAI==='function'){
 }
 /* BUG 2: resyncFromDB spectator guard */
 var _oRS=window.resyncFromDB;
-if(typeof _oRS==='function'){window.resyncFromDB=async function(){if(window.spectatorMode)return;return _oRS.apply(this,arguments);};}
+if(typeof _oRS==='function'){window.resyncFromDB=async function(){if(_kkSt().spectatorMode)return;return _oRS.apply(this,arguments);};}
 /* BUG 3: autoRejoin oppName null */
 var _oAR=window.autoRejoin;
 if(typeof _oAR==='function'){
