@@ -566,21 +566,21 @@ function _css(){
 /* ── DM Chat window ── */
 ._sg-dm-win{display:flex;flex-direction:column;background:rgba(6,4,16,.97);border:1px solid rgba(255,255,255,.08);border-top:1px solid rgba(255,255,255,.16);border-radius:20px;overflow:hidden;animation:_sg-in .3s cubic-bezier(.16,1,.3,1) both;}
 ._sg-dm-hdr{display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(0,0,0,.20);border-bottom:1px solid rgba(212,168,67,.10);}
-._sg-dm-hdr-name{font-size:.78rem;font-weight:700;color:#F0E8D8;font-family:'Outfit',sans-serif;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-._sg-dm-hdr-status{font-size:.60rem;color:rgba(180,148,70,.45);font-family:'Outfit',sans-serif;}
+._sg-dm-hdr-name{font-size:.78rem;font-weight:700;color:#F0E8D8;font-family:\'Outfit\',sans-serif;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+._sg-dm-hdr-status{font-size:.60rem;color:rgba(180,148,70,.45);font-family:\'Outfit\',sans-serif;}
 ._sg-dm-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;max-height:300px;min-height:80px;scrollbar-width:thin;scrollbar-color:rgba(212,168,67,.10) transparent;}
 ._sg-dm-msgs::-webkit-scrollbar{width:3px}
 ._sg-dm-msgs::-webkit-scrollbar-thumb{background:rgba(212,168,67,.15);border-radius:99px}
-._sg-bubble-out{align-self:flex-end;max-width:80%;padding:7px 12px;border-radius:14px 3px 14px 14px;background:rgba(212,168,67,.13);border:1px solid rgba(212,168,67,.22);border-top:1px solid rgba(255,255,255,.12);color:#F0E8D8;font-size:.72rem;line-height:1.5;font-family:'Outfit',sans-serif;word-break:break-word;animation:_sg-up .15s ease both;}
-._sg-bubble-in{align-self:flex-start;max-width:80%;padding:7px 12px;border-radius:3px 14px 14px 14px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);border-top:1px solid rgba(255,255,255,.13);color:rgba(240,232,216,.85);font-size:.72rem;line-height:1.5;font-family:'Outfit',sans-serif;word-break:break-word;animation:_sg-up .15s ease both;}
+._sg-bubble-out{align-self:flex-end;max-width:80%;padding:7px 12px;border-radius:14px 3px 14px 14px;background:rgba(212,168,67,.13);border:1px solid rgba(212,168,67,.22);border-top:1px solid rgba(255,255,255,.12);color:#F0E8D8;font-size:.72rem;line-height:1.5;font-family:\'Outfit\',sans-serif;word-break:break-word;animation:_sg-up .15s ease both;}
+._sg-bubble-in{align-self:flex-start;max-width:80%;padding:7px 12px;border-radius:3px 14px 14px 14px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);border-top:1px solid rgba(255,255,255,.13);color:rgba(240,232,216,.85);font-size:.72rem;line-height:1.5;font-family:\'Outfit\',sans-serif;word-break:break-word;animation:_sg-up .15s ease both;}
 ._sg-dm-foot{display:flex;gap:8px;padding:10px 12px;border-top:1px solid rgba(212,168,67,.08);background:rgba(0,0,0,.15);}
-._sg-dm-inp{flex:1;padding:8px 13px;background:rgba(255,255,255,.04);border:1px solid rgba(212,168,67,.16);border-top:1px solid rgba(255,255,255,.10);border-radius:12px;color:#F0E8D8;font-family:'Outfit',sans-serif;font-size:.74rem;outline:none;transition:all .2s;}
+._sg-dm-inp{flex:1;padding:8px 13px;background:rgba(255,255,255,.04);border:1px solid rgba(212,168,67,.16);border-top:1px solid rgba(255,255,255,.10);border-radius:12px;color:#F0E8D8;font-family:\'Outfit\',sans-serif;font-size:.74rem;outline:none;transition:all .2s;}
 ._sg-dm-inp:focus{border-color:rgba(212,168,67,.40);background:rgba(255,255,255,.07);box-shadow:0 0 0 3px rgba(212,168,67,.07);}
 ._sg-dm-inp::placeholder{color:rgba(212,168,67,.20);}
 ._sg-dm-send{padding:8px 14px;border-radius:12px;cursor:pointer;background:linear-gradient(135deg,rgba(80,50,5,.9),rgba(200,150,42,.9),rgba(240,195,65,.95));border:1px solid rgba(212,168,67,.42);border-top:1px solid rgba(255,255,255,.22);color:#0A0600;font-size:.78rem;font-weight:700;box-shadow:0 2px 10px rgba(200,150,42,.18);transition:all .2s cubic-bezier(.16,1,.3,1);}
 ._sg-dm-send:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(200,150,42,.32);}
 ._sg-dm-send:active{transform:scale(.94);transition:all .07s;}
-._sg-dm-empty{text-align:center;padding:24px 0;font-size:.70rem;color:rgba(180,148,70,.28);font-family:'Outfit',sans-serif;}
+._sg-dm-empty{text-align:center;padding:24px 0;font-size:.70rem;color:rgba(180,148,70,.28);font-family:\'Outfit\',sans-serif;}
 
 /* ── Friend Profile Card ── */
 ._sg-fpcard{
@@ -613,11 +613,11 @@ function _css(){
   animation:_sg-av-pop .35s cubic-bezier(.16,1,.3,1) both;
 }
 ._sg-fp-name{
-  font-family:'Outfit',sans-serif;font-size:.90rem;font-weight:700;
+  font-family:\'Outfit\',sans-serif;font-size:.90rem;font-weight:700;
   color:#F0E8D8;text-align:center;
 }
 ._sg-fp-id{
-  font-family:'Outfit',monospace;font-size:.66rem;font-weight:700;
+  font-family:\'Outfit\',monospace;font-size:.66rem;font-weight:700;
   color:${GL.goldHi};letter-spacing:.07em;
   padding:3px 10px;border-radius:999px;
   background:${GL.goldDm};border:1px solid ${GL.goldBd};
@@ -626,7 +626,7 @@ function _css(){
 ._sg-fp-id:hover{background:rgba(212,168,67,.28);}
 ._sg-fp-status{
   display:flex;align-items:center;gap:6px;
-  font-size:.66rem;font-family:'Outfit',sans-serif;color:rgba(180,148,70,.55);
+  font-size:.66rem;font-family:\'Outfit\',sans-serif;color:rgba(180,148,70,.55);
 }
 ._sg-fp-btns{
   display:flex;gap:8px;width:100%;
@@ -637,7 +637,7 @@ function _css(){
 ._sg-gtag{
   display:inline-flex;align-items:center;gap:3px;
   padding:1px 7px;border-radius:999px;
-  font-size:.54rem;font-weight:700;font-family:'Outfit',sans-serif;
+  font-size:.54rem;font-weight:700;font-family:\'Outfit\',sans-serif;
   color:rgba(180,148,70,.75);
   background:rgba(212,168,67,.08);
   border:1px solid rgba(212,168,67,.20);
@@ -650,7 +650,7 @@ function _css(){
   background:rgba(16,185,129,.07);
   border:1px solid rgba(16,185,129,.26);border-top:1px solid rgba(16,185,129,.38);
   color:rgba(110,231,183,.88);
-  font-family:'Outfit',sans-serif;font-size:.80rem;font-weight:700;
+  font-family:\'Outfit\',sans-serif;font-size:.80rem;font-weight:700;
   backdrop-filter:${GL.bl.md};-webkit-backdrop-filter:${GL.bl.md};
   box-shadow:inset 0 1px 0 rgba(16,185,129,.10),0 2px 12px rgba(0,0,0,.22);
   transition:all .22s cubic-bezier(.16,1,.3,1);
@@ -688,7 +688,7 @@ function _css(){
     inset 0 -1px 0 rgba(0,0,0,.12),
     0 0 0 1px rgba(255,255,255,.05);
   cursor:pointer;
-  font-family:'Outfit',sans-serif;font-size:.74rem;font-weight:700;
+  font-family:\'Outfit\',sans-serif;font-size:.74rem;font-weight:700;
   color:rgba(240,232,216,.90);letter-spacing:.02em;
   transition:all .24s cubic-bezier(.16,1,.3,1);
   overflow:hidden;
@@ -763,8 +763,8 @@ function _css(){
 }
 ._sg-link-cta:active{transform:scale(.98);transition:all .08s;}
 ._sg-link-cta-txt{flex:1;min-width:0;}
-._sg-link-cta-ttl{font-size:.78rem;font-weight:700;color:#F0E8D8;font-family:'Outfit',sans-serif;}
-._sg-link-cta-sub{font-size:.60rem;color:rgba(180,200,255,.55);font-family:'Outfit',sans-serif;margin-top:2px;}
+._sg-link-cta-ttl{font-size:.78rem;font-weight:700;color:#F0E8D8;font-family:\'Outfit\',sans-serif;}
+._sg-link-cta-sub{font-size:.60rem;color:rgba(180,200,255,.55);font-family:\'Outfit\',sans-serif;margin-top:2px;}
 ._sg-link-cta-arr{font-size:.80rem;color:rgba(147,190,255,.7);flex-shrink:0;transition:transform .2s cubic-bezier(.16,1,.3,1);}
 ._sg-link-cta:hover ._sg-link-cta-arr{transform:translateX(4px);}
 
@@ -776,7 +776,7 @@ function _css(){
   border:1px solid rgba(212,168,67,.22);
   border-top:1px solid rgba(255,255,255,.10);
   backdrop-filter:blur(12px);
-  font-family:'Outfit',monospace;font-size:.72rem;font-weight:700;
+  font-family:\'Outfit\',monospace;font-size:.72rem;font-weight:700;
   color:rgba(240,204,114,.80);letter-spacing:.06em;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
   transition:all .18s cubic-bezier(.16,1,.3,1);
@@ -792,7 +792,7 @@ function _css(){
   border-top:1px solid rgba(255,255,255,.12);
   font-size:.54rem;font-weight:700;
   color:rgba(147,190,255,.80);
-  font-family:'Outfit',sans-serif;
+  font-family:\'Outfit\',sans-serif;
   transition:all .18s;
   backdrop-filter:blur(10px);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
@@ -860,7 +860,7 @@ async function _openEdit(){
             🪪 <span id="_sg-idlbl">${_x(_gid)}</span>
             <span style="font-size:.46rem;opacity:.4">ကူးရန်</span>
           </div>
-          <div style="font-size:.58rem;color:rgba(180,148,70,.35);font-family:'Outfit',sans-serif;margin-top:5px">
+          <div style="font-size:.58rem;color:rgba(180,148,70,.35);font-family:\'Outfit\',sans-serif;margin-top:5px">
             ဒီ Device မှာ ထာဝစဉ် ID · Friend Add ရာမှာ သုံးနိုင်
           </div>
         </div>
@@ -1147,6 +1147,40 @@ async function _loadAll(){
   }
   /* Resolve which localStorage guest friends have linked Gmail */
   await _resolveGuestLinks();
+  /* Auto-cleanup: remove localStorage entries already covered by DB friendships.
+     Prevents duplicate rows when same person exists in both places. */
+  _syncGuestFriToDb();
+}
+
+/* Remove localStorage guest friends who are already in _flist (DB friendships).
+   Called after _loadAll() so _flist and _linkedGuestCache are populated. */
+function _syncGuestFriToDb(){
+  var list=_getGuestFriends();
+  if(!list.length)return;
+  /* Build sets from DB friends: user_codes and uids */
+  var myId=_authUser?.id||_kp?.uid||'';
+  var dbCodes=new Set();
+  var dbUids=new Set();
+  _flist.forEach(function(f){
+    var p=f.requester_id===myId?f.adr:f.req;
+    if(!p)return;
+    if(p.user_code)dbCodes.add(p.user_code);
+    if(p.id)dbUids.add(p.id);
+    /* Also add username for last-resort dedup */
+  });
+  /* Also add linked Gmail uids from cache */
+  list.forEach(function(g){
+    var linked=_linkedGuestCache[g.user_code];
+    if(linked&&linked.id)dbUids.add(linked.id);
+  });
+  var cleaned=list.filter(function(g){
+    if(dbCodes.has(g.user_code))return false;
+    if(g.uid&&dbUids.has(g.uid))return false;
+    var linked=_linkedGuestCache[g.user_code];
+    if(linked&&dbUids.has(linked.id))return false;
+    return true;
+  });
+  if(cleaned.length!==list.length)_saveGuestFriends(cleaned);
 }
 
 /* Check which localStorage guest friends have since linked Gmail.
@@ -1616,18 +1650,39 @@ function _renderFriendTab(){
   var myId=_authUser?.id||_kp?.uid||'';
   var isGuest=(!myId)||(_kp&&_kp.type!=='auth');
 
-  /* Guest mode — local list + DB accepted (merged, de-duped) */
+  /* ── UNIFIED row builder — single layout for every friend ──
+     [avatar | name + status+id | 📨 Invite | 💬 Chat]
+     No inline delete button — remove via profile modal only.  */
+  function _row(cfg,idx){
+    var unread=cfg.chatUnread?'<span class="_sg-unread">'+cfg.chatUnread+'</span>':'';
+    return '<div class="_sg-fri _sg-fri-cl" style="animation-delay:'+(idx*0.04)+'s"'+
+      ' onclick="'+cfg.onclick+'">'+
+      '<div class="_sg-fav-ring">'+cfg.av+'<div class="_sg-sdot '+(cfg.dot||'off')+'"></div></div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-size:.76rem;font-weight:700;color:#F0E8D8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:\'Outfit\',sans-serif">'+cfg.name+'</div>'+
+        '<div style="display:flex;align-items:center;gap:5px;margin-top:2px">'+cfg.subHtml+'</div>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:7px;flex-shrink:0">'+
+        '<button class="_sg-binv" title="Invite" onclick="event.stopPropagation();'+cfg.inviteClick+'">📨</button>'+
+        '<div class="_sg-bchat-wrap"'+(cfg.chatUid?' data-chat-uid="'+cfg.chatUid+'"':'')+
+          ' onclick="event.stopPropagation();'+cfg.chatClick+'">'+
+          '<button class="_sg-bchat">💬</button>'+unread+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }
+
+  /* ── GUEST MODE ────────────────────────────────────────────────── */
   if(isGuest){
     var myGid2=_kp?.id||localStorage.getItem('kk_gid')||'';
     var gfri=_getGuestFriends().map(function(x){return Object.assign({},x);});
-    /* Merge DB accepted friends */
     var dbFriCodes=new Set(gfri.map(function(x){return x.user_code;}));
     _guestFriDB.forEach(function(r){
       var code=(r.from_guest_id===myGid2)?r.to_player_code:r.from_guest_id;
       var nm=(r.from_guest_id===myGid2)?r.to_player_code:(r.from_guest_name||r.from_guest_id);
       if(code&&!dbFriCodes.has(code)){
         dbFriCodes.add(code);
-        gfri.push({user_code:code,username:nm||code,avatar_url:null,is_guest:true,_dbId:r.id});
+        gfri.push({user_code:code,username:nm||code,avatar_url:null,uid:null,_dbId:r.id});
       }
     });
     if(!gfri.length){
@@ -1635,134 +1690,114 @@ function _renderFriendTab(){
       return;
     }
     box.innerHTML=gfri.map(function(g,idx){
-      var isGmail=g.uid&&g.user_code&&g.user_code.startsWith('KK')&&!g.user_code.startsWith('KKG');
+      var isGmail=!!(g.uid);
       var avH=g.avatar_url
         ?'<img src="'+_x(g.avatar_url)+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:1.5px solid '+GL.goldBd+'" loading="lazy">'
         :'<div style="width:38px;height:38px;border-radius:50%;background:rgba(212,168,67,.08);display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(212,168,67,.18);font-size:1rem">👤</div>';
-      var removeAction=g._dbId
-        ?'window._sgRemoveGuestDBFri(\''+_x(g._dbId)+'\',\''+_x(g.user_code)+'\')'
-        :'window._sgRemoveGuestFri(\''+_x(g.user_code)+'\')';
-      /* Invite: use uid if available (Gmail friend), else copy room code */
-      var inviteOnclick=isGmail
-        ? 'event.stopPropagation();window._sgInviteFri(\''+_x(g.uid)+'\',\''+_x(g.username||g.user_code||'')+'\')' 
-        : 'event.stopPropagation();window._sgInviteFri(null,\''+_x(g.username||g.user_code||'')+'\')';
-      /* Chat: open DM if Gmail, else prompt to link */
-      var chatOnclick=isGmail
-        ? 'event.stopPropagation();window._sgOpenDM(\''+_x(g.uid)+'\')'
-        : 'event.stopPropagation();window._sgGoLink()';
-      var chatTitle=isGmail ? 'Chat' : 'Chat — Gmail ချိတ်ဆက်မည်';
-      return '<div class="_sg-fri _sg-fri-cl" style="animation-delay:'+(idx*0.04)+'s"'+
-        ' onclick="window._sgOpenGuestFriProfile(\''+_x(g.user_code)+'\')">'+
-        '<div class="_sg-fav-ring">'+avH+'<div class="_sg-sdot off"></div></div>'+
-        '<div style="flex:1;min-width:0">'+
-          '<div style="font-size:.76rem;font-weight:700;color:#F0E8D8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:\'Outfit\',sans-serif">'+_x(g.username||'–')+'</div>'+
-          '<div style="display:flex;align-items:center;gap:5px;margin-top:2px">'+
-            (isGmail
-              ? '<span style="font-size:.56rem;color:rgba(16,185,129,.65);font-family:\'Outfit\',sans-serif">✓ Gmail</span>'
-              : '<span class="_sg-gtag">👤 Guest</span>')+
-            '<span style="font-size:.54rem;color:rgba(180,148,70,.35);font-family:\'Outfit\',monospace">'+_x(g.user_code||'')+'</span>'+
-          '</div>'+
-        '</div>'+
-        '<div style="display:flex;align-items:center;gap:5px;flex-shrink:0">'+
-          '<button class="_sg-binv" title="Invite" onclick="'+inviteOnclick+'">📨</button>'+
-          '<button class="_sg-bchat" title="'+chatTitle+'" onclick="'+chatOnclick+'">💬</button>'+
-          '<button class="_sg-bsm _sg-brem" '+
-            'data-nm="'+_x(g.username||'–')+'" '+
-            'data-id="'+(g._dbId?_x(g._dbId):_x(g.user_code))+'" '+
-            'data-code="'+_x(g.user_code)+'" '+
-            'data-type="'+(g._dbId?'guestdb':'guest')+'" '+
-            'onclick="event.stopPropagation();window._sgConfirmDel(this.dataset.type,this.dataset.id,this.dataset.nm,this.dataset.code)">✕</button>'+
-        '</div>'+
-      '</div>';
+      var subHtml=
+        (isGmail?'<span style="font-size:.56rem;color:rgba(16,185,129,.65);font-family:\'Outfit\',sans-serif">\u2713 Gmail</span>'
+                :'<span class="_sg-gtag">\U0001f464 Guest</span>')+
+        '<span style="font-size:.54rem;color:rgba(180,148,70,.35);font-family:\'Outfit\',monospace">'+_x(g.user_code||'')+'</span>';
+      var inviteClick=isGmail
+        ?'window._sgInviteFri(\''+_x(g.uid)+'\'\',\''+_x(g.username||g.user_code||'')+'\')'
+        :'window._sgInviteFri(null,\''+_x(g.username||g.user_code||'')+'\')';
+      var chatClick=isGmail
+        ?'window._sgOpenDM(\''+_x(g.uid)+'\')'
+        :'window._sgInviteFri(null,\''+_x(g.username||g.user_code||'')+'\')';
+      return _row({
+        av:avH,name:_x(g.username||'–'),subHtml:subHtml,dot:'off',
+        onclick:'window._sgOpenGuestFriProfile(\''+_x(g.user_code)+'\')',
+        inviteClick:inviteClick,chatClick:chatClick,
+        chatUid:isGmail?_x(g.uid):'',
+        chatUnread:isGmail&&_dmUnread[g.uid]?_dmUnread[g.uid]:0
+      },idx);
     }).join('');
     return;
   }
 
-  /* Auth mode — DB friends + localStorage guest friends */
-  var _gfriAuth=_getGuestFriends();
+  /* ── AUTH MODE ─────────────────────────────────────────────────── */
+  /* Build dedup sets from DB friendship list */
+  var _dbUids=new Set();
+  var _dbCodes=new Set();
+  _flist.forEach(function(f){
+    var p=f.requester_id===myId?f.adr:f.req;
+    if(!p)return;
+    if(p.id)_dbUids.add(p.id);
+    if(p.user_code)_dbCodes.add(p.user_code);
+  });
+
+  /* Filter localStorage guest friends — remove any already in DB list */
+  var _gfriAuth=_getGuestFriends().filter(function(g){
+    if(_dbCodes.has(g.user_code))return false;
+    if(g.uid&&_dbUids.has(g.uid))return false;
+    var linked=_linkedGuestCache[g.user_code];
+    if(linked&&_dbUids.has(linked.id))return false;
+    return true;
+  });
+
   if(!_flist.length&&!_gfriAuth.length){
     box.innerHTML='<div class="_sg-empty">သူငယ်ချင်း မရှိသေးပါ<small>Add tab မှ Player ID ဖြင့် ထည့်ပါ</small></div>';
     return;
   }
+
+  /* DB friends — online first */
   var onl=_flist.filter(function(f){var o=f.requester_id===myId?f.addressee_id:f.requester_id;return _online.has(o);});
   var off=_flist.filter(function(f){var o=f.requester_id===myId?f.addressee_id:f.requester_id;return !_online.has(o);});
   var _dbHtml=[...onl,...off].map(function(f,idx){
     var p=f.requester_id===myId?f.adr:f.req;if(!p)return'';
     var on=_online.has(p.id);
-    return '<div class="_sg-fri _sg-fri-cl" style="animation-delay:'+(idx*0.04)+'s"'+
-      ' onclick="window._sgOpenFriProfile(\''+f.id+'\')">'+
-      '<div class="_sg-fav-ring">'+_friAv(p,38)+'<div class="_sg-sdot '+(on?'on':'off')+'"></div></div>'+
-      '<div style="flex:1;min-width:0">'+
-        '<div style="font-size:.76rem;font-weight:700;color:#F0E8D8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:\'Outfit\',sans-serif">'+_x(p.username||'–')+'</div>'+
-        '<div style="display:flex;align-items:center;gap:5px;margin-top:2px">'+
-          '<span class="'+(on?'_sg-don':'_sg-doff')+'"></span>'+
-          '<span style="font-size:.60rem;color:'+(on?(_friendStatus[p.id]==='in_match'?'rgba(245,158,11,.85)':GL.ok):'rgba(255,255,255,.28)')+';font-family:\'Outfit\',sans-serif">'+(on?(_friendStatus[p.id]==='in_match'?'🎮 In Match':'Online'):'Offline')+'</span>'+
-          (p.user_code?'<span style="font-size:.55rem;color:rgba(180,148,70,.40);font-family:\'Outfit\',monospace;margin-left:4px">'+_x(p.user_code)+'</span>':'')+
-        '</div>'+
-      '</div>'+
-      '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'+
-        '<button class="_sg-binv" onclick="event.stopPropagation();window._sgInviteFri(\''+p.id+'\',\''+_x(p.username||p.user_code||'')+'\')">📨</button>'+
-        '<div class="_sg-bchat-wrap" data-chat-uid="'+p.id+'" onclick="event.stopPropagation();window._sgOpenDM(\''+p.id+'\')">'+
-          '<button class="_sg-bchat">💬</button>'+
-          (_dmUnread[p.id]?'<span class="_sg-unread">'+_dmUnread[p.id]+'</span>':'')+
-        '</div>'+
-      '</div>'+
-    '</div>';
+    var status=on?(_friendStatus[p.id]==='in_match'?'🎮 In Match':'Online'):'Offline';
+    var statusColor=on?(_friendStatus[p.id]==='in_match'?'rgba(245,158,11,.85)':GL.ok):'rgba(255,255,255,.28)';
+    return _row({
+      av:_friAv(p,38),
+      name:_x(p.username||'–'),
+      dot:on?'on':'off',
+      subHtml:
+        '<span class="'+(on?'_sg-don':'_sg-doff')+'"></span>'+
+        '<span style="font-size:.60rem;color:'+statusColor+';font-family:\'Outfit\',sans-serif">'+status+'</span>'+
+        (p.user_code?'<span style="font-size:.55rem;color:rgba(180,148,70,.40);font-family:\'Outfit\',monospace;margin-left:4px">'+_x(p.user_code)+'</span>':''),
+      onclick:'window._sgOpenFriProfile(\''+f.id+'\')',
+      inviteClick:'window._sgInviteFri(\''+p.id+'\',\''+_x(p.username||p.user_code||'')+'\')',
+      chatClick:'window._sgOpenDM(\''+p.id+'\')',
+      chatUid:p.id,
+      chatUnread:_dmUnread[p.id]||0
+    },idx);
   }).join('');
-  /* Guest friends stored locally (auth user added guests).
-     Check _linkedGuestCache — if the guest has linked Gmail, show as auth friend. */
+
+  /* localStorage guest friends (deduped) */
   var _gstHtml=_gfriAuth.map(function(g,idx){
     var aidx=(onl.length+off.length)+idx;
-    var linked=_linkedGuestCache[g.user_code]; /* profile row if Gmail-linked */
-
-    if(linked){
-      /* Gmail-linked → show as full auth friend row (online status, DM, Invite) */
-      var on=_online.has(linked.id);
-      var avH=linked.avatar_url
-        ?'<img src="'+_x(linked.avatar_url)+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:1.5px solid '+GL.goldBd+'" loading="lazy" onerror="this.style.display=\'none\'">'
-        :'<div style="width:38px;height:38px;border-radius:50%;background:rgba(212,168,67,.08);display:flex;align-items:center;justify-content:center;font-size:1rem;border:1.5px solid rgba(212,168,67,.18)">👤</div>';
-      return '<div class="_sg-fri _sg-fri-cl" style="animation-delay:'+(aidx*0.04)+'s"'+
-        ' onclick="window._sgOpenGuestFriProfile(\''+_x(g.user_code)+'\')">'+
-        '<div class="_sg-fav-ring">'+avH+'<div class="_sg-sdot '+(on?'on':'off')+'"></div></div>'+
-        '<div style="flex:1;min-width:0">'+
-          '<div style="font-size:.76rem;font-weight:700;color:#F0E8D8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:\'Outfit\',sans-serif">'+_x(linked.username||g.username||'–')+'</div>'+
-          '<div style="display:flex;align-items:center;gap:5px;margin-top:2px">'+
-            '<span class="'+(on?'_sg-don':'_sg-doff')+'"></span>'+
-            '<span style="font-size:.60rem;color:'+(on?GL.ok:'rgba(255,255,255,.28)')+';font-family:\'Outfit\',sans-serif">'+(on?'Online':'Offline')+'</span>'+
-            '<span style="font-size:.55rem;color:rgba(180,148,70,.40);font-family:\'Outfit\',monospace;margin-left:4px">'+_x(linked.user_code)+'</span>'+
-          '</div>'+
-        '</div>'+
-        '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'+
-          '<button class="_sg-binv" onclick="event.stopPropagation();window._sgInviteFri(\''+linked.id+'\',\''+_x(linked.username||g.username||'')+'\')">📨</button>'+
-          '<div class="_sg-bchat-wrap" data-chat-uid="'+linked.id+'" onclick="event.stopPropagation();window._sgOpenDM(\''+linked.id+'\')">'+
-            '<button class="_sg-bchat">💬</button>'+
-            (_dmUnread[linked.id]?'<span class="_sg-unread">'+_dmUnread[linked.id]+'</span>':'')+
-          '</div>'+
-          '<button class="_sg-bsm _sg-brem" data-nm="'+_x(linked.username||g.username||'–')+'" data-code="'+_x(g.user_code)+'" onclick="event.stopPropagation();window._sgConfirmDel(\'guest\',this.dataset.code,this.dataset.nm)">✕</button>'+
-        '</div>'+
-      '</div>';
-    }
-
-    /* True guest (no Gmail) → invite only, no DM */
-    return '<div class="_sg-fri _sg-fri-cl" style="animation-delay:'+(aidx*0.04)+'s"'+
-      ' onclick="window._sgOpenGuestFriProfile(\''+_x(g.user_code)+'\')">'+
-      '<div class="_sg-fav-ring">'+
-        '<div style="width:38px;height:38px;border-radius:50%;background:rgba(212,168,67,.08);display:flex;align-items:center;justify-content:center;font-size:1rem;border:1.5px solid rgba(212,168,67,.18)">👤</div>'+
-        '<div class="_sg-sdot off"></div>'+
-      '</div>'+
-      '<div style="flex:1;min-width:0">'+
-        '<div style="font-size:.76rem;font-weight:700;color:#F0E8D8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:\'Outfit\',sans-serif">'+_x(g.username||'–')+'</div>'+
-        '<div style="display:flex;align-items:center;gap:5px;margin-top:2px">'+
-          '<span class="_sg-gtag">👤 Guest</span>'+
-          '<span style="font-size:.54rem;color:rgba(180,148,70,.35);font-family:\'Outfit\',monospace">'+_x(g.user_code||'')+'</span>'+
-        '</div>'+
-      '</div>'+
-      '<div style="display:flex;align-items:center;gap:5px;flex-shrink:0">'+
-        '<button class="_sg-binv" onclick="event.stopPropagation();window._sgInviteFri(null,\''+_x(g.username||g.user_code||'')+'\')">📨</button>'+
-        '<button class="_sg-bsm _sg-brem" data-nm="'+_x(g.username||'–')+'" data-code="'+_x(g.user_code)+'" onclick="event.stopPropagation();window._sgConfirmDel(\'guest\',this.dataset.code,this.dataset.nm)">✕</button>'+
-      '</div>'+
-    '</div>';
+    var linked=_linkedGuestCache[g.user_code];
+    var uid=g.uid||(linked&&linked.id)||null;
+    var isGmail=!!(uid);
+    var avH=(linked&&linked.avatar_url)
+      ?'<img src="'+_x(linked.avatar_url)+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:1.5px solid '+GL.goldBd+'" loading="lazy" onerror="this.style.display=\'none\'">'  
+      :'<div style="width:38px;height:38px;border-radius:50%;background:rgba(212,168,67,.08);display:flex;align-items:center;justify-content:center;font-size:1rem;border:1.5px solid rgba(212,168,67,.18)">👤</div>';
+    var nm=_x((linked&&linked.username)||g.username||'–');
+    var uc=_x((linked&&linked.user_code)||g.user_code||'');
+    var on=uid&&_online.has(uid);
+    var inviteClick=isGmail
+      ?'window._sgInviteFri(\''+_x(uid)+'\'\',\''+_x((linked&&linked.username)||g.username||'')+'\')'  
+      :'window._sgInviteFri(null,\''+_x(g.username||g.user_code||'')+'\')';
+    /* Chat: DM if uid, else informative toast */
+    var chatClick=isGmail
+      ?'window._sgOpenDM(\''+_x(uid)+'\')'  
+      :'window._sgInviteFri(null,\''+_x((linked&&linked.username)||g.username||g.user_code||'')+'\')';
+    return _row({
+      av:avH,name:nm,dot:on?'on':'off',
+      subHtml:isGmail
+        ?'<span class="'+(on?'_sg-don':'_sg-doff')+'"></span>'+
+          '<span style="font-size:.60rem;color:'+(on?GL.ok:'rgba(255,255,255,.28)')+';font-family:\'Outfit\',sans-serif">'+(on?'Online':'Offline')+'</span>'+
+          '<span style="font-size:.55rem;color:rgba(180,148,70,.40);font-family:\'Outfit\',monospace;margin-left:4px">'+uc+'</span>'
+        :'<span class="_sg-gtag">👤 Guest</span>'+
+          '<span style="font-size:.54rem;color:rgba(180,148,70,.35);font-family:\'Outfit\',monospace">'+uc+'</span>',
+      onclick:'window._sgOpenGuestFriProfile(\''+_x(g.user_code)+'\')',
+      inviteClick:inviteClick,chatClick:chatClick,
+      chatUid:isGmail?_x(uid):'',
+      chatUnread:uid&&_dmUnread[uid]?_dmUnread[uid]:0
+    },aidx);
   }).join('');
+
   box.innerHTML=_dbHtml+_gstHtml;
 }
 
@@ -2044,21 +2079,39 @@ window._sgInviteFri=async function(toUid,toName){
     /* Pre-fill room code */
     var ci=document.getElementById('inp-code');
     if(ci)ci.value=rc;
-    /* Create the room — joinRoom() usually doesn't return a Promise so we
-       ALWAYS wait 1000ms to guarantee the Supabase write completes before
-       the invite is sent. Without this delay the invitee gets "Room မတွေ့ပါ". */
+    /* Create the room — joinRoom() usually doesn't return a Promise.
+       After calling it, VERIFY the room actually exists in DB before
+       sending invite — retry every 300ms up to 3 seconds. */
     if(typeof window.joinRoom==='function'){
       try{
         var _jr=window.joinRoom();
-        if(_jr&&typeof _jr.then==='function'){
-          await _jr;
-          /* Even after promise resolves give DB a moment to propagate */
-          await new Promise(function(r){setTimeout(r,400);});
-        } else {
-          /* joinRoom() is sync/void — wait for Supabase write to complete */
-          await new Promise(function(r){setTimeout(r,1000);});
-        }
+        if(_jr&&typeof _jr.then==='function'){await _jr;}
       }catch(e){console.warn('[invite] joinRoom:',e);}
+    }
+    /* Poll DB until room is confirmed (max 3s) */
+    if(_sb()){
+      var _confirmed=false;
+      for(var _t=0;_t<10&&!_confirmed;_t++){
+        await new Promise(function(r){setTimeout(r,300);});
+        try{
+          var _chk=await _sb().from('rooms').select('id').eq('code',rc).maybeSingle();
+          if(_chk&&_chk.data){_confirmed=true;}
+        }catch(e){/* table name may differ — fall through after attempts */}
+        if(_t===9&&!_confirmed){
+          /* Last resort: try common room table names */
+          try{
+            var _chk2=await _sb().from('game_rooms').select('id').eq('code',rc).maybeSingle();
+            if(_chk2&&_chk2.data)_confirmed=true;
+          }catch(e2){}
+        }
+      }
+      if(!_confirmed){
+        /* Room not verified — still send invite but warn */
+        console.warn('[invite] room not confirmed in DB after 3s, sending anyway');
+      }
+    } else {
+      /* No Supabase client — just wait 1500ms */
+      await new Promise(function(r){setTimeout(r,1500);});
     }
   }
 
@@ -2182,14 +2235,25 @@ window._sgAcceptInvite=async function(){
   /* Pre-fill inp-name from _kp if empty */
   var ni=$('inp-name');
   if(ni&&!ni.value&&_kp&&_kp.name)ni.value=_kp.name;
-  /* Pre-fill room code */
+  /* Pre-fill room code and join with retry */
   var ci=$('inp-code');
   if(ci)ci.value=inv.room_code;
-  /* Wait for modal close animation AND ensure inviter's room exists in DB
-     before joining — 800ms is safe margin (inviter waits 1000ms before sending) */
+  /* Close modal, then attempt join. If joinRoom fails (room not ready),
+     retry once after 1500ms additional wait. */
+  var _invRoomCode=inv.room_code;
   setTimeout(function(){
-    if(typeof window.joinRoom==='function')window.joinRoom();
-  },800);
+    if(typeof window.joinRoom!=='function')return;
+    window.joinRoom();
+    /* If game shows "Room မတွေ့ပါ" error, the room might still be propagating.
+       Schedule a single retry after 1500ms as fallback. */
+    setTimeout(function(){
+      var errEl=document.getElementById('join-err')||document.querySelector('[id*="err"],[class*="error"]');
+      if(errEl&&errEl.textContent&&errEl.textContent.includes('မတွေ့')){
+        var ci2=$('inp-code');if(ci2)ci2.value=_invRoomCode;
+        window.joinRoom();
+      }
+    },1500);
+  },400);
 };
 
 window._sgDeclineInvite=async function(){
@@ -2352,12 +2416,18 @@ window._sgOpenGuestFriProfile=function(code){
   var statusHtml=hasUid
     ?'<span style="font-size:.56rem;color:rgba(16,185,129,.65);font-family:\'Outfit\',sans-serif">✓ Gmail</span>'
     :'<span class="_sg-gtag">👤 Guest</span>';
+  var isAuthViewer=(_kp&&_kp.type==='auth');
   var inviteBtn=hasUid
     ?'<button class="_sg-bgold" onclick="window._sgInviteFri(\''+_x(g.uid)+'\',\''+_x(g.username||g.user_code||'')+'\')">📨 Invite</button>'
     :'<button class="_sg-bgold" onclick="window._sgInviteFri(null,\''+_x(g.username||g.user_code||'')+'\');window._sgClose()">📨 Room Invite</button>';
   var chatBtn=hasUid
+    /* Has uid → full DM */
     ?'<button class="_sg-bgold" style="background:rgba(99,179,237,.14);border-color:rgba(99,179,237,.35);color:rgba(147,210,255,.9)" onclick="window._sgClose();window._sgOpenDM(\''+_x(g.uid)+'\')">💬 Chat</button>'
-    :'<button class="_sg-bgold" style="background:rgba(16,185,129,.07);border-color:rgba(16,185,129,.28);color:rgba(110,231,183,.8)" onclick="window._sgClose();window._sgGoLink()" title="Gmail ချိတ်ဆက်ရင် Chat ရနိုင်သည်">🔗 Chat ရန် Gmail ချိတ်</button>';
+    : isAuthViewer
+      /* Auth user viewing Guest (no uid) → chat via room */
+      ?'<button class="_sg-bgold" style="background:rgba(99,179,237,.10);border-color:rgba(99,179,237,.28);color:rgba(147,210,255,.8)" onclick="window._sgInviteFri(null,\''+_x(g.username||g.user_code||'')+'\');window._sgClose()">💬 Room Invite</button>'
+      /* Guest user viewing Guest friend → prompt to link Gmail */
+      :'<button class="_sg-bgold" style="background:rgba(16,185,129,.07);border-color:rgba(16,185,129,.28);color:rgba(110,231,183,.8)" onclick="window._sgClose();window._sgGoLink()" title="Gmail ချိတ်ဆက်ရင် Chat ရနိုင်သည်">🔗 Gmail ချိတ်ဆက်</button>';
   _open(
     '<div class="_sg-hdr"><div class="_sg-htitle">Friend Profile</div>'+
       '<div class="_sg-hclose" onclick="window._sgClose()">✕</div></div>'+
@@ -2503,7 +2573,7 @@ async function _openFriends(){
       <div class="_sg-hdr"><div class="_sg-htitle">Friends</div>
         <div class="_sg-hclose" onclick="window._sgClose()">✕</div></div>
       <div class="_sg-body">
-        <div style="padding:8px 12px;border-radius:10px;background:rgba(212,168,67,.07);border:1px solid rgba(212,168,67,.16);border-top:1px solid rgba(255,255,255,.08);font-size:.68rem;color:rgba(212,168,67,.65);font-family:'Outfit',sans-serif;line-height:1.6;backdrop-filter:blur(12px)">
+        <div style="padding:8px 12px;border-radius:10px;background:rgba(212,168,67,.07);border:1px solid rgba(212,168,67,.16);border-top:1px solid rgba(255,255,255,.08);font-size:.68rem;color:rgba(212,168,67,.65);font-family:\'Outfit\',sans-serif;line-height:1.6;backdrop-filter:blur(12px)">
           👤 Guest ID: <span style="font-family:monospace;color:rgba(240,204,114,.80)">${_x(_kp?.id||'')}</span>
           &nbsp;·&nbsp;<span onclick="window._sgGoLink()" style="color:rgba(147,190,255,.70);cursor:pointer;text-decoration:underline">Gmail ချိတ်ဆက်မည်</span>
         </div>
