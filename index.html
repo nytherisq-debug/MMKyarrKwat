@@ -3991,6 +3991,19 @@ let glog=[], capBy={[B]:[],[W]:[]}, lastF=null, lastT=null;
 let myName='', myColor=null, roomId='', isHost=false;
 let ver=0, huffOn=false, huffAt=null;
 let leaving=false, winShown=false, gameCount=0;
+/* ── session-guard bridge: exposes `let` state to external scripts ──
+   window.roomId, etc. don't work for `let` vars; use this getter instead */
+window._sgState=function(){
+  return{
+    roomId      :typeof roomId!=='undefined'?roomId:'',
+    over        :typeof over!=='undefined'?over:false,
+    myColor     :typeof myColor!=='undefined'?myColor:null,
+    isHost      :typeof isHost!=='undefined'?isHost:false,
+    leaving     :typeof leaving!=='undefined'?leaving:false,
+    aiMode      :typeof aiMode!=='undefined'?aiMode:false,
+    spectatorMode:typeof spectatorMode!=='undefined'?spectatorMode:false,
+  };
+};
 
 /* ══════════════════════════════════════════════
    SUPABASE
