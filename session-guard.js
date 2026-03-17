@@ -2470,80 +2470,70 @@ window._sgOpenFriProfile=function(fid){
     </div>`);
 };
 
-/* ══ GUEST FRIEND PROFILE MODAL ══ */
+/* ══ GUEST FRIEND PROFILE MODAL — unified layout matching auth profile ══ */
 window._sgOpenGuestFriProfile=function(code){
-  /* If this guest has linked Gmail, show full auth-style profile */
+  /* Prefer linked Gmail data over raw guest cache */
   var linked=_linkedGuestCache[code];
-  if(linked){
-    var on=_online.has(linked.id);
-    var avH=linked.avatar_url
-      ?'<img class="_sg-fp-av" src="'+_x(linked.avatar_url)+'" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'+'<div class="_sg-fp-avfb" style="display:none">👤</div>'
-      :'<div class="_sg-fp-avfb">👤</div>';
-    _open(
-      '<div class="_sg-hdr"><div class="_sg-htitle">Friend Profile</div>'+
-        '<div class="_sg-hclose" onclick="window._sgClose()">✕</div></div>'+
-      '<div class="_sg-body">'+
-        '<div class="_sg-fpcard">'+
-          avH+
-          '<div class="_sg-fp-name">'+_x(linked.username||'–')+'</div>'+
-          '<div class="_sg-fp-id" onclick="window._sgCopyId(\''+_x(linked.user_code)+'\')">🪪 '+_x(linked.user_code)+'</div>'+
-          '<div class="_sg-fp-status">'+
-            '<span style="font-size:.56rem;color:rgba(16,185,129,.65)">✓ Gmail</span>'+
-            '<span class="'+(on?'_sg-don':'_sg-doff')+'" style="margin-left:4px"></span>'+
-            '<span style="color:'+(on?GL.ok:'rgba(255,255,255,.35)')+'">'+( on?'Online':'Offline')+'</span>'+
-          '</div>'+
-        '</div>'+
-        '<div class="_sg-fp-btns">'+
-          '<button class="_sg-bgold" onclick="window._sgInviteFri(\''+linked.id+'\',\''+_x(linked.username||'')+'\')">📨 Invite</button>'+
-          '<button class="_sg-bgold" style="background:rgba(99,179,237,.14);border-color:rgba(99,179,237,.35);color:rgba(147,210,255,.9)" onclick="window._sgClose();window._sgOpenDM(\''+linked.id+'\')">💬 Chat</button>'+
-        '</div>'+
-        '<button class="_sg-bglass" onclick="window._sgClose()">← ပြန်မည်</button>'+
-      '</div>');
-    return;
-  }
-
-  /* Guest/Gmail friend — use uid if stored */
   var gfri=_getGuestFriends();
-  var g=gfri.find(function(x){return x.user_code===code;});if(!g)return;
-  var hasUid=!!(g.uid);
-  var avH=g.avatar_url
-    ?'<img class="_sg-fp-av" src="'+_x(g.avatar_url)+'" loading="lazy">'
+  var g=gfri.find(function(x){return x.user_code===code;})||{user_code:code,username:code,avatar_url:null,uid:null};
+
+  /* Resolve fields — linked Gmail wins over guest cache */
+  var uid=g.uid||(linked&&linked.id)||null;
+  var username=_x((linked&&linked.username)||g.username||'–');
+  var uc=_x((linked&&linked.user_code)||g.user_code||code);
+  var avatarUrl=(linked&&linked.avatar_url)||g.avatar_url||null;
+  var isGmail=!!(uid);
+  var isOnline=!!(uid&&_online.has(uid));
+
+  /* Avatar — same _sg-fp-av / _sg-fp-avfb classes as auth profile */
+  var avH=avatarUrl
+    ?'<img class="_sg-fp-av" src="'+_x(avatarUrl)+'" loading="lazy"'+
+       ' onerror="this.style.display=\'none\';if(this.nextElementSibling)this.nextElementSibling.style.display=\'flex\'">'
+      +'<div class="_sg-fp-avfb" style="display:none">👤</div>'
     :'<div class="_sg-fp-avfb">👤</div>';
-  var statusHtml=hasUid
-    ?'<span style="font-size:.56rem;color:rgba(16,185,129,.65);font-family:\'Outfit\',sans-serif">✓ Gmail</span>'
-    :'<span class="_sg-gtag">👤 Guest</span>';
+
+  /* Status — same structure as auth profile */
+  var inMatch=uid&&_friendStatus[uid]==='in_match';
+  var statusColor=isOnline?(inMatch?'rgba(245,158,11,.9)':GL.ok):'rgba(255,255,255,.35)';
+  var statusText=isOnline?(inMatch?'🎮 In Match':'Online'):'Offline';
+  var statusHtml=
+    '<span class="'+(isOnline?'_sg-don':'_sg-doff')+'"></span>'+
+    '<span style="font-size:.64rem;color:'+statusColor+';font-family:\'Outfit\',sans-serif;margin-left:3px">'+statusText+'</span>'+
+    (isGmail
+      ?'<span style="font-size:.52rem;color:rgba(16,185,129,.70);margin-left:5px">✓ Gmail</span>'
+      :'<span class="_sg-gtag" style="margin-left:5px">👤 Guest</span>');
+
+  /* Buttons — identical dimensions to auth profile */
   var isAuthViewer=(_kp&&_kp.type==='auth');
-  var inviteBtn=hasUid
-    ?'<button class="_sg-bgold" onclick="window._sgInviteFri(\''+_x(g.uid)+'\',\''+_x(g.username||g.user_code||'')+'\')">📨 Invite</button>'
-    :'<button class="_sg-bgold" onclick="window._sgInviteFri(null,\''+_x(g.username||g.user_code||'')+'\');window._sgClose()">📨 Room Invite</button>';
-  var chatBtn=hasUid
-    /* Has uid → full DM */
-    ?'<button class="_sg-bgold" style="background:rgba(99,179,237,.14);border-color:rgba(99,179,237,.35);color:rgba(147,210,255,.9)" onclick="window._sgClose();window._sgOpenDM(\''+_x(g.uid)+'\')">💬 Chat</button>'
-    : isAuthViewer
-      /* Auth user viewing Guest (no uid) → chat via room */
-      ?'<button class="_sg-bgold" style="background:rgba(99,179,237,.10);border-color:rgba(99,179,237,.28);color:rgba(147,210,255,.8)" onclick="window._sgInviteFri(null,\''+_x(g.username||g.user_code||'')+'\');window._sgClose()">💬 Room Invite</button>'
-      /* Guest user viewing Guest friend → prompt to link Gmail */
-      :'<button class="_sg-bgold" style="background:rgba(16,185,129,.07);border-color:rgba(16,185,129,.28);color:rgba(110,231,183,.8)" onclick="window._sgClose();window._sgGoLink()" title="Gmail ချိတ်ဆက်ရင် Chat ရနိုင်သည်">🔗 Gmail ချိတ်ဆက်</button>';
+  var inviteBtn=isGmail
+    ?'<button class="_sg-bgold" onclick="window._sgInviteFri(\''+_x(uid)+'\',\''+username+'\')">📨 Invite</button>'
+    :'<button class="_sg-bgold" onclick="window._sgInviteFri(null,\''+username+'\');window._sgClose()">📨 Invite</button>';
+  var chatBtn=isGmail
+    ?'<button class="_sg-bgold" style="background:rgba(99,179,237,.14);border-color:rgba(99,179,237,.35);color:rgba(147,210,255,.9)"'+
+       ' onclick="window._sgClose();window._sgOpenDM(\''+_x(uid)+'\')">💬 Chat</button>'
+    :isAuthViewer
+      ?'<button class="_sg-bgold" style="background:rgba(99,179,237,.10);border-color:rgba(99,179,237,.28);color:rgba(147,210,255,.8)"'+
+         ' onclick="window._sgInviteFri(null,\''+username+'\');window._sgClose()">💬 Chat</button>'
+      :'<button class="_sg-bgold" style="background:rgba(16,185,129,.07);border-color:rgba(16,185,129,.28);color:rgba(110,231,183,.8)"'+
+         ' onclick="window._sgClose();window._sgGoLink()" title="Gmail ချိတ်ဆက်ရင် Chat ရနိုင်သည်">🔗 Gmail ချိတ်ဆက်</button>';
+
   _open(
     '<div class="_sg-hdr"><div class="_sg-htitle">Friend Profile</div>'+
       '<div class="_sg-hclose" onclick="window._sgClose()">✕</div></div>'+
     '<div class="_sg-body">'+
       '<div class="_sg-fpcard">'+
         avH+
-        '<div class="_sg-fp-name">'+_x(g.username||'–')+'</div>'+
-        '<div class="_sg-fp-id" onclick="window._sgCopyId(\''+_x(g.user_code)+'\')">🪪 '+_x(g.user_code)+'</div>'+
+        '<div class="_sg-fp-name">'+username+'</div>'+
+        '<div class="_sg-fp-id" onclick="window._sgCopyId(\''+uc+'\')">🪪 '+uc+'</div>'+
         '<div class="_sg-fp-status">'+statusHtml+'</div>'+
       '</div>'+
       '<div class="_sg-fp-btns">'+inviteBtn+chatBtn+'</div>'+
       '<button class="_sg-brem _sg-bsm" style="width:100%;border-radius:10px;padding:9px;margin-top:2px"'+
-        ' data-nm="'+_x(g.username||'–')+'"'+
-        ' onclick="window._sgConfirmDel(\'guest\',\''+_x(code)+'\',this.dataset.nm)">'+
-        'ဖယ်ရှား'+
-      '</button>'+
+        ' data-nm="'+username+'"'+
+        ' onclick="window._sgConfirmDel(\'guest\',\''+_x(code)+'\',this.dataset.nm)">ဖယ်ရှား</button>'+
       '<button class="_sg-bglass" onclick="window._sgClose()">← ပြန်မည်</button>'+
     '</div>');
 };
-
 /* ══ GUEST FRIEND SYSTEM (localStorage) ══ */
 /* ML style: guests can add friends locally, carry over on account link */
 var _GF_KEY='kk_gfri';
