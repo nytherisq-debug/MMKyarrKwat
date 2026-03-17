@@ -205,8 +205,9 @@ function _css(){
   border-top:1px solid rgba(255,255,255,.38);
   color:#060200;font-family:'Outfit',sans-serif;font-size:.86rem;font-weight:700;
   box-shadow:0 4px 20px rgba(200,148,32,.24),inset 0 1px 0 rgba(255,255,255,.22);
-  transition:all .22s cubic-bezier(0,0,.2,1);
+  transition:transform .18s cubic-bezier(0,0,.2,1),box-shadow .18s cubic-bezier(0,0,.2,1);
   position:relative;overflow:hidden;
+  will-change:transform;
 }
 ._sg-bgold::before{
   content:'';position:absolute;inset:0;
@@ -311,9 +312,10 @@ function _css(){
   border-top:1px solid rgba(255,255,255,.18);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 2px 12px rgba(0,0,0,.22);
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  transition:all .2s cubic-bezier(0,0,.2,1);
+  transition:transform .18s cubic-bezier(0,0,.2,1),box-shadow .18s cubic-bezier(0,0,.2,1),background .18s;
   animation:_sg-enter .24s cubic-bezier(0,0,.2,1) both;
   position:relative;overflow:hidden;
+  will-change:transform;
 }
 ._sg-fri::before{
   content:'';position:absolute;top:0;left:0;right:0;height:1px;
@@ -759,7 +761,8 @@ function _open(html,onReady){
 function _close(){
   var bd=$('_sg-bd');if(!bd)return;
   bd.classList.remove('on');
-  setTimeout(function(){bd.innerHTML='';},320);
+  _dmCurrentUid=null;
+  setTimeout(function(){if(bd)bd.innerHTML='';},320);
 }
 function _msg(id,t,html){
   var el=$(id);if(!el)return;
@@ -2104,9 +2107,10 @@ window._sgInviteFri=async function(toUid,toName){
       await sb.from('room_invites').delete()
         .eq('from_uid',user.id).eq('to_uid',toUid).eq('status','pending');
       var fromName=(_kp&&_kp.name)||'Player';
+      var fromAvatar=(_kp&&_kp.avatar)||null;
       var res=await sb.from('room_invites').insert({
         from_uid:user.id,to_uid:toUid,
-        from_name:fromName,room_code:rc,status:'pending'
+        from_name:fromName,from_avatar:fromAvatar,room_code:rc,status:'pending'
       });
       if(res.error){_sgToast('❌ Invite မပို့ရပါ: '+(res.error.message||''));return;}
       _sgToast('📨 '+_x(toName||'Friend')+' ထံ Invite ပို့ပြီး ✓');
@@ -2211,6 +2215,37 @@ function _showInviteOverlay(inv){
   if(_kkRoom()&&_kkRoom()!=='AI'&&!_kkSt().over)return;
   /* Store pending invite data globally */
   window._pendingInvite={id:inv.id,room_code:inv.room_code};
+
+  /* ── Resolve inviter avatar ──
+     Priority: DB field → friends cache → profile lookup → gold initial */
+  var _av=inv.from_avatar||null;
+  if(!_av&&inv.from_uid){
+    /* Check loaded friends list first (no extra request) */
+    var _myId=_authUser&&_authUser.id||'';
+    var _fr=_flist.find(function(f){return f.requester_id===inv.from_uid||f.addressee_id===inv.from_uid;});
+    if(_fr){var _fp=_fr.requester_id===_myId?_fr.adr:_fr.req;if(_fp&&_fp.avatar_url)_av=_fp.avatar_url;}
+  }
+  var _name=inv.from_name||'Friend';
+  var _initial=(_name.trim()[0]||'?').toUpperCase();
+  var _avHtml=_av
+    ?'<img src="'+_x(_av)+'" id="_sg-inv-av"'+
+       ' style="width:72px;height:72px;border-radius:50%;object-fit:cover;display:block;'+
+       'border:2.5px solid rgba(212,168,67,.55);'+
+       'box-shadow:0 0 0 4px rgba(212,168,67,.12),0 0 22px rgba(212,168,67,.22),0 4px 16px rgba(0,0,0,.55);'+
+       'animation:_sg-av-pop .35s cubic-bezier(0,0,.2,1) both"'+
+       ' onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">'
+      +'<div id="_sg-inv-av-fb" style="display:none;width:72px;height:72px;border-radius:50%;'+
+       'background:rgba(212,168,67,.10);border:2.5px solid rgba(212,168,67,.38);'+
+       'align-items:center;justify-content:center;font-size:1.7rem;font-weight:700;'+
+       'color:#F0CC72;font-family:'Cinzel Decorative',serif;'+
+       'box-shadow:0 0 0 4px rgba(212,168,67,.10),0 0 18px rgba(212,168,67,.18)">'+_x(_initial)+'</div>'
+    :'<div style="width:72px;height:72px;border-radius:50%;'+
+       'background:rgba(212,168,67,.10);border:2.5px solid rgba(212,168,67,.38);'+
+       'display:flex;align-items:center;justify-content:center;font-size:1.7rem;font-weight:700;'+
+       'color:#F0CC72;font-family:'Cinzel Decorative',serif;'+
+       'box-shadow:0 0 0 4px rgba(212,168,67,.10),0 0 18px rgba(212,168,67,.18);'+
+       'animation:_sg-av-pop .35s cubic-bezier(0,0,.2,1) both">'+_x(_initial)+'</div>';
+
   _ensureBd();
   var bd=$('_sg-bd');
   bd.innerHTML=
@@ -2220,11 +2255,15 @@ function _showInviteOverlay(inv){
         '<div class="_sg-hclose" onclick="window._sgDeclineInvite()">✕</div>'+
       '</div>'+
       '<div class="_sg-body">'+
-        '<div style="text-align:center;padding:18px 0 12px">'+
-          '<div style="font-size:2.2rem;margin-bottom:10px">🎮</div>'+
-          '<div style="font-size:.88rem;font-weight:700;color:#F0E8D8;margin-bottom:5px">'+_x(inv.from_name||'Friend')+'</div>'+
-          '<div style="font-size:.70rem;color:rgba(180,148,70,.55);margin-bottom:14px">Room ကို ဖိတ်ခေါ်သည်</div>'+
-          '<div style="font-family:Orbitron,monospace;font-size:1.6rem;color:#F0CC72;letter-spacing:8px;font-weight:700;padding:12px;background:rgba(212,168,67,.08);border-radius:12px;border:1px solid rgba(212,168,67,.2)">'+_x(inv.room_code)+'</div>'+
+        '<div style="text-align:center;padding:18px 0 12px;display:flex;flex-direction:column;align-items:center;gap:0">'+
+          '<div style="margin-bottom:12px">'+_avHtml+'</div>'+
+          '<div style="font-size:.92rem;font-weight:700;color:#F0E8D8;margin-bottom:4px">'+_x(_name)+'</div>'+
+          '<div style="font-size:.70rem;color:rgba(180,148,70,.55);margin-bottom:16px">Room ကို ဖိတ်ခေါ်သည်</div>'+
+          '<div style="font-family:Orbitron,monospace;font-size:1.6rem;color:#F0CC72;letter-spacing:8px;'+
+               'font-weight:700;padding:12px 16px;background:rgba(212,168,67,.08);'+
+               'border-radius:12px;border:1px solid rgba(212,168,67,.2);width:100%;text-align:center">'+
+            _x(inv.room_code)+
+          '</div>'+
         '</div>'+
         '<div class="_sg-fp-btns">'+
           '<button class="_sg-bgold" onclick="window._sgAcceptInvite()">✅ လက်ခံ</button>'+
@@ -2233,6 +2272,33 @@ function _showInviteOverlay(inv){
       '</div>'+
     '</div></div>';
   bd.classList.add('on');
+
+  /* Async avatar fallback: if we had no avatar yet, fetch from DB after showing overlay */
+  if(!_av&&inv.from_uid){
+    var sb=_sb();
+    if(sb){
+      sb.from('profiles').select('avatar_url').eq('id',inv.from_uid).maybeSingle()
+        .then(function(r){
+          if(!r||!r.data||!r.data.avatar_url)return;
+          /* Patch the already-shown overlay — smooth fade-in */
+          var _el=document.getElementById('_sg-inv-av');
+          var _fb=document.getElementById('_sg-inv-av-fb');
+          if(!_el&&_fb){
+            /* Fallback is showing — replace with real image */
+            var _img=document.createElement('img');
+            _img.id='_sg-inv-av';
+            _img.src=r.data.avatar_url;
+            _img.style.cssText='width:72px;height:72px;border-radius:50%;object-fit:cover;display:block;'+
+              'border:2.5px solid rgba(212,168,67,.55);opacity:0;transition:opacity .25s;'+
+              'box-shadow:0 0 0 4px rgba(212,168,67,.12),0 0 22px rgba(212,168,67,.22),0 4px 16px rgba(0,0,0,.55)';
+            _img.onerror=function(){_img.remove();};
+            _fb.parentNode.insertBefore(_img,_fb);
+            _fb.style.display='none';
+            requestAnimationFrame(function(){_img.style.opacity='1';});
+          }
+        }).catch(function(){});
+    }
+  }
 }
 
 window._sgAcceptInvite=async function(){
@@ -2362,10 +2428,8 @@ async function _fetchFriendStatuses(uids){
 }
 
 /* Helper: close existing modal */
-window._sgClose=function(){
-  _dmCurrentUid=null;
-  _close();
-};
+/* _close() already clears _dmCurrentUid */
+window._sgClose=function(){_close();};
 
 /* ══ FRIEND PROFILE MODAL ══ */
 window._sgOpenFriProfile=function(fid){
