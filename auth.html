@@ -312,15 +312,7 @@ const CFG = {
   sbUrl : 'https://oxziinvwdhligrbllqbj.supabase.co',
   sbKey : 'sb_publishable_8uBlwuN8DbyDfccT2uMaNw_9fpqYb6s',
   game  : 'index.html',
-  base  : (function(){
-    var _u=window.location.href.split('?')[0].split('#')[0];
-    var _o=window.location.origin;
-    var _p=_u.slice(_o.length);
-    var _last=_p.split('/').pop();
-    if(_last.indexOf('.')>=0){_p=_p.slice(0,_p.lastIndexOf('/')+1);}
-    else if(!_p.endsWith('/'))_p+='/';
-    return _o+_p;
-  })(),
+  base  : window.location.origin + window.location.pathname.replace(/[^/]*$/, ''),
   /* localStorage keys */
   LS_GID  : 'kk_gid',    /* guest permanent ID  */
   LS_GNM  : 'kk_gnm',    /* guest display name  */
@@ -347,20 +339,12 @@ let _pch  = null;   /* presence channel               */
 let _fwch = null;   /* friendships watch channel      */
 const _online = new Set();
 let _presenceStarted = false;
-let _flist = [];              /* friendships array */
 let _presenceReady   = false; /* true after first presence sync — prevents login-flood toasts */
 
 function SB(){
   if(!_sb) _sb = supabase.createClient(CFG.sbUrl, CFG.sbKey);
   return _sb;
 }
-function _stopPresence(){
-  if(typeof _pch!=='undefined'&&_pch){try{SB().removeChannel(_pch);}catch(e){}}_pch=null;
-  _presenceStarted=false;
-}
-function _chime(){}
-function saveEditName(){}
-function addFriend(){}
 
 /* ═══════════════════════════════════════════════
    GUEST PERMANENT ID
@@ -420,7 +404,6 @@ function _randChars(n){
   if(mode === 'logout'){
     history.replaceState({}, '', window.location.pathname);
     localStorage.setItem(CFG.LS_MODE, 'auth');
-    try{sessionStorage.removeItem('kk_player');}catch(e){}
     showScr('scr-auth');
     _listenAuth();
     return;
@@ -502,7 +485,6 @@ async function _listenAuth(){
       _flist = []; _online.clear();
       _stopPresence();
       _presenceStarted = false;
-      try{sessionStorage.removeItem('kk_player');}catch(e){}
       /* Only redirect if we were on the profile screen (auth mode) */
       if(localStorage.getItem(CFG.LS_MODE) === 'auth'){
         _sessionExpiredRedirect();
@@ -800,8 +782,8 @@ async function _loadProfile(){
 /* ═══════════════════════════════════════════════
    EDIT NAME
 ═══════════════════════════════════════════════ */function cancelEditName(){
-  const er=document.getElementById('edit-row');if(er)er.style.display='none';
-  const nr=document.getElementById('name-row');if(nr)nr.style.display='flex';
+  document.getElementById('edit-row').style.display  = 'none';
+  document.getElementById('name-row').style.display  = 'flex';
 }/* ═══════════════════════════════════════════════
    AVATAR UPLOAD
 ═══════════════════════════════════════════════ */
@@ -871,8 +853,8 @@ let _authCurrentDM = null;  /* uid of open DM thread */
 ═══════════════════════════════════════════════ */
 async function goGame(){
   /* ── Sync player data to sessionStorage for game to consume ── */
-  let player = null;
   try{
+    let player;
     if(_user && _prof){
       /* Authenticated user — validate user_code format before sending to game */
       const _validKK = (c) => typeof c==='string' && /^KK[A-Z0-9]{6}$/.test(c);
@@ -907,21 +889,17 @@ async function goGame(){
           .upsert({id:_gid, display_name:_gnm, updated_at:new Date().toISOString()},
                   {onConflict:'id', ignoreDuplicates:false});
       }catch(e){ console.warn('guest_profiles upsert:',e); }
-      const _gav = localStorage.getItem('kk_gav') || null;
       player = {
         type      : 'guest',
         id        : _gid,
         uid       : null,
         name      : _gnm,
-        avatar    : _gav,
+        avatar    : null,
         email     : null,
       };
     }
+    sessionStorage.setItem('kk_player', JSON.stringify(player));
   }catch(e){ console.warn('goGame sync:', e); }
-  if(player){
-    player.savedAt=Date.now();
-    try{sessionStorage.setItem('kk_player',JSON.stringify(player));}catch(e){}
-  }
 
   document.getElementById('ov-icon').textContent = '✓';
   document.getElementById('ov-ttl').textContent  = 'အောင်မြင်ပါသည်';
@@ -959,8 +937,8 @@ function toast(msg, dur=2800){
 /* Enter key — save name edit */
 document.addEventListener('keydown', e=>{
   if(e.key === 'Enter'){
-    const _er=document.getElementById('edit-row');
-    if(_er&&_er.style.display!=='none') saveEditName();
+    if(document.getElementById('edit-row')?.style.display !== 'none') saveEditName();
+    else if(document.activeElement === document.getElementById('add-inp')) addFriend();
   }
 });
 </script>
