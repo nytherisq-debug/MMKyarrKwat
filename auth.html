@@ -52,7 +52,7 @@ body::after{
 .orb2{width:360px;height:360px;bottom:-9%;right:-7%;background:radial-gradient(circle,rgba(70,28,160,.08) 0%,transparent 65%);animation:od 17s ease-in-out infinite alternate-reverse}
 @keyframes od{from{transform:translate(0,0)}to{transform:translate(30px,-26px)}}
 /* ── LAYOUT ── */
-.page{position:relative;z-index:10;min-height:100vh;min-height:100svh;width:100%;display:flex;align-items:center;justify-content:center;padding:20px 16px}
+.page{position:relative;z-index:10;min-height:100vh;min-height:100svh;width:100%;display:flex;align-items:center;justify-content:center;padding:20px 16px;overflow-y:auto;}
 .scr{display:none}.scr.on{display:flex;flex-direction:column;align-items:center;width:100%}
 /* ── GLASS CARD ── */
 .card{
@@ -149,8 +149,8 @@ body::after{
 /* Guest notice */
 /* ── LINK ACCOUNT PANEL ── */
 .link-panel{
-  padding:20px 22px 22px;
-  display:flex;flex-direction:column;gap:14px;
+  padding:14px 18px 18px;
+  display:flex;flex-direction:column;gap:10px;
   border-top:1px solid rgba(212,168,67,.07);
 }
 .link-ttl{
@@ -161,10 +161,10 @@ body::after{
 }
 .link-items{display:flex;flex-direction:column;gap:7px;margin:0 2px}
 .link-item{
-  display:flex;align-items:center;gap:9px;
-  padding:8px 11px;border-radius:10px;
+  display:flex;align-items:center;gap:8px;
+  padding:6px 10px;border-radius:10px;
   background:rgba(212,168,67,.045);border:1px solid rgba(212,168,67,.10);
-  font-size:.72rem;color:var(--t2);line-height:1.4;
+  font-size:.70rem;color:var(--t2);line-height:1.35;
 }
 .link-item-icon{font-size:.95rem;flex-shrink:0;width:22px;text-align:center}
 .link-warn{
@@ -274,7 +274,7 @@ body::after{
 <!-- ══════════════ LINK ACCOUNT SCREEN ══════════════ -->
 <div class="scr" id="scr-link">
   <div class="card"><div class="card-body">
-    <div class="logo">
+    <div class="logo" style="margin-bottom:14px">
       <div class="logo-title">Account ချိတ်ဆက်မည်</div>
       <div class="logo-sub">LINK GUEST → GMAIL</div>
     </div>
