@@ -1183,8 +1183,22 @@ async function _startPresence(user){
   _pch
     .on('presence',{event:'sync'},function(){
       var st=_pch.presenceState();
-      _online=new Set(Object.keys(st).filter(function(k){return k!==user.id;}));
-      _refreshWidget();_renderFriendTab();_renderOnlineCount();
+      var newOnline=new Set(Object.keys(st).filter(function(k){return k!==user.id;}));
+      /* Diff: only patch rows that actually changed — no full re-render */
+      var changed=false;
+      /* Check newly online */
+      newOnline.forEach(function(uid){
+        if(!_online.has(uid)){_online.add(uid);if(!_patchFriendRow(uid,true))changed=true;}
+      });
+      /* Check newly offline */
+      _online.forEach(function(uid){
+        if(!newOnline.has(uid)){_online.delete(uid);if(!_patchFriendRow(uid,false))changed=true;}
+      });
+      _online=newOnline;
+      /* Only full re-render if a friend changed state but had no row to patch
+         (i.e. list changed structurally) */
+      if(changed)_debouncedRender();
+      _refreshWidget();_renderOnlineCount();
     })
     .on('presence',{event:'join'},function(d){
       if(d.key&&d.key!==user.id)_online.add(d.key);
@@ -1614,6 +1628,7 @@ function _friAv(p,size){
 
 
 
+var _ftabHash='';
 function _renderFriendTab(){
   var box=$('_sg-ftab');if(!box)return;
   var myId=_authUser?.id||_kp?.uid||'';
@@ -1658,7 +1673,7 @@ function _renderFriendTab(){
       box.innerHTML='<div class="_sg-empty">သူငယ်ချင်း မရှိသေးပါ<small>Add tab မှ Player ID ဖြင့် ထည့်ပါ</small></div>';
       return;
     }
-    box.innerHTML=gfri.map(function(g,idx){
+    var _html=gfri.map(function(g,idx){
       var isGmail=!!(g.uid);
       var avH=g.avatar_url
         ?'<img src="'+_x(g.avatar_url)+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:1.5px solid '+GL.goldBd+'" loading="lazy">'
@@ -1682,6 +1697,9 @@ function _renderFriendTab(){
         chatUnread:isGmail&&_dmUnread[g.uid]?_dmUnread[g.uid]:0
       },idx);
     }).join('');
+    if(_html===_ftabHash)return;
+    _ftabHash=_html;
+    box.innerHTML=_html;
     return;
   }
 
@@ -1770,7 +1788,10 @@ function _renderFriendTab(){
     },aidx);
   }).join('');
 
-  box.innerHTML=_dbHtml+_gstHtml;
+  var _newHash=_dbHtml+_gstHtml;
+  if(_newHash===_ftabHash)return; /* identical — skip DOM update, no flicker */
+  _ftabHash=_newHash;
+  box.innerHTML=_newHash;
 }
 
 function _renderReqTab(){
