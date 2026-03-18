@@ -57,15 +57,17 @@ body::after{
 /* ── GLASS CARD ── */
 .card{
   position:relative;width:100%;max-width:400px;border-radius:26px;
-  background:rgba(14,10,26,.50);
-  backdrop-filter:blur(36px) saturate(180%);-webkit-backdrop-filter:blur(36px) saturate(180%);
-  border:1px solid rgba(255,255,255,.085);
+  background:rgba(14,10,26,.52);
+  /* Liquid Glass: blur-2xl=40px saturate(200%) from 0eb7fa540bde1768.css */
+  backdrop-filter:blur(40px) saturate(200%);-webkit-backdrop-filter:blur(40px) saturate(200%);
+  /* glass-border:#ffffff26 (confirmed token) */
+  border:1px solid #ffffff26;
   box-shadow:
-    0 0 0 1px rgba(212,168,67,.07),
-    0 24px 64px rgba(0,0,0,.58),
-    0 8px 24px rgba(0,0,0,.32),
-    inset 0 1px 0 rgba(255,255,255,.09),
-    inset 0 0 50px rgba(212,168,67,.018);
+    0 0 0 1px rgba(212,168,67,.08),
+    0 24px 64px rgba(0,0,0,.60),
+    0 8px 24px rgba(0,0,0,.34),
+    inset 0 1px 0 rgba(255,255,255,.12),
+    inset 0 0 50px rgba(212,168,67,.022);
   overflow:hidden;
   animation:cardIn .55s var(--spring) both;
 }
@@ -89,10 +91,13 @@ body::after{
   display:flex;align-items:center;justify-content:center;gap:10px;
   border-radius:12px;cursor:pointer;
   font-family:'Outfit',sans-serif;font-size:.86rem;font-weight:600;color:var(--t1);
-  background:rgba(255,255,255,.052);border:1px solid rgba(255,255,255,.13);
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  box-shadow:0 3px 14px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.08);
+  /* glass-bg:#ffffff14 (confirmed Liquid Glass token) */
+  background:#ffffff14;border:1px solid #ffffff26;
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  box-shadow:0 3px 14px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.10);
   transition:all .18s var(--ease);animation:up .45s var(--ease) both .10s;
+  /* Required for ripple effect */
+  position:relative;overflow:hidden;
 }
 .btn-google:hover{background:rgba(255,255,255,.088);border-color:rgba(255,255,255,.20);transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.40)}
 .btn-google:active{transform:none;background:rgba(255,255,255,.034)}
@@ -110,6 +115,7 @@ body::after{
   font-family:'Noto Sans Myanmar',sans-serif;font-size:.78rem;font-weight:500;color:var(--t3);
   background:transparent;border:1px solid rgba(212,168,67,.09);
   transition:all .18s var(--ease);animation:up .45s var(--ease) both .18s;
+  position:relative;overflow:hidden;
 }
 .btn-guest:hover{color:var(--t2);background:rgba(212,168,67,.05);border-color:rgba(212,168,67,.18)}
 .btn-guest:active{transform:scale(.99)}
@@ -182,6 +188,7 @@ body::after{
   border:none;
   box-shadow:0 4px 18px rgba(212,168,67,.38);
   transition:all .18s var(--ease);
+  position:relative;overflow:hidden;
 }
 .btn-link-google:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(212,168,67,.52)}
 .btn-link-google:active{transform:none}
@@ -190,6 +197,7 @@ body::after{
   width:100%;padding:8px;background:none;border:none;cursor:pointer;
   font-family:'Outfit',sans-serif;font-size:.72rem;color:var(--t3);
   transition:color .14s;
+  position:relative;overflow:hidden;
 }
 .btn-link-back:hover{color:var(--t2)}
 /* Profile section tabs */
@@ -233,6 +241,14 @@ body::after{
 /* ── KEYFRAMES ── */
 @keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+/* Liquid Glass ripple — from 0eb7fa540bde1768.css confirmed tokens */
+@keyframes gl-ripple{0%{opacity:.65;transform:scale(0)}to{opacity:0;transform:scale(1)}}
+.gl-ripple-el{
+  position:absolute;border-radius:50%;pointer-events:none;
+  background:rgba(255,255,255,.22);
+  transform:scale(0);
+  animation:gl-ripple .55s cubic-bezier(0,0,.2,1) forwards;
+}
 /* ── MOBILE ── */
 
 .modal-overlay{position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.85);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px}
@@ -963,6 +979,38 @@ document.addEventListener('keydown', e=>{
     if(_er && _er.style.display !== 'none') saveEditName();
   }
 });
+
+/* ── Liquid Glass ripple — attached to entire page via delegation
+   Fires on btn-google, btn-guest, btn-link-google, btn-link-back, btn-play.
+   Uses gl-ripple keyframe defined in CSS above.
+   Buttons already have position:relative;overflow:hidden for containment. ── */
+(function(){
+  const TARGETS = '.btn-google,.btn-guest,.btn-link-google,.btn-link-back,.btn-play';
+  document.addEventListener('pointerdown', function(ev){
+    const btn = ev.target.closest(TARGETS);
+    if(!btn || btn.disabled) return;
+    const r   = btn.getBoundingClientRect();
+    const el  = document.createElement('span');
+    const sz  = Math.max(r.width, r.height) * 2;
+    el.className     = 'gl-ripple-el';
+    el.style.width   = sz + 'px';
+    el.style.height  = sz + 'px';
+    el.style.left    = (ev.clientX - r.left  - sz / 2) + 'px';
+    el.style.top     = (ev.clientY - r.top   - sz / 2) + 'px';
+    btn.appendChild(el);
+    setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 580);
+  });
+})();
+</script>
+
+<!-- ── Service Worker (PWA offline + splash screen) ── -->
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./sw.js')
+      .catch(function(){ /* SW optional — fail silently */ });
+  });
+}
 </script>
 </body>
 </html>
