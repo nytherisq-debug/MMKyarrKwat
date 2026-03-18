@@ -894,7 +894,7 @@ window._sgSaveGuest=async function(){
   var btn=$('_sg-savebtn');
   if(btn){btn.disabled=true;btn.innerHTML='<span class="_sg-spin"></span>သိမ်းနေသည်…';}
   try{localStorage.setItem('kk_gnm',nm);}catch(e){}
-  if(_kp){_kp.name=nm;try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}}
+  if(_kp){_kp.name=nm;_kp.savedAt=Date.now();try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}}
   var bnm=document.querySelector('#_sg-badge ._sg-bnm');if(bnm)bnm.textContent=nm;
   var ni=$('inp-name');if(ni)ni.value=nm;
   /* Also update guest_profiles table so others can see new name */
@@ -925,7 +925,7 @@ window._sgSaveAuth=async function(){
     if(dup?.data){_msg('_sg-emsg','er','⚠️ Username ရှိပြီးသား — အခြား ရွေးပါ');if(btn&&$('_sg-m')){btn.disabled=false;btn.innerHTML='✓ &nbsp;Username သိမ်းမည်';}return;}
     await sb.from('profiles').update({username:nm,updated_at:new Date().toISOString()}).eq('id',user.id);
     if(_authProf)_authProf.username=nm;
-    if(_kp){_kp.name=nm;try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}}
+    if(_kp){_kp.name=nm;_kp.savedAt=Date.now();try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}}
     var bnm=document.querySelector('#_sg-badge ._sg-bnm');if(bnm)bnm.textContent=nm;
     var ni=$('inp-name');if(ni)ni.value=nm;
     _msg('_sg-emsg','ok','✓ Username ပြောင်းပြီးပါပြီ');
@@ -964,7 +964,7 @@ window._sgUploadAv=async function(inp){
             _msg('_sg-emsg','er','❌ Storage ပြည့်နေသည်');return;
           }
           /* Update _kp + sessionStorage */
-          if(_kp){_kp.avatar=dataUrl;try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}}
+          if(_kp){_kp.avatar=dataUrl;_kp.savedAt=Date.now();try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}}
           /* Live-update the modal avatar + badge */
           var m=$('_sg-m');
           if(m){
@@ -1010,7 +1010,7 @@ window._sgUploadAv=async function(inp){
     var url=pub+'?t='+Date.now();
     await sb.from('profiles').update({avatar_url:pub,updated_at:new Date().toISOString()}).eq('id',user.id);
     if(_authProf)_authProf.avatar_url=url;
-    if(_kp){_kp.avatar=url;try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}}
+    if(_kp){_kp.avatar=url;_kp.savedAt=Date.now();try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}}
     var m=$('_sg-m');
     if(m){
       m.querySelectorAll('._sg-avw img').forEach(function(i){i.src=url;i.style.display='block';});
@@ -1056,8 +1056,9 @@ window._sgGoLink=function(){
   /* Save name for carry-over after OAuth */
   if(gnm&&!gnm.startsWith('Guest·')){try{localStorage.setItem('kk_upgrade_nm',gnm);}catch(e){}}
   try{localStorage.setItem('kk_link_pending','1');}catch(e){}
-  var base=window.location.origin+window.location.pathname.replace(/[^/]*$/,'');
-  window.location.href=base+'auth.html?link=1';
+  var _lh=window.location.href.split('?')[0].split('#')[0];
+  if(!_lh.endsWith('/'))_lh=_lh.lastIndexOf('/')>8?_lh.slice(0,_lh.lastIndexOf('/')+1):_lh+'/';
+  window.location.href=_lh+'auth.html?link=1';
 };
 
 /* Confirm-delete helper — name passed via dataset.nm to avoid single-quote injection.
@@ -2896,16 +2897,20 @@ function _buildLobby(p){
       signinBtn.addEventListener('click',function(e){
         e.stopPropagation();
         try{localStorage.setItem('kk_mode','auth');}catch(x){}
-        var base=window.location.pathname.replace(/[^/]*$/,'');
-        window.location.href=window.location.origin+base+'auth.html';
+        var _lh=window.location.href.split('?')[0].split('#')[0];
+        if(!_lh.endsWith('/'))_lh=_lh.lastIndexOf('/')>8?_lh.slice(0,_lh.lastIndexOf('/')+1):_lh+'/';
+        window.location.href=_lh+'auth.html';
       });
     }
     var logoutBtn=$('_sg-logout-btn');
     if(logoutBtn){
       logoutBtn.addEventListener('click',function(e){
         e.stopPropagation();
-        var base=window.location.pathname.replace(/[^/]*$/,'');
-        window.location.href=window.location.origin+base+'auth.html?mode=logout';
+        /* Clear kk_player so index.html guard redirects after logout */
+        try{sessionStorage.removeItem('kk_player');}catch(ex){}
+        var _lh=window.location.href.split('?')[0].split('#')[0];
+        if(!_lh.endsWith('/'))_lh=_lh.lastIndexOf('/')>8?_lh.slice(0,_lh.lastIndexOf('/')+1):_lh+'/';
+        window.location.href=_lh+'auth.html?mode=logout';
       });
     }
     var chipBtn=$('_sg-link-chip');
@@ -3055,17 +3060,23 @@ if(typeof _oAR==='function'){
 try{console.log('[session-guard v4] loaded. _kp=',_kp?'auth:'+_kp.type:'null');}catch(e){}
 _css();
 function _doInit(){
-  /* ── Session guard: if no kk_player, bounce through auth.html to set it ──
-     auth.html handles: new user → auth screen, returning auth → goGame(),
-     returning guest → goGame(). sessionStorage survives tab refresh but
-     is cleared on new tabs/windows, so this only triggers when truly needed. */
-  if(!_kp){
-    var _lsMode='';
-    try{_lsMode=localStorage.getItem('kk_mode')||'';}catch(e){}
-    /* If there IS a localStorage mode, auth.html will fast-redirect back — no flash.
-       If no mode at all, user needs to pick login method. */
-    var _base=window.location.origin+window.location.pathname.replace(/[^/]*$/,'');
-    window.location.replace(_base+'auth.html');
+  /* ── Session guard: validate kk_player before allowing lobby access ──
+     Redirects to auth.html if:
+       1. kk_player is missing (fresh tab / cleared data)
+       2. kk_player is malformed (missing type/name fields)
+       3. kk_player is stale (> 7 days — forces re-auth for security)
+     auth.html fast-returns for existing sessions (no visible flash). */
+  function _needsAuth(p){
+    if(!p||!p.type||!p.name)return true;              /* missing required fields */
+    if(p.savedAt&&Date.now()-p.savedAt>7*24*3600*1000)return true; /* > 7 days old */
+    return false;
+  }
+  if(_needsAuth(_kp)){
+    /* Robust base-path: handles /M (no slash), /M/ and /M/index.html */
+    var _href=window.location.href.split('?')[0].split('#')[0];
+    /* If URL ends with a file (has extension) or slash, get its directory */
+    if(!_href.endsWith('/'))_href=_href.lastIndexOf('/')>8?_href.slice(0,_href.lastIndexOf('/')+1):_href+'/';
+    window.location.replace(_href+'auth.html');
     return;
   }
   _buildLobby(_kp);
