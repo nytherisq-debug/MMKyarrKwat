@@ -347,23 +347,20 @@ let _pch  = null;   /* presence channel               */
 let _fwch = null;   /* friendships watch channel      */
 const _online = new Set();
 let _presenceStarted = false;
+let _flist = [];              /* friendships array */
 let _presenceReady   = false; /* true after first presence sync — prevents login-flood toasts */
-let _flist = [];              /* accepted friendships array */
 
 function SB(){
   if(!_sb) _sb = supabase.createClient(CFG.sbUrl, CFG.sbKey);
   return _sb;
 }
-
-/* ── Stub functions — safe no-ops for removed/stubbed features ── */
 function _stopPresence(){
-  if(_pch){try{SB().removeChannel(_pch);}catch(e){}}_pch=null;
-  if(_fwch){try{SB().removeChannel(_fwch);}catch(e){}}_fwch=null;
-  _presenceStarted=false;_presenceReady=false;
+  if(typeof _pch!=='undefined'&&_pch){try{SB().removeChannel(_pch);}catch(e){}}_pch=null;
+  _presenceStarted=false;
 }
-function _chime(on){}  /* audio chime — no-op, game handles sounds */
-function saveEditName(){}  /* inline name edit — handled by session-guard */
-function addFriend(){}     /* add friend — handled by session-guard */
+function _chime(){}
+function saveEditName(){}
+function addFriend(){}
 
 /* ═══════════════════════════════════════════════
    GUEST PERMANENT ID
@@ -410,12 +407,8 @@ function _randChars(n){
    the async check to decide the correct screen. */
 (function(){
   if(!localStorage.getItem(CFG.LS_MODE)){
-    /* Brand new user: show auth screen immediately */
     document.getElementById('scr-auth').classList.add('on');
   }
-  /* For returning users (guest/auth mode set): the async boot handles showing
-     the correct screen or redirecting. A brief black flash is unavoidable
-     but the async code runs within <300ms on good connections. */
 })();
 
 (async()=>{
@@ -427,7 +420,6 @@ function _randChars(n){
   if(mode === 'logout'){
     history.replaceState({}, '', window.location.pathname);
     localStorage.setItem(CFG.LS_MODE, 'auth');
-    /* Clear session player so index.html guard redirects properly after logout */
     try{sessionStorage.removeItem('kk_player');}catch(e){}
     showScr('scr-auth');
     _listenAuth();
@@ -510,7 +502,6 @@ async function _listenAuth(){
       _flist = []; _online.clear();
       _stopPresence();
       _presenceStarted = false;
-      /* Clear sessionStorage so index.html guard redirects properly */
       try{sessionStorage.removeItem('kk_player');}catch(e){}
       /* Only redirect if we were on the profile screen (auth mode) */
       if(localStorage.getItem(CFG.LS_MODE) === 'auth'){
@@ -927,8 +918,6 @@ async function goGame(){
       };
     }
   }catch(e){ console.warn('goGame sync:', e); }
-  /* Set kk_player OUTSIDE the try so it always runs before redirect.
-     Add savedAt so index.html can expire stale sessions. */
   if(player){
     player.savedAt=Date.now();
     try{sessionStorage.setItem('kk_player',JSON.stringify(player));}catch(e){}
@@ -971,8 +960,7 @@ function toast(msg, dur=2800){
 document.addEventListener('keydown', e=>{
   if(e.key === 'Enter'){
     const _er=document.getElementById('edit-row');
-    if(_er&&_er.style.display !== 'none') saveEditName();
-    /* add-inp handled by session-guard */
+    if(_er&&_er.style.display!=='none') saveEditName();
   }
 });
 </script>
