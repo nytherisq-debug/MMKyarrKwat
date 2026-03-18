@@ -3991,8 +3991,7 @@ let glog=[], capBy={[B]:[],[W]:[]}, lastF=null, lastT=null;
 let myName='', myColor=null, roomId='', isHost=false;
 let ver=0, huffOn=false, huffAt=null;
 let leaving=false, winShown=false, gameCount=0;
-/* ── session-guard bridge: exposes `let` state to external scripts ──
-   window.roomId, etc. don't work for `let` vars; use this getter instead */
+/* ── session-guard bridge: exposes `let` state to external scripts ── */
 window._sgState=function(){
   return{
     roomId      :typeof roomId!=='undefined'?roomId:'',
