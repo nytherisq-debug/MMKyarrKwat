@@ -3977,6 +3977,12 @@ button {
    PIECE IDs
 ══════════════════════════════════════════════ */
 const E=0,B=1,W=2,BK=3,WK=4;
+/* BUG-4 FIX: Initialize dedup timestamps at boot.
+   window._lastLeaveTs is read at handleMsg before doLeave ever sets it,
+   causing the guard `_lts <= window._lastLeaveTs` to compare with undefined
+   and silently fail. Same risk for _lastHuffTs. */
+window._lastLeaveTs=0;
+window._lastHuffTs=0;
 const isB=p=>p===B||p===BK;
 const isW=p=>p===W||p===WK;
 const isK=p=>p===BK||p===WK;
@@ -4512,7 +4518,7 @@ function handleMsg(type,payload){
   } else if(type==='chat'){
     addChatMsg(payload);
   } else if(type==='rematch_req'){
-    const on=$('opp-nm').textContent||'ပြိုင်ဘက်';
+    const on=$('opp-nm')?.textContent||'ပြိုင်ဘက်';
     $s('rr-sub',`${on} က နောက်ပွဲ ထပ်ကစားဖို့ ခေါ်နေသည်`);
     $('rematch-req').classList.add('on');
     vibrate([100,50,100]);
@@ -4572,7 +4578,8 @@ function showScr(id){
 }
 let _tt=null;
 function toast(t){
-  const e=$('toast');e.textContent=t;e.classList.add('on');
+  const e=$('toast');if(!e)return;
+  e.textContent=t;e.classList.add('on');
   clearTimeout(_tt);_tt=setTimeout(()=>e.classList.remove('on'),2500);
 }
 function newBoard(){
@@ -5165,7 +5172,7 @@ async function applyRemote(st){
       const _hwb=$('huff-wait-bar');if(_hwb)_hwb.classList.remove('on');
     }
     /* Clear huffWaitMode whenever we get a clean non-pending state */
-    if(!st.huffPending){huffWaitMode=false;huffWaitCands=[];$('huff-wait-bar').classList.remove('on');}
+    if(!st.huffPending){huffWaitMode=false;huffWaitCands=[];const _hwb=$('huff-wait-bar');if(_hwb)_hwb.classList.remove('on');}
     if(st.huffNotif&&st.huffNotif.ts&&(!window._lastHuffTs||st.huffNotif.ts>window._lastHuffTs)){
       window._lastHuffTs=st.huffNotif.ts;
       /* hn notification is for Player B only (shown locally after they pick).
@@ -5267,7 +5274,7 @@ function showWin(iWon,wn){
 
   $s('wi',iWon?'🏆':'😔');
   $s('wt',iWon?'အနိုင်ရပြီ! 🎉':'ရှုံးနိမ့်သွားသည်');
-  const on=$('opp-nm').textContent||'ပြိုင်ဘက်';
+  const on=$('opp-nm')?.textContent||'ပြိုင်ဘက်';
   $s('wm',iWon?`ကောင်းမွန်သောဂိမ်း! ${myName} အနိုင်ရ!`:`${on} (${wn}) အနိုင်ရသည်`);
 
   /* Apply win/lose vibe class */
@@ -5472,7 +5479,7 @@ function uiUpdate(){
     buildDots('opp-dots',oppC===B?'b':'w',oppT);
     const mine=turn===myColor;
     $s('tlbl',mine?'သင့်အလှည့်':'ပြိုင်ဘက် အလှည့်');
-    $s('twho',mine?myName:($('opp-nm').textContent||'ပြိုင်ဘက်'));
+    $s('twho',mine?myName:($('opp-nm')?.textContent||'ပြိုင်ဘက်'));
     $('my-card').classList.toggle('act',mine);$('opp-card').classList.toggle('act',!mine);
     $('my-bar').classList.toggle('act',mine);$('my-bar').classList.toggle('my-turn',mine&&!over);
     $('opp-bar').classList.toggle('act',!mine);
@@ -5929,10 +5936,10 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
   let _visLeaveTimer=null;
   document.addEventListener('visibilitychange',()=>{
     if(document.hidden){
-      /* Short delay — if they come back within 4s, cancel */
+      /* Delay — if they come back within 8s, cancel (prevents kick on screen lock) */
       _visLeaveTimer=setTimeout(()=>{
         if(document.hidden)_sendLeaveBroadcast();
-      },4000);
+      },8000);
     } else {
       clearTimeout(_visLeaveTimer);_visLeaveTimer=null;
       /* Returning to foreground: if we're in lobby and have a saved session, show rejoin banner */
@@ -5984,6 +5991,7 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
 (function(){
   const SRC = 'https://www.youtube.com/embed/3N04vXMzXtM?autoplay=1&mute=0&loop=1&playlist=3N04vXMzXtM&playsinline=1&controls=0&rel=0';
   let isOn = false;
+  let _mFallbackTimer = null;
   const wrap = document.getElementById('yt-wrap');
 
   function startMusic(){
@@ -5995,10 +6003,22 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
     f.allow  = 'autoplay; encrypted-media';
     f.setAttribute('frameborder','0');
     f.setAttribute('allowfullscreen','');
+    /* FIX: If iframe never fires load within 8s (YouTube blocked / no network),
+       quietly indicate failure — don't leave user thinking music is on */
+    _mFallbackTimer = setTimeout(function(){
+      const ico = document.getElementById('mico');
+      const btn = document.getElementById('mbtn');
+      if(ico && isOn){ ico.textContent = '🔇'; }
+      if(btn && isOn){ btn.title = 'YouTube မရပါ (VPN / Network စစ်ပါ)'; }
+    }, 8000);
+    f.addEventListener('load', function(){
+      clearTimeout(_mFallbackTimer);
+    }, { once: true });
     wrap.appendChild(f);
   }
 
   function stopMusic(){
+    clearTimeout(_mFallbackTimer);
     wrap.innerHTML = '';
   }
 
@@ -6010,11 +6030,13 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
       isOn = true;
       ico.textContent = '🔊';
       btn.classList.add('on');
+      btn.title = '';
     } else {
       stopMusic();
       isOn = false;
       ico.textContent = '🎵';
       btn.classList.remove('on');
+      btn.title = '';
     }
   };
 })();
@@ -6026,5 +6048,14 @@ function aiEndGame(winner){over=true;showWin(winner===myColor,winner===B?'ပြ
      ဒီ file နှင့် တူညီသော folder ထဲ ထားပါ
 ══════════════════════════════════════════ -->
 <script src="session-guard.js"></script>
+
+<!-- ── Service Worker (PWA offline + home screen splash) ── -->
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(){/* SW optional — fail silently */});
+  });
+}
+</script>
 </body>
 </html>
