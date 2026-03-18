@@ -1056,9 +1056,7 @@ window._sgGoLink=function(){
   /* Save name for carry-over after OAuth */
   if(gnm&&!gnm.startsWith('Guest·')){try{localStorage.setItem('kk_upgrade_nm',gnm);}catch(e){}}
   try{localStorage.setItem('kk_link_pending','1');}catch(e){}
-  var _lh=window.location.href.split('?')[0].split('#')[0];
-  if(!_lh.endsWith('/'))_lh=_lh.lastIndexOf('/')>8?_lh.slice(0,_lh.lastIndexOf('/')+1):_lh+'/';
-  window.location.href=_lh+'auth.html?link=1';
+  window.location.href=_getBase()+'auth.html?link=1';
 };
 
 /* Confirm-delete helper — name passed via dataset.nm to avoid single-quote injection.
@@ -2897,20 +2895,15 @@ function _buildLobby(p){
       signinBtn.addEventListener('click',function(e){
         e.stopPropagation();
         try{localStorage.setItem('kk_mode','auth');}catch(x){}
-        var _lh=window.location.href.split('?')[0].split('#')[0];
-        if(!_lh.endsWith('/'))_lh=_lh.lastIndexOf('/')>8?_lh.slice(0,_lh.lastIndexOf('/')+1):_lh+'/';
-        window.location.href=_lh+'auth.html';
+        window.location.href=_getBase()+'auth.html';
       });
     }
     var logoutBtn=$('_sg-logout-btn');
     if(logoutBtn){
       logoutBtn.addEventListener('click',function(e){
         e.stopPropagation();
-        /* Clear kk_player so index.html guard redirects after logout */
         try{sessionStorage.removeItem('kk_player');}catch(ex){}
-        var _lh=window.location.href.split('?')[0].split('#')[0];
-        if(!_lh.endsWith('/'))_lh=_lh.lastIndexOf('/')>8?_lh.slice(0,_lh.lastIndexOf('/')+1):_lh+'/';
-        window.location.href=_lh+'auth.html?mode=logout';
+        window.location.href=_getBase()+'auth.html?mode=logout';
       });
     }
     var chipBtn=$('_sg-link-chip');
@@ -3058,6 +3051,15 @@ if(typeof _oAR==='function'){
 /* ═══════════════════════════════ INIT ═════════════════════════════════ */
 /* Diagnostic: prove this file loaded */
 try{console.log('[session-guard v4] loaded. _kp=',_kp?'auth:'+_kp.type:'null');}catch(e){}
+function _getBase(){
+  var _u=window.location.href.split('?')[0].split('#')[0];
+  var _o=window.location.origin;
+  var _p=_u.slice(_o.length);
+  var _last=_p.split('/').pop();
+  if(_last.indexOf('.')>=0){_p=_p.slice(0,_p.lastIndexOf('/')+1);}
+  else if(!_p.endsWith('/'))_p+='/';
+  return _o+_p;
+}
 _css();
 function _doInit(){
   /* ── Session guard: validate kk_player before allowing lobby access ──
@@ -3072,11 +3074,7 @@ function _doInit(){
     return false;
   }
   if(_needsAuth(_kp)){
-    /* Robust base-path: handles /M (no slash), /M/ and /M/index.html */
-    var _href=window.location.href.split('?')[0].split('#')[0];
-    /* If URL ends with a file (has extension) or slash, get its directory */
-    if(!_href.endsWith('/'))_href=_href.lastIndexOf('/')>8?_href.slice(0,_href.lastIndexOf('/')+1):_href+'/';
-    window.location.replace(_href+'auth.html');
+    window.location.replace(_getBase()+'auth.html');
     return;
   }
   _buildLobby(_kp);
