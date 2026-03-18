@@ -782,7 +782,9 @@ function _open(html,onReady){
 function _close(){
   var bd=$('_sg-bd');if(!bd)return;
   bd.classList.remove('on');
-  setTimeout(function(){bd.innerHTML='';},320);
+  /* Reset hash so _renderFriendTab always re-renders when modal next opens */
+  _ftabHash='';
+  setTimeout(function(){if(bd)bd.innerHTML='';},320);
 }
 function _msg(id,t,html){
   var el=$(id);if(!el)return;
@@ -2747,6 +2749,7 @@ async function _openFriends(){
         </div>
       </div>`,
       async function(){
+        _ftabHash='';
         await _loadGuestFriData();
         _startGuestInvListener();
         _renderFriendTab();_renderGuestReqTab();_updateGuestReqBadge();
@@ -2801,6 +2804,8 @@ async function _openFriends(){
 
     </div>`,
     async function(){
+      /* Force re-render by clearing hash — prevents spinner stuck on re-open */
+      _ftabHash='';
       await _loadAll();
       await _resolveGuestLinks();
       if(!_pch){await _startPresence(user);}
@@ -2808,7 +2813,7 @@ async function _openFriends(){
       _startGuestReqListener(user);
       _renderFriendTab();_renderReqTab();_updateReqBadge();
       _checkPendingInvites(user);
-      /* Re-fetch friend in-match statuses fresh — clears stale 'in_match' from crashes */
+      /* Re-fetch in-match statuses fresh */
       var _uids=_flist.map(function(f){return f.requester_id===user.id?f.addressee_id:f.requester_id;}).filter(Boolean);
       if(_uids.length)_fetchFriendStatuses(_uids).then(function(){_renderFriendTab();});
     });
