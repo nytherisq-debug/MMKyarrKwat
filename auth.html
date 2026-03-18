@@ -312,7 +312,12 @@ const CFG = {
   sbUrl : 'https://oxziinvwdhligrbllqbj.supabase.co',
   sbKey : 'sb_publishable_8uBlwuN8DbyDfccT2uMaNw_9fpqYb6s',
   game  : 'index.html',
-  base  : window.location.origin + window.location.pathname.replace(/[^/]*$/, ''),
+  base  : (function(){
+    /* Robust base: handles /M (no slash), /M/, /M/auth.html */
+    var _h=window.location.href.split('?')[0].split('#')[0];
+    if(!_h.endsWith('/'))_h=_h.lastIndexOf('/')>8?_h.slice(0,_h.lastIndexOf('/')+1):_h+'/';
+    return _h;
+  })(),
   /* localStorage keys */
   LS_GID  : 'kk_gid',    /* guest permanent ID  */
   LS_GNM  : 'kk_gnm',    /* guest display name  */
@@ -404,6 +409,8 @@ function _randChars(n){
   if(mode === 'logout'){
     history.replaceState({}, '', window.location.pathname);
     localStorage.setItem(CFG.LS_MODE, 'auth');
+    /* Clear session player so index.html guard redirects properly after logout */
+    try{sessionStorage.removeItem('kk_player');}catch(e){}
     showScr('scr-auth');
     _listenAuth();
     return;
@@ -485,6 +492,8 @@ async function _listenAuth(){
       _flist = []; _online.clear();
       _stopPresence();
       _presenceStarted = false;
+      /* Clear sessionStorage so index.html guard redirects properly */
+      try{sessionStorage.removeItem('kk_player');}catch(e){}
       /* Only redirect if we were on the profile screen (auth mode) */
       if(localStorage.getItem(CFG.LS_MODE) === 'auth'){
         _sessionExpiredRedirect();
@@ -899,8 +908,13 @@ async function goGame(){
         email     : null,
       };
     }
-    sessionStorage.setItem('kk_player', JSON.stringify(player));
   }catch(e){ console.warn('goGame sync:', e); }
+  /* Set kk_player OUTSIDE the try so it always runs before redirect.
+     Add savedAt so index.html can expire stale sessions. */
+  if(player){
+    player.savedAt=Date.now();
+    try{sessionStorage.setItem('kk_player',JSON.stringify(player));}catch(e){}
+  }
 
   document.getElementById('ov-icon').textContent = '✓';
   document.getElementById('ov-ttl').textContent  = 'အောင်မြင်ပါသည်';
