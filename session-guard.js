@@ -44,7 +44,6 @@ var GL={
 var $=function(id){return document.getElementById(id);};
 var _x=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
 var _sb=function(){return(typeof window.SB==='function')?window.SB():null;};
-/* Robust base path — works for /M (no slash), /M/, /M/index.html */
 function _getBase(){
   var _u=window.location.href.split('?')[0].split('#')[0];
   var _o=window.location.origin;
@@ -54,14 +53,12 @@ function _getBase(){
   else if(!_p.endsWith('/'))_p+='/';
   return _o+_p;
 }
-/* Safe game-state readers — `let` vars don't appear on window */
 function _kkSt(){return(typeof window._sgState==='function')?window._sgState():{
   roomId:_kkRoom()||'',over:_kkSt().over||false,
   myColor:_kkSt().myColor||null,isHost:window.isHost||false,
   leaving:window.leaving||false,aiMode:window.aiMode||false,
   spectatorMode:_kkSt().spectatorMode||false};}
 function _kkRoom(){return _kkSt().roomId;}
-/* Module-scoped debounce timer */
 var _bcastRenderTimer=null;
 function _debouncedRender(){
   clearTimeout(_bcastRenderTimer);
@@ -1226,7 +1223,7 @@ async function _startPresence(user){
     _getProf().then(function(prof){
       try{_pch.track({user_id:user.id,username:prof?.username||'',ts:Date.now()});}catch(e){}
     });
-  },20000);  /* 20s — keeps presence alive without flicker */
+  },20000);
 
   /* ── Visibility: re-announce online / announce offline (guard against duplicate add) ── */
   if(!_pch._sgVisAdded){
@@ -2054,7 +2051,7 @@ window._sgInviteFri=async function(toUid,toName){
       _sgToast('💡 Room Code မရှိပါ — ကိုယ်တိုင် ပေးပို့ပါ');
       return;
     }
-    /* Silent room creation — lobby stays visible */
+    /* Silent room creation — stay on lobby, block waiting screen */
     var ni=document.getElementById('inp-name');
     if(ni&&!ni.value&&_kp&&_kp.name)ni.value=_kp.name;
     if(typeof window.createRoom==='function'){
@@ -2094,10 +2091,9 @@ window._sgInviteFri=async function(toUid,toName){
       await sb.from('room_invites').delete()
         .eq('from_uid',user.id).eq('to_uid',toUid).eq('status','pending');
       var fromName=(_kp&&_kp.name)||'Player';
-      var fromAvatar=(_kp&&_kp.avatar)||null;
       var res=await sb.from('room_invites').insert({
         from_uid:user.id,to_uid:toUid,
-        from_name:fromName,from_avatar:fromAvatar,room_code:rc,status:'pending'
+        from_name:fromName,room_code:rc,status:'pending'
       });
       if(res.error){_sgToast('❌ Invite မပို့ရပါ: '+(res.error.message||''));return;}
       _sgToast('📨 '+_x(toName||'Friend')+' ထံ Invite ပို့ပြီး ✓');
@@ -2211,28 +2207,11 @@ function _showInviteOverlay(inv){
         '<div class="_sg-hclose" onclick="window._sgDeclineInvite()">✕</div>'+
       '</div>'+
       '<div class="_sg-body">'+
-        '<div style="text-align:center;padding:18px 0 12px;display:flex;flex-direction:column;align-items:center">'+
-          (function(){
-            var _av=inv.from_avatar||null;
-            var _nm=inv.from_name||'Friend';
-            var _ini=(_nm.trim()[0]||'?').toUpperCase();
-            if(_av){return '<img src="'+_x(_av)+'" id="_sg-inv-av"'+
-              ' style="width:72px;height:72px;border-radius:50%;object-fit:cover;display:block;margin-bottom:12px;'+
-              'border:2.5px solid rgba(212,168,67,.55);box-shadow:0 0 0 4px rgba(212,168,67,.12),0 4px 16px rgba(0,0,0,.55);'+
-              'animation:_sg-av-pop .35s cubic-bezier(0,0,.2,1) both"'+
-              ' onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">'
-              +'<div id="_sg-inv-av-fb" style="display:none;width:72px;height:72px;border-radius:50%;margin-bottom:12px;'+
-              'background:rgba(212,168,67,.10);border:2.5px solid rgba(212,168,67,.38);'+
-              'align-items:center;justify-content:center;font-size:1.7rem;font-weight:700;color:#F0CC72">'+_x(_ini)+'</div>';}
-            return '<div style="width:72px;height:72px;border-radius:50%;margin-bottom:12px;'+
-              'background:rgba(212,168,67,.10);border:2.5px solid rgba(212,168,67,.38);'+
-              'display:flex;align-items:center;justify-content:center;font-size:1.7rem;font-weight:700;color:#F0CC72;'+
-              'animation:_sg-av-pop .35s cubic-bezier(0,0,.2,1) both">'+_x(_ini)+'</div>';
-          })()+
-          '<div style="font-size:.92rem;font-weight:700;color:#F0E8D8;margin-bottom:4px">'+_x(inv.from_name||'Friend')+'</div>'+
-          '<div style="font-size:.70rem;color:rgba(180,148,70,.55);margin-bottom:16px">Room ကို ဖိတ်ခေါ်သည်</div>'+
-          '<div style="font-family:Orbitron,monospace;font-size:1.6rem;color:#F0CC72;letter-spacing:8px;font-weight:700;'+
-               'padding:12px 16px;background:rgba(212,168,67,.08);border-radius:12px;border:1px solid rgba(212,168,67,.2);width:100%;text-align:center">'+_x(inv.room_code)+'</div>'+
+        '<div style="text-align:center;padding:18px 0 12px">'+
+          '<div style="font-size:2.2rem;margin-bottom:10px">🎮</div>'+
+          '<div style="font-size:.88rem;font-weight:700;color:#F0E8D8;margin-bottom:5px">'+_x(inv.from_name||'Friend')+'</div>'+
+          '<div style="font-size:.70rem;color:rgba(180,148,70,.55);margin-bottom:14px">Room ကို ဖိတ်ခေါ်သည်</div>'+
+          '<div style="font-family:Orbitron,monospace;font-size:1.6rem;color:#F0CC72;letter-spacing:8px;font-weight:700;padding:12px;background:rgba(212,168,67,.08);border-radius:12px;border:1px solid rgba(212,168,67,.2)">'+_x(inv.room_code)+'</div>'+
         '</div>'+
         '<div class="_sg-fp-btns">'+
           '<button class="_sg-bgold" onclick="window._sgAcceptInvite()">✅ လက်ခံ</button>'+
@@ -2263,7 +2242,7 @@ window._sgAcceptInvite=async function(){
     var ci=$('inp-code');if(ci)ci.value=_rc;
     var _lss=$('lobby-st');if(_lss)_lss.textContent='⏳ Room ဝင်နေသည် ('+_rc+')…';
     if(typeof window.joinRoom==='function'){
-      try{await window.joinRoom();}catch(e){console.warn('[accept] joinRoom:',e);}
+      try{await window.joinRoom();}catch(e){}
     }
     if(_kkRoom()){var _lss2=$('lobby-st');if(_lss2)_lss2.textContent='';return;}
     if(_tries<4){
@@ -2272,8 +2251,7 @@ window._sgAcceptInvite=async function(){
       await _tryJoin();
     }else{
       var _lss4=$('lobby-st');
-      if(_lss4)_lss4.textContent='❌ Room မတွေ့ပါ — Inviter ထံ ထပ်ဆက်သွယ်ပါ';
-      _sgToast('❌ Room ဝင်မရပါ');
+      if(_lss4)_lss4.textContent='❌ Room မတွေ့ပါ — Code ထပ်ထည့်ပြီး ဝင်ပါ';
       setTimeout(function(){var _l=$('lobby-st');if(_l&&_l.textContent.includes('Room'))_l.textContent='';},5000);
     }
   }
@@ -2925,7 +2903,6 @@ if(typeof _oAR==='function'){
 try{console.log('[session-guard v4] loaded. _kp=',_kp?'auth:'+_kp.type:'null');}catch(e){}
 _css();
 function _doInit(){
-  /* ── Session guard: redirect to auth.html if no valid session ── */
   function _needsAuth(p){
     if(!p||!p.type||!p.name)return true;
     if(p.savedAt&&Date.now()-p.savedAt>7*24*3600*1000)return true;
