@@ -58,6 +58,12 @@ var _inviteCh=null;     /* invite realtime channel */
 window._pendingInvite=null; /* pending invite data for accept/decline */
 var _friendStatus={};   /* {uid: 'lobby'|'in_match'} */
 var _authUser=null,_authProf=null;
+/* Module-scoped debounce timer — shared across _startPresence calls */
+var _bcastRenderTimer=null;
+function _debouncedRender(){
+  clearTimeout(_bcastRenderTimer);
+  _bcastRenderTimer=setTimeout(function(){_bcastRenderTimer=null;_renderFriendTab();},320);
+}
 
 async function _getUser(){
   if(_authUser)return _authUser;
@@ -381,13 +387,13 @@ function _css(){
 
 /* ── DM Chat ── */
 ._sg-dm-wrap{display:flex;flex-direction:column;height:420px;max-height:72vh}
-._sg-dm-msgs{
+._sg-dm-wrap ._sg-dm-msgs{
   flex:1;overflow-y:auto;display:flex;flex-direction:column;
   gap:6px;padding:12px 4px 8px;
   scrollbar-width:thin;scrollbar-color:rgba(212,168,67,.12) transparent;
 }
-._sg-dm-msgs::-webkit-scrollbar{width:3px}
-._sg-dm-msgs::-webkit-scrollbar-thumb{background:rgba(212,168,67,.16);border-radius:2px}
+._sg-dm-wrap ._sg-dm-msgs::-webkit-scrollbar{width:3px}
+._sg-dm-wrap ._sg-dm-msgs::-webkit-scrollbar-thumb{background:rgba(212,168,67,.16);border-radius:2px}
 ._sg-dm-empty{text-align:center;padding:30px 16px;font-size:.70rem;color:rgba(180,148,70,.36);font-family:'Outfit',sans-serif;line-height:2}
 ._sg-dm-row{display:flex;width:100%}
 ._sg-dm-row.me{justify-content:flex-end}
@@ -604,9 +610,9 @@ function _css(){
 }
 ._sg-dm-hdr-name{font-size:.78rem;font-weight:700;color:#F0E8D8;font-family:'Outfit',sans-serif;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 ._sg-dm-hdr-status{font-size:.60rem;color:rgba(180,148,70,.44);font-family:'Outfit',sans-serif}
-._sg-dm-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;max-height:300px;min-height:80px;scrollbar-width:thin;scrollbar-color:rgba(212,168,67,.10) transparent}
-._sg-dm-msgs::-webkit-scrollbar{width:3px}
-._sg-dm-msgs::-webkit-scrollbar-thumb{background:rgba(212,168,67,.14);border-radius:99px}
+._sg-dm-win ._sg-dm-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;max-height:300px;min-height:80px;scrollbar-width:thin;scrollbar-color:rgba(212,168,67,.10) transparent}
+._sg-dm-win ._sg-dm-msgs::-webkit-scrollbar{width:3px}
+._sg-dm-win ._sg-dm-msgs::-webkit-scrollbar-thumb{background:rgba(212,168,67,.14);border-radius:99px}
 ._sg-bubble-out{
   align-self:flex-end;max-width:80%;padding:7px 12px;
   border-radius:14px 3px 14px 14px;
@@ -948,7 +954,9 @@ window._sgUploadAv=async function(inp){
           var MAX=220,w=img.width,h=img.height;
           if(w>MAX||h>MAX){var s=MAX/Math.max(w,h);w=Math.round(w*s);h=Math.round(h*s);}
           var c=document.createElement('canvas');c.width=w;c.height=h;
-          c.getContext('2d').drawImage(img,0,0,w,h);
+          var ctx=c.getContext('2d');
+          if(!ctx){_msg('_sg-emsg','er','❌ Canvas မရပါ');return;}
+          ctx.drawImage(img,0,0,w,h);
           var dataUrl=c.toDataURL('image/jpeg',0.82);
           /* Check size (<200KB for localStorage safety) */
           if(dataUrl.length>200000){dataUrl=c.toDataURL('image/jpeg',0.55);}
@@ -1198,12 +1206,7 @@ async function _startPresence(user){
 
   /* ── BROADCAST channel for INSTANT online/offline ── */
   /* This fires in < 200ms vs presence which can take 5-30s */
-  /* Debounced render — coalesces rapid online/offline events into one DOM pass */
-  var _bcastRenderTimer=null;
-  function _debouncedRender(){
-    clearTimeout(_bcastRenderTimer);
-    _bcastRenderTimer=setTimeout(function(){_bcastRenderTimer=null;_renderFriendTab();},320);
-  }
+  /* _debouncedRender uses module-scoped _bcastRenderTimer (declared at top) */
   var _bcast=sb.channel('kk-online-bcast');
   _bcast
     .on('broadcast',{event:'online'},function(d){
@@ -3052,6 +3055,19 @@ if(typeof _oAR==='function'){
 try{console.log('[session-guard v4] loaded. _kp=',_kp?'auth:'+_kp.type:'null');}catch(e){}
 _css();
 function _doInit(){
+  /* ── Session guard: if no kk_player, bounce through auth.html to set it ──
+     auth.html handles: new user → auth screen, returning auth → goGame(),
+     returning guest → goGame(). sessionStorage survives tab refresh but
+     is cleared on new tabs/windows, so this only triggers when truly needed. */
+  if(!_kp){
+    var _lsMode='';
+    try{_lsMode=localStorage.getItem('kk_mode')||'';}catch(e){}
+    /* If there IS a localStorage mode, auth.html will fast-redirect back — no flash.
+       If no mode at all, user needs to pick login method. */
+    var _base=window.location.origin+window.location.pathname.replace(/[^/]*$/,'');
+    window.location.replace(_base+'auth.html');
+    return;
+  }
   _buildLobby(_kp);
   /* Always pre-fill name input regardless of badge state */
   var ni=$('inp-name');
