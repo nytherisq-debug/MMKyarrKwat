@@ -44,26 +44,35 @@ var GL={
 var $=function(id){return document.getElementById(id);};
 var _x=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
 var _sb=function(){return(typeof window.SB==='function')?window.SB():null;};
-/* Safe game-state reader — works for both `let` (index.html) and `var` globals.
-   `let` vars don't appear on `window`, so use _sgState() bridge when available. */
+/* Robust base path — works for /M (no slash), /M/, /M/index.html */
+function _getBase(){
+  var _u=window.location.href.split('?')[0].split('#')[0];
+  var _o=window.location.origin;
+  var _p=_u.slice(_o.length);
+  var _last=_p.split('/').pop();
+  if(_last.indexOf('.')>=0){_p=_p.slice(0,_p.lastIndexOf('/')+1);}
+  else if(!_p.endsWith('/'))_p+='/';
+  return _o+_p;
+}
+/* Safe game-state readers — `let` vars don't appear on window */
 function _kkSt(){return(typeof window._sgState==='function')?window._sgState():{
   roomId:_kkRoom()||'',over:_kkSt().over||false,
   myColor:_kkSt().myColor||null,isHost:window.isHost||false,
   leaving:window.leaving||false,aiMode:window.aiMode||false,
   spectatorMode:_kkSt().spectatorMode||false};}
 function _kkRoom(){return _kkSt().roomId;}
+/* Module-scoped debounce timer */
+var _bcastRenderTimer=null;
+function _debouncedRender(){
+  clearTimeout(_bcastRenderTimer);
+  _bcastRenderTimer=setTimeout(function(){_bcastRenderTimer=null;_renderFriendTab();},320);
+}
 var _kp=null;
 try{var _r=sessionStorage.getItem('kk_player');if(_r)_kp=JSON.parse(_r);}catch(e){}
 var _inviteCh=null;     /* invite realtime channel */
 window._pendingInvite=null; /* pending invite data for accept/decline */
 var _friendStatus={};   /* {uid: 'lobby'|'in_match'} */
 var _authUser=null,_authProf=null;
-/* Module-scoped debounce timer — shared across _startPresence calls */
-var _bcastRenderTimer=null;
-function _debouncedRender(){
-  clearTimeout(_bcastRenderTimer);
-  _bcastRenderTimer=setTimeout(function(){_bcastRenderTimer=null;_renderFriendTab();},320);
-}
 
 async function _getUser(){
   if(_authUser)return _authUser;
@@ -158,7 +167,6 @@ function _css(){
   flex:1;font-family:'Cinzel Decorative',serif;font-size:.86rem;font-weight:700;letter-spacing:.06em;
   background:linear-gradient(120deg,#C8920A 0%,#F0CC72 45%,#D4A843 100%);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  /* No animation — static gold gradient, premium and clean */
 }
 ._sg-hclose{
   width:28px;height:28px;border-radius:50%;cursor:pointer;flex-shrink:0;
@@ -211,9 +219,8 @@ function _css(){
   border-top:1px solid rgba(255,255,255,.38);
   color:#060200;font-family:'Outfit',sans-serif;font-size:.86rem;font-weight:700;
   box-shadow:0 4px 20px rgba(200,148,32,.24),inset 0 1px 0 rgba(255,255,255,.22);
-  transition:transform .18s cubic-bezier(0,0,.2,1),box-shadow .18s cubic-bezier(0,0,.2,1);
+  transition:all .22s cubic-bezier(0,0,.2,1);
   position:relative;overflow:hidden;
-  will-change:transform;
 }
 ._sg-bgold::before{
   content:'';position:absolute;inset:0;
@@ -318,10 +325,9 @@ function _css(){
   border-top:1px solid rgba(255,255,255,.18);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 2px 12px rgba(0,0,0,.22);
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  transition:transform .18s cubic-bezier(0,0,.2,1),box-shadow .18s cubic-bezier(0,0,.2,1),background .18s;
+  transition:all .2s cubic-bezier(0,0,.2,1);
   animation:_sg-enter .24s cubic-bezier(0,0,.2,1) both;
   position:relative;overflow:hidden;
-  will-change:transform;
 }
 ._sg-fri::before{
   content:'';position:absolute;top:0;left:0;right:0;height:1px;
@@ -610,9 +616,9 @@ function _css(){
 }
 ._sg-dm-hdr-name{font-size:.78rem;font-weight:700;color:#F0E8D8;font-family:'Outfit',sans-serif;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 ._sg-dm-hdr-status{font-size:.60rem;color:rgba(180,148,70,.44);font-family:'Outfit',sans-serif}
-._sg-dm-win ._sg-dm-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;max-height:300px;min-height:80px;scrollbar-width:thin;scrollbar-color:rgba(212,168,67,.10) transparent}
-._sg-dm-win ._sg-dm-msgs::-webkit-scrollbar{width:3px}
-._sg-dm-win ._sg-dm-msgs::-webkit-scrollbar-thumb{background:rgba(212,168,67,.14);border-radius:99px}
+._sg-dm-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;max-height:300px;min-height:80px;scrollbar-width:thin;scrollbar-color:rgba(212,168,67,.10) transparent}
+._sg-dm-msgs::-webkit-scrollbar{width:3px}
+._sg-dm-msgs::-webkit-scrollbar-thumb{background:rgba(212,168,67,.14);border-radius:99px}
 ._sg-bubble-out{
   align-self:flex-end;max-width:80%;padding:7px 12px;
   border-radius:14px 3px 14px 14px;
@@ -767,8 +773,7 @@ function _open(html,onReady){
 function _close(){
   var bd=$('_sg-bd');if(!bd)return;
   bd.classList.remove('on');
-  _dmCurrentUid=null;
-  setTimeout(function(){if(bd)bd.innerHTML='';},320);
+  setTimeout(function(){bd.innerHTML='';},320);
 }
 function _msg(id,t,html){
   var el=$(id);if(!el)return;
@@ -778,137 +783,146 @@ function _msg(id,t,html){
 
 /* ═══════════════════════════ PROFILE EDIT ═════════════════════════════ */
 async function _openEdit(){
+  /* BUG FIX: Check _kp.type FIRST.
+     If player arrived as Guest (_kp.type!=='auth'), always show Guest modal
+     even if a stale Gmail Supabase session exists in the browser.
+     Do NOT call _getUser() for guests — it would return the cached Gmail user. */
   var _isGuest = !_kp || _kp.type !== 'auth';
   var user = _isGuest ? null : await _getUser();
   var prof = _isGuest ? null : await _getProf();
+  if(!user){
+    var _gid=_ensureGuestId();
+    /* Sync generated ID back into _kp + sessionStorage so badge shows it */
+    if(_kp&&!_kp.id){
+      _kp.id=_gid;
+      try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}
+      /* Update badge ID tag */
+      var _bidtag=document.querySelector('#_sg-badge ._sg-bidtag');
+      if(_bidtag)_bidtag.textContent='· '+_gid;
+    }
+    var _gnm=_x(_kp?.name||localStorage.getItem('kk_gnm')||'');
+    _open(`
+      <div class="_sg-hdr"><div class="_sg-htitle">Guest Profile</div>
+        <div class="_sg-hclose" onclick="window._sgClose()">✕</div></div>
+      <div class="_sg-body">
 
-  /* ── Shared: resolve display values ── */
-  var _gid = _isGuest ? _ensureGuestId() : null;
-  if(_isGuest && _kp && !_kp.id){
-    _kp.id = _gid;
-    try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}
-    var _bidtag = document.querySelector('#_sg-badge ._sg-bidtag');
-    if(_bidtag) _bidtag.textContent = '· ' + _gid;
+        <!-- Guest permanent ID -->
+        <div>
+          <div class="_sg-lbl" style="margin-bottom:6px">🪪 Guest ID (Permanent)</div>
+          <div onclick="window._sgCopyId('${_x(_gid)}')" class="_sg-gid-pill" style="width:fit-content">
+            🪪 <span id="_sg-idlbl">${_x(_gid)}</span>
+            <span style="font-size:.46rem;opacity:.4">ကူးရန်</span>
+          </div>
+          <div style="font-size:.58rem;color:rgba(180,148,70,.35);font-family:\'Outfit\',sans-serif;margin-top:5px">
+            ဒီ Device မှာ ထာဝစဉ် ID · Friend Add ရာမှာ သုံးနိုင်
+          </div>
+        </div>
+
+        <!-- Username -->
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div class="_sg-lbl">✏️ Guest Name</div>
+          <input class="_sg-inp" id="_sg-nm" maxlength="20" placeholder="နာမည်ထည့်ပါ..." value="${_gnm}">
+          <button class="_sg-bgold" onclick="window._sgSaveGuest()">✓ &nbsp;နာမည် သိမ်းမည်</button>
+        </div>
+
+        <div class="_sg-msg" id="_sg-emsg"></div>
+
+        <!-- Gmail link CTA -->
+        <div style="margin-top:2px">
+          <div class="_sg-lbl" style="margin-bottom:8px">🔗 Gmail ချိတ်ဆက်မည်</div>
+          <div class="_sg-link-cta" onclick="window._sgGoLink()">
+            <svg width="24" height="24" viewBox="0 0 24 24" style="flex-shrink:0">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            <div class="_sg-link-cta-txt">
+              <div class="_sg-link-cta-ttl">Gmail နဲ့ Permanent Account ရမည်</div>
+              <div class="_sg-link-cta-sub">ID ထာဝစဉ် · တဖုန်းမှ တဖုန်း ကူးနိုင် · Profile ပုံ</div>
+            </div>
+            <div class="_sg-link-cta-arr">→</div>
+          </div>
+        </div>
+
+        <button class="_sg-bglass" onclick="window._sgClose()">← ပြန်မည်</button>
+      </div>`);
+    return;
   }
-  var nm   = _isGuest ? (_kp?.name || localStorage.getItem('kk_gnm') || '') : (prof?.username || user?.email?.split('@')[0] || 'Player');
-  var code = _isGuest ? _gid : (prof?.user_code || _kp?.id || null);
-  var av   = _isGuest ? (localStorage.getItem('kk_gav') || null) : (prof?.avatar_url || user?.user_metadata?.avatar_url || null);
-
-  var avH = av
-    ? '<img src="'+_x(av)+'" style="width:72px;height:72px;border-radius:50%;object-fit:cover;display:block"'
-        +' onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">'
-        +'<div class="_sg-avfb" style="display:none">👤</div>'
-    : '<div class="_sg-avfb">👤</div>';
-
-  var saveBtn   = _isGuest ? 'window._sgSaveGuest()' : 'window._sgSaveAuth()';
-  var saveLbl   = _isGuest ? '✓ &nbsp;နာမည် သိမ်းမည်' : '✓ &nbsp;Username သိမ်းမည်';
-  var emailRow  = (!_isGuest && user?.email)
-    ? '<div style="font-size:.60rem;color:rgba(180,148,70,.40);text-align:center;font-family:'Outfit',sans-serif">'+_x(user.email)+'</div>'
-    : '';
-  /* Guest-only: subtle Gmail upgrade link at bottom */
-  var gmailCta  = _isGuest
-    ? '<div onclick="window._sgClose();setTimeout(window._sgGoLink,120)" style="'+
-        'display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:12px;cursor:pointer;'+
-        'background:rgba(66,133,244,.07);border:1px solid rgba(66,133,244,.22);'+
-        'border-top:1px solid rgba(255,255,255,.10);margin-top:2px;'+
-        'transition:background .18s">'+
-        '<svg width="16" height="16" viewBox="0 0 24 24" style="flex-shrink:0">'+
-          '<path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>'+
-          '<path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>'+
-          '<path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>'+
-          '<path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>'+
-        '</svg>'+
-        '<div style="flex:1;min-width:0">'+
-          '<div style="font-size:.74rem;font-weight:700;color:rgba(147,190,255,.85);font-family:'Outfit',sans-serif">Gmail နဲ့ Permanent Account ရမည်</div>'+
-          '<div style="font-size:.58rem;color:rgba(147,190,255,.45);font-family:'Outfit',sans-serif;margin-top:1px">ID ထာဝစဉ် · တဖုန်းမှ တဖုန်း ကူးနိုင် · Cloud sync</div>'+
-        '</div>'+
-        '<div style="font-size:.68rem;color:rgba(147,190,255,.45)">→</div>'+
-      '</div>'
-    : '';
-
-  /* ── Auth: need to async-load code if missing ── */
-  var codeReady = _isGuest ? true : !!code;
-
-  _open(
-    '<div class="_sg-hdr"><div class="_sg-htitle">Profile ပြင်မည်</div>'+
-      '<div class="_sg-hclose" onclick="window._sgClose()">✕</div></div>'+
-    '<div class="_sg-body">'+
-
-      /* Avatar section — clickable for BOTH guest and auth */
-      '<div style="display:flex;flex-direction:column;align-items:center;gap:4px">'+
-        '<div class="_sg-avw" onclick="document.getElementById('_sg-avinp').click()" title="ပုံ ပြောင်းရန်">'+
-          avH+'<div class="_sg-avov">📷</div>'+
-        '</div>'+
-        '<input type="file" id="_sg-avinp" accept="image/jpeg,image/png,image/webp,image/gif"'+
-          ' style="display:none" onchange="window._sgUploadAv(this)">'+
-        '<div style="font-size:.58rem;color:rgba(212,168,67,.32);font-family:'Outfit',sans-serif">ပုံနှိပ်ပြောင်းနိုင် · 3MB အောက်</div>'+
-      '</div>'+
-
-      /* ID pill */
-      '<div>'+
-        '<div class="_sg-lbl" style="margin-bottom:6px">🪪 Player ID</div>'+
-        '<div id="_sg-idpill" class="_sg-gid-pill" style="cursor:pointer"'+
-          ' onclick="window._sgCopyId(document.getElementById('_sg-idlbl')?.dataset?.code||''+_x(code||'')+'')">'+
-          '🪪 <span id="_sg-idlbl" data-code="'+_x(code||'')+'">'+(code?_x(code):'<span class="_sg-spin" style="margin:0 4px"></span>')+'</span>'+
-          '<span style="font-size:.46rem;opacity:.4">ကူးရန်</span>'+
-        '</div>'+
-      '</div>'+
-
-      /* Username */
-      '<div style="display:flex;flex-direction:column;gap:6px">'+
-        '<div class="_sg-lbl">✏️ Username</div>'+
-        '<input class="_sg-inp" id="_sg-nm" maxlength="20" value="'+_x(nm)+'" placeholder="Username...">'+
-        '<button class="_sg-bgold" id="_sg-savebtn" onclick="'+saveBtn+'">'+saveLbl+'</button>'+
-      '</div>'+
-
-      emailRow+
-      '<div class="_sg-msg" id="_sg-emsg"></div>'+
-      gmailCta+
-      '<button class="_sg-bglass" onclick="window._sgClose()">← ပြန်မည်</button>'+
-    '</div>',
-
-    /* onReady — auth: fetch/generate code if missing */
-    (codeReady||_isGuest) ? null : async function(){
+  var nm=prof?.username||user.email?.split('@')[0]||'Player';
+  var code=prof?.user_code||_kp?.id||null;
+  /* Cached in localStorage as fallback */
+  var _lsCk='kk_uc_'+user.id;
+  if(!code){try{code=localStorage.getItem(_lsCk)||null;}catch(e){}}
+  var codeReady=!!code;
+  var av=prof?.avatar_url||user.user_metadata?.avatar_url||null;
+  var avH=av
+    ?'<img src="'+_x(av)+'" style="width:72px;height:72px;border-radius:50%;object-fit:cover;display:block" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="_sg-avfb" style="display:none">👤</div>'
+    :'<div class="_sg-avfb">👤</div>';
+  _open(`
+    <div class="_sg-hdr"><div class="_sg-htitle">Profile ပြင်မည်</div>
+      <div class="_sg-hclose" onclick="window._sgClose()">✕</div></div>
+    <div class="_sg-body">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+        <div class="_sg-avw" onclick="document.getElementById('_sg-avinp').click()" title="ပုံ ပြောင်းရန်">
+          ${avH}<div class="_sg-avov">📷</div>
+        </div>
+        <input type="file" id="_sg-avinp" accept="image/jpeg,image/png,image/webp,image/gif"
+          style="display:none" onchange="window._sgUploadAv(this)">
+        <div style="font-size:.58rem;color:rgba(212,168,67,.32);font-family:\'Outfit\',sans-serif">ပုံနှိပ်ပြောင်းနိုင် · 3MB အောက်</div>
+      </div>
+      <div>
+        <div class="_sg-lbl" style="margin-bottom:6px">🪪 Player ID</div>
+        <div id="_sg-idpill" class="_sg-gid-pill" style="cursor:pointer" onclick="window._sgCopyId(document.getElementById('_sg-idlbl').dataset.code||'')">
+          🪪 <span id="_sg-idlbl" data-code="${_x(code||'')}">${code?_x(code):'<span class="_sg-spin" style="margin:0 4px"></span>'}</span>
+          <span style="font-size:.46rem;opacity:.4">ကူးရန်</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="_sg-lbl">✏️ Username</div>
+        <input class="_sg-inp" id="_sg-nm" maxlength="20" value="${_x(nm)}" placeholder="Username...">
+        <button class="_sg-bgold" id="_sg-savebtn" onclick="window._sgSaveAuth()">✓ &nbsp;Username သိမ်းမည်</button>
+      </div>
+      <div style="font-size:.60rem;color:rgba(180,148,70,.40);text-align:center;font-family:\'Outfit\',sans-serif">${_x(user.email||'')}</div>
+      <div class="_sg-msg" id="_sg-emsg"></div>
+      <button class="_sg-bglass" onclick="window._sgClose()">← ပြန်မည်</button>
+    </div>`,
+    /* onReady — if code missing, fetch/generate from DB and fill pill */
+    codeReady ? null : async function(){
       var sb=_sb();if(!sb||!$('_sg-idlbl'))return;
       try{
         var r=await sb.from('profiles').select('user_code').eq('id',user.id).single();
         var fc=r.data?.user_code;
         if(!fc){
+          /* Generate deterministically and write to DB */
           fc=_detCode(user.id);
           try{await sb.from('profiles').update({user_code:fc,updated_at:new Date().toISOString()}).eq('id',user.id);}catch(e){}
         }
-        try{localStorage.setItem('kk_uc_'+user.id,fc);}catch(e){}
+        /* Cache */
+        try{localStorage.setItem(_lsCk,fc);}catch(e){}
         if(_authProf)_authProf.user_code=fc;
         if(_kp){_kp.id=fc;try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}}
+        /* Update pill if modal still open */
         var lbl=$('_sg-idlbl');
-        if(lbl){lbl.dataset.code=fc;lbl.innerHTML=_x(fc);}
+        if(lbl){
+          lbl.dataset.code=fc;
+          lbl.innerHTML=_x(fc);
+        }
       }catch(e){
         var lbl=$('_sg-idlbl');
         if(lbl)lbl.innerHTML='<span style="color:rgba(239,68,68,.7);font-size:.62rem">မရနိုင်ပါ</span>';
       }
     });
 }
+
 window._sgSaveGuest=async function(){
   var nm=($('_sg-nm')?.value||'').trim();
   if(!nm||nm.length<2){_msg('_sg-emsg','er','⚠️ 2 လုံးနှင့်အထက်');return;}
-  var btn=$('_sg-savebtn');
-  if(btn){btn.disabled=true;btn.innerHTML='<span class="_sg-spin"></span>သိမ်းနေသည်…';}
   try{localStorage.setItem('kk_gnm',nm);}catch(e){}
-  if(_kp){_kp.name=nm;_kp.savedAt=Date.now();try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}}
+  if(_kp){_kp.name=nm;try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}}
   var bnm=document.querySelector('#_sg-badge ._sg-bnm');if(bnm)bnm.textContent=nm;
   var ni=$('inp-name');if(ni)ni.value=nm;
-  /* Also update guest_profiles table so others can see new name */
-  var gid=_kp?.id||localStorage.getItem('kk_gid')||'';
-  var sb=_sb();
-  if(sb&&gid){
-    try{
-      await sb.from('guest_profiles')
-        .upsert({id:gid,display_name:nm,updated_at:new Date().toISOString()},
-                {onConflict:'id',ignoreDuplicates:false});
-    }catch(e){/* non-fatal */}
-  }
   _msg('_sg-emsg','ok','✓ နာမည် ပြောင်းပြီးပါပြီ');
-  if(btn&&$('_sg-m')){btn.disabled=false;btn.innerHTML='✓ &nbsp;နာမည် သိမ်းမည်';}
   setTimeout(_close,1200);
 };
 
@@ -925,7 +939,7 @@ window._sgSaveAuth=async function(){
     if(dup?.data){_msg('_sg-emsg','er','⚠️ Username ရှိပြီးသား — အခြား ရွေးပါ');if(btn&&$('_sg-m')){btn.disabled=false;btn.innerHTML='✓ &nbsp;Username သိမ်းမည်';}return;}
     await sb.from('profiles').update({username:nm,updated_at:new Date().toISOString()}).eq('id',user.id);
     if(_authProf)_authProf.username=nm;
-    if(_kp){_kp.name=nm;_kp.savedAt=Date.now();try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}}
+    if(_kp){_kp.name=nm;try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}}
     var bnm=document.querySelector('#_sg-badge ._sg-bnm');if(bnm)bnm.textContent=nm;
     var ni=$('inp-name');if(ni)ni.value=nm;
     _msg('_sg-emsg','ok','✓ Username ပြောင်းပြီးပါပြီ');
@@ -939,63 +953,8 @@ window._sgUploadAv=async function(inp){
   var AL=['image/jpeg','image/png','image/webp','image/gif'];
   if(!AL.includes(f.type)){_msg('_sg-emsg','er','⚠️ JPEG/PNG/WEBP/GIF သာ');inp.value='';return;}
   if(f.size>3*1024*1024){_msg('_sg-emsg','er','⚠️ 3MB အောက်သာ');inp.value='';return;}
-  var _isGuest = !_kp || _kp.type !== 'auth';
-  var user = _isGuest ? null : await _getUser();
-
-  /* ── GUEST path: compress to canvas DataURL → store in localStorage ── */
-  if(_isGuest || !user){
-    _msg('_sg-emsg','ok','<span class="_sg-spin"></span>ပုံ ပြောင်းနေသည်…');
-    var reader=new FileReader();
-    reader.onload=function(ev){
-      var img=new Image();
-      img.onload=function(){
-        try{
-          /* Resize to max 220×220 px to keep localStorage size small */
-          var MAX=220,w=img.width,h=img.height;
-          if(w>MAX||h>MAX){var s=MAX/Math.max(w,h);w=Math.round(w*s);h=Math.round(h*s);}
-          var c=document.createElement('canvas');c.width=w;c.height=h;
-          var ctx=c.getContext('2d');
-          if(!ctx){_msg('_sg-emsg','er','❌ Canvas မရပါ');return;}
-          ctx.drawImage(img,0,0,w,h);
-          var dataUrl=c.toDataURL('image/jpeg',0.82);
-          /* Check size (<200KB for localStorage safety) */
-          if(dataUrl.length>200000){dataUrl=c.toDataURL('image/jpeg',0.55);}
-          try{localStorage.setItem('kk_gav',dataUrl);}catch(e){
-            _msg('_sg-emsg','er','❌ Storage ပြည့်နေသည်');return;
-          }
-          /* Update _kp + sessionStorage */
-          if(_kp){_kp.avatar=dataUrl;_kp.savedAt=Date.now();try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}}
-          /* Live-update the modal avatar + badge */
-          var m=$('_sg-m');
-          if(m){
-            m.querySelectorAll('._sg-avw img').forEach(function(i){i.src=dataUrl;i.style.display='block';});
-            m.querySelectorAll('._sg-avfb').forEach(function(fb){fb.style.display='none';});
-          }
-          var _bdg=document.querySelector('#_sg-badge');
-          if(_bdg){
-            var bav=_bdg.querySelector('img');
-            if(bav){bav.src=dataUrl;}
-            else{
-              var bsp=_bdg.querySelector('span[style*="border-radius:50%"]');
-              if(bsp){
-                var bi=document.createElement('img');bi.src=dataUrl;
-                bi.style.cssText='width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid '+GL.goldBd;
-                bi.onerror=function(){bi.remove();};
-                _bdg.insertBefore(bi,bsp);bsp.remove();
-              }
-            }
-          }
-          _msg('_sg-emsg','ok','✓ ပုံ ပြောင်းပြီးပါပြီ');
-        }catch(e){_msg('_sg-emsg','er','❌ '+(e.message||'ပြောင်းမရပါ'));}
-      };
-      img.onerror=function(){_msg('_sg-emsg','er','❌ ပုံ ဖတ်မရပါ');};
-      img.src=ev.target.result;
-    };
-    reader.onerror=function(){_msg('_sg-emsg','er','❌ ဖတ်မရပါ');};
-    reader.readAsDataURL(f);
-    inp.value='';
-    return;
-  }
+  var user=await _getUser();
+  if(!user){_msg('_sg-emsg','er','⚠️ Gmail ဖြင့် ဝင်မှသာ');inp.value='';return;}
   _msg('_sg-emsg','ok','<span class="_sg-spin"></span>Upload နေသည်…');
   var EX={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif'};
   var path=user.id+'/av.'+(EX[f.type]||'jpg');
@@ -1010,7 +969,7 @@ window._sgUploadAv=async function(inp){
     var url=pub+'?t='+Date.now();
     await sb.from('profiles').update({avatar_url:pub,updated_at:new Date().toISOString()}).eq('id',user.id);
     if(_authProf)_authProf.avatar_url=url;
-    if(_kp){_kp.avatar=url;_kp.savedAt=Date.now();try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}}
+    if(_kp){_kp.avatar=url;try{sessionStorage.setItem('kk_player',JSON.stringify(_kp));}catch(e){}}
     var m=$('_sg-m');
     if(m){
       m.querySelectorAll('._sg-avw img').forEach(function(i){i.src=url;i.style.display='block';});
@@ -1205,13 +1164,11 @@ async function _startPresence(user){
 
   /* ── BROADCAST channel for INSTANT online/offline ── */
   /* This fires in < 200ms vs presence which can take 5-30s */
-  /* _debouncedRender uses module-scoped _bcastRenderTimer (declared at top) */
   var _bcast=sb.channel('kk-online-bcast');
   _bcast
     .on('broadcast',{event:'online'},function(d){
       if(d.payload&&d.payload.uid&&d.payload.uid!==user.id){
         _online.add(d.payload.uid);
-        /* Patch in-place first (no flicker); fall back to debounced full render */
         if(!_patchFriendRow(d.payload.uid,true))_debouncedRender();
         _refreshWidget();_renderOnlineCount();
       }
@@ -1264,13 +1221,12 @@ async function _startPresence(user){
   if(_pch._heartbeat)clearInterval(_pch._heartbeat);
   _pch._heartbeat=setInterval(function(){
     if(!_pch||!_pch._sgBcast)return;
-    /* Broadcast online — instant signal to peers */
     try{_pch._sgBcast.send({type:'broadcast',event:'online',payload:{uid:user.id,ts:Date.now()}});}catch(e){}
-    /* Re-track presence — Supabase presence expires after ~30s without re-track */
+    /* Also re-track presence to prevent timeout */
     _getProf().then(function(prof){
       try{_pch.track({user_id:user.id,username:prof?.username||'',ts:Date.now()});}catch(e){}
     });
-  },20000);  /* 20s — keeps presence alive without causing flicker */
+  },20000);  /* 20s — keeps presence alive without flicker */
 
   /* ── Visibility: re-announce online / announce offline (guard against duplicate add) ── */
   if(!_pch._sgVisAdded){
@@ -2098,41 +2054,26 @@ window._sgInviteFri=async function(toUid,toName){
       _sgToast('💡 Room Code မရှိပါ — ကိုယ်တိုင် ပေးပို့ပါ');
       return;
     }
-    /* Silent room creation — lobby stays visible, waiting screen suppressed */
+    /* Silent room creation — lobby stays visible */
     var ni=document.getElementById('inp-name');
     if(ni&&!ni.value&&_kp&&_kp.name)ni.value=_kp.name;
     if(typeof window.createRoom==='function'){
-      /* Patch showScr to suppress waiting-screen; patch $s to suppress w-code display */
       var _oScr=window.showScr;
       var _o$s=window.$s;
       window.showScr=function(s){if(s==='waiting')return;return _oScr&&_oScr.call(this,s);};
       if(typeof window.$s==='function'){
-        window.$s=function(id,v){
-          if(id==='w-code'||id==='lobby-st')return;
-          return _o$s.call(this,id,v);
-        };
+        window.$s=function(id,v){if(id==='w-code'||id==='lobby-st')return;return _o$s.call(this,id,v);};
       }
-      try{
-        var _cr=window.createRoom();
-        if(_cr&&typeof _cr.then==='function'){await _cr;}
-      }catch(e){console.warn('[invite] createRoom:',e);}
-      finally{
-        window.showScr=_oScr;
-        if(typeof _o$s==='function')window.$s=_o$s;
-      }
+      try{var _cr=window.createRoom();if(_cr&&typeof _cr.then==='function'){await _cr;}}
+      catch(e){console.warn('[invite] createRoom:',e);}
+      finally{window.showScr=_oScr;if(typeof _o$s==='function')window.$s=_o$s;}
     }
-    /* Poll until _kkRoom() is set (max 3s, 100ms ticks) */
     var _pw=0;
-    while(!_kkRoom()&&_pw<30){
-      await new Promise(function(r){setTimeout(r,100);});
-      _pw++;
-    }
+    while(!_kkRoom()&&_pw<30){await new Promise(function(r){setTimeout(r,100);});_pw++;}
     rc=_kkRoom()||'';
     if(!rc||rc.length<4){
       _sgToast('❌ Room ဖန်တီးမရပါ — ထပ်ကြိုးစားပါ');
-      /* Clear any 'ဖန်တီးနေသည်' text from lobby-st */
-      var _lsc=$('lobby-st');if(_lsc)_lsc.textContent='';
-      return;
+      var _lsc=$('lobby-st');if(_lsc)_lsc.textContent='';return;
     }
   }
 
@@ -2261,37 +2202,6 @@ function _showInviteOverlay(inv){
   if(_kkRoom()&&_kkRoom()!=='AI'&&!_kkSt().over)return;
   /* Store pending invite data globally */
   window._pendingInvite={id:inv.id,room_code:inv.room_code};
-
-  /* ── Resolve inviter avatar ──
-     Priority: DB field → friends cache → profile lookup → gold initial */
-  var _av=inv.from_avatar||null;
-  if(!_av&&inv.from_uid){
-    /* Check loaded friends list first (no extra request) */
-    var _myId=_authUser&&_authUser.id||'';
-    var _fr=_flist.find(function(f){return f.requester_id===inv.from_uid||f.addressee_id===inv.from_uid;});
-    if(_fr){var _fp=_fr.requester_id===_myId?_fr.adr:_fr.req;if(_fp&&_fp.avatar_url)_av=_fp.avatar_url;}
-  }
-  var _name=inv.from_name||'Friend';
-  var _initial=(_name.trim()[0]||'?').toUpperCase();
-  var _avHtml=_av
-    ?'<img src="'+_x(_av)+'" id="_sg-inv-av"'+
-       ' style="width:72px;height:72px;border-radius:50%;object-fit:cover;display:block;'+
-       'border:2.5px solid rgba(212,168,67,.55);'+
-       'box-shadow:0 0 0 4px rgba(212,168,67,.12),0 0 22px rgba(212,168,67,.22),0 4px 16px rgba(0,0,0,.55);'+
-       'animation:_sg-av-pop .35s cubic-bezier(0,0,.2,1) both"'+
-       ' onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">'
-      +'<div id="_sg-inv-av-fb" style="display:none;width:72px;height:72px;border-radius:50%;'+
-       'background:rgba(212,168,67,.10);border:2.5px solid rgba(212,168,67,.38);'+
-       'align-items:center;justify-content:center;font-size:1.7rem;font-weight:700;'+
-       'color:#F0CC72;font-family:'Cinzel Decorative',serif;'+
-       'box-shadow:0 0 0 4px rgba(212,168,67,.10),0 0 18px rgba(212,168,67,.18)">'+_x(_initial)+'</div>'
-    :'<div style="width:72px;height:72px;border-radius:50%;'+
-       'background:rgba(212,168,67,.10);border:2.5px solid rgba(212,168,67,.38);'+
-       'display:flex;align-items:center;justify-content:center;font-size:1.7rem;font-weight:700;'+
-       'color:#F0CC72;font-family:'Cinzel Decorative',serif;'+
-       'box-shadow:0 0 0 4px rgba(212,168,67,.10),0 0 18px rgba(212,168,67,.18);'+
-       'animation:_sg-av-pop .35s cubic-bezier(0,0,.2,1) both">'+_x(_initial)+'</div>';
-
   _ensureBd();
   var bd=$('_sg-bd');
   bd.innerHTML=
@@ -2301,15 +2211,28 @@ function _showInviteOverlay(inv){
         '<div class="_sg-hclose" onclick="window._sgDeclineInvite()">✕</div>'+
       '</div>'+
       '<div class="_sg-body">'+
-        '<div style="text-align:center;padding:18px 0 12px;display:flex;flex-direction:column;align-items:center;gap:0">'+
-          '<div style="margin-bottom:12px">'+_avHtml+'</div>'+
-          '<div style="font-size:.92rem;font-weight:700;color:#F0E8D8;margin-bottom:4px">'+_x(_name)+'</div>'+
+        '<div style="text-align:center;padding:18px 0 12px;display:flex;flex-direction:column;align-items:center">'+
+          (function(){
+            var _av=inv.from_avatar||null;
+            var _nm=inv.from_name||'Friend';
+            var _ini=(_nm.trim()[0]||'?').toUpperCase();
+            if(_av){return '<img src="'+_x(_av)+'" id="_sg-inv-av"'+
+              ' style="width:72px;height:72px;border-radius:50%;object-fit:cover;display:block;margin-bottom:12px;'+
+              'border:2.5px solid rgba(212,168,67,.55);box-shadow:0 0 0 4px rgba(212,168,67,.12),0 4px 16px rgba(0,0,0,.55);'+
+              'animation:_sg-av-pop .35s cubic-bezier(0,0,.2,1) both"'+
+              ' onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">'
+              +'<div id="_sg-inv-av-fb" style="display:none;width:72px;height:72px;border-radius:50%;margin-bottom:12px;'+
+              'background:rgba(212,168,67,.10);border:2.5px solid rgba(212,168,67,.38);'+
+              'align-items:center;justify-content:center;font-size:1.7rem;font-weight:700;color:#F0CC72">'+_x(_ini)+'</div>';}
+            return '<div style="width:72px;height:72px;border-radius:50%;margin-bottom:12px;'+
+              'background:rgba(212,168,67,.10);border:2.5px solid rgba(212,168,67,.38);'+
+              'display:flex;align-items:center;justify-content:center;font-size:1.7rem;font-weight:700;color:#F0CC72;'+
+              'animation:_sg-av-pop .35s cubic-bezier(0,0,.2,1) both">'+_x(_ini)+'</div>';
+          })()+
+          '<div style="font-size:.92rem;font-weight:700;color:#F0E8D8;margin-bottom:4px">'+_x(inv.from_name||'Friend')+'</div>'+
           '<div style="font-size:.70rem;color:rgba(180,148,70,.55);margin-bottom:16px">Room ကို ဖိတ်ခေါ်သည်</div>'+
-          '<div style="font-family:Orbitron,monospace;font-size:1.6rem;color:#F0CC72;letter-spacing:8px;'+
-               'font-weight:700;padding:12px 16px;background:rgba(212,168,67,.08);'+
-               'border-radius:12px;border:1px solid rgba(212,168,67,.2);width:100%;text-align:center">'+
-            _x(inv.room_code)+
-          '</div>'+
+          '<div style="font-family:Orbitron,monospace;font-size:1.6rem;color:#F0CC72;letter-spacing:8px;font-weight:700;'+
+               'padding:12px 16px;background:rgba(212,168,67,.08);border-radius:12px;border:1px solid rgba(212,168,67,.2);width:100%;text-align:center">'+_x(inv.room_code)+'</div>'+
         '</div>'+
         '<div class="_sg-fp-btns">'+
           '<button class="_sg-bgold" onclick="window._sgAcceptInvite()">✅ လက်ခံ</button>'+
@@ -2318,33 +2241,6 @@ function _showInviteOverlay(inv){
       '</div>'+
     '</div></div>';
   bd.classList.add('on');
-
-  /* Async avatar fallback: if we had no avatar yet, fetch from DB after showing overlay */
-  if(!_av&&inv.from_uid){
-    var sb=_sb();
-    if(sb){
-      sb.from('profiles').select('avatar_url').eq('id',inv.from_uid).maybeSingle()
-        .then(function(r){
-          if(!r||!r.data||!r.data.avatar_url)return;
-          /* Patch the already-shown overlay — smooth fade-in */
-          var _el=document.getElementById('_sg-inv-av');
-          var _fb=document.getElementById('_sg-inv-av-fb');
-          if(!_el&&_fb){
-            /* Fallback is showing — replace with real image */
-            var _img=document.createElement('img');
-            _img.id='_sg-inv-av';
-            _img.src=r.data.avatar_url;
-            _img.style.cssText='width:72px;height:72px;border-radius:50%;object-fit:cover;display:block;'+
-              'border:2.5px solid rgba(212,168,67,.55);opacity:0;transition:opacity .25s;'+
-              'box-shadow:0 0 0 4px rgba(212,168,67,.12),0 0 22px rgba(212,168,67,.22),0 4px 16px rgba(0,0,0,.55)';
-            _img.onerror=function(){_img.remove();};
-            _fb.parentNode.insertBefore(_img,_fb);
-            _fb.style.display='none';
-            requestAnimationFrame(function(){_img.style.opacity='1';});
-          }
-        }).catch(function(){});
-    }
-  }
 }
 
 window._sgAcceptInvite=async function(){
@@ -2354,9 +2250,7 @@ window._sgAcceptInvite=async function(){
   var sb=_sb();
   if(sb){try{await sb.from('room_invites').update({status:'accepted'}).eq('id',inv.id);}catch(e){console.warn('accept invite update:',e);}}
   _close();
-  /* Clear any lobby-st hints */
-  var _ls=$('lobby-st');if(_ls)_ls.textContent='';
-  /* Pre-fill name from kk_player or localStorage */
+  /* Pre-fill name — try _kp first, fall back to localStorage */
   var ni=$('inp-name');
   if(ni&&!ni.value){
     var _nm=(_kp&&_kp.name)||localStorage.getItem('kk_gnm')||'';
@@ -2364,35 +2258,25 @@ window._sgAcceptInvite=async function(){
   }
   var _rc=inv.room_code;
   var _tries=0;
-  /* joinRoom is async — wrap in retrying poller */
   async function _tryJoin(){
     _tries++;
-    /* Set inp-code value for joinRoom to read */
     var ci=$('inp-code');if(ci)ci.value=_rc;
-    /* Show status feedback */
     var _lss=$('lobby-st');if(_lss)_lss.textContent='⏳ Room ဝင်နေသည် ('+_rc+')…';
     if(typeof window.joinRoom==='function'){
       try{await window.joinRoom();}catch(e){console.warn('[accept] joinRoom:',e);}
     }
-    if(_kkRoom()){
-      /* Success — joinRoom set roomId; game will start via handleMsg('join') */
-      var _lss2=$('lobby-st');if(_lss2)_lss2.textContent='';
-      return;
-    }
+    if(_kkRoom()){var _lss2=$('lobby-st');if(_lss2)_lss2.textContent='';return;}
     if(_tries<4){
-      /* Retry with increasing backoff — room may still be propagating */
       var delay=_tries===1?1200:_tries===2?2000:3000;
-      var _lss3=$('lobby-st');if(_lss3)_lss3.textContent='⏳ Room ရှာနေသည်… ('+_tries+'/3)';
       await new Promise(function(r){setTimeout(r,delay);});
       await _tryJoin();
     }else{
       var _lss4=$('lobby-st');
-      if(_lss4)_lss4.textContent='❌ Room မတွေ့ပါ — Inviter ထံ Code တိုက်ရိုက် တောင်းပါ';
-      _sgToast('❌ Room ဝင်မရပါ — Inviter ကို ပြန်ဆက်သွယ်ပါ');
-      setTimeout(function(){var _ls5=$('lobby-st');if(_ls5&&_ls5.textContent.includes('Room'))_ls5.textContent='';},5000);
+      if(_lss4)_lss4.textContent='❌ Room မတွေ့ပါ — Inviter ထံ ထပ်ဆက်သွယ်ပါ';
+      _sgToast('❌ Room ဝင်မရပါ');
+      setTimeout(function(){var _l=$('lobby-st');if(_l&&_l.textContent.includes('Room'))_l.textContent='';},5000);
     }
   }
-  /* Initial 600ms delay — let DB listener settle after update */
   setTimeout(_tryJoin,600);
 };
 
@@ -2474,8 +2358,10 @@ async function _fetchFriendStatuses(uids){
 }
 
 /* Helper: close existing modal */
-/* _close() already clears _dmCurrentUid */
-window._sgClose=function(){_close();};
+window._sgClose=function(){
+  _dmCurrentUid=null;
+  _close();
+};
 
 /* ══ FRIEND PROFILE MODAL ══ */
 window._sgOpenFriProfile=function(fid){
@@ -2516,70 +2402,80 @@ window._sgOpenFriProfile=function(fid){
     </div>`);
 };
 
-/* ══ GUEST FRIEND PROFILE MODAL — unified layout matching auth profile ══ */
+/* ══ GUEST FRIEND PROFILE MODAL ══ */
 window._sgOpenGuestFriProfile=function(code){
-  /* Prefer linked Gmail data over raw guest cache */
+  /* If this guest has linked Gmail, show full auth-style profile */
   var linked=_linkedGuestCache[code];
+  if(linked){
+    var on=_online.has(linked.id);
+    var avH=linked.avatar_url
+      ?'<img class="_sg-fp-av" src="'+_x(linked.avatar_url)+'" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'+'<div class="_sg-fp-avfb" style="display:none">👤</div>'
+      :'<div class="_sg-fp-avfb">👤</div>';
+    _open(
+      '<div class="_sg-hdr"><div class="_sg-htitle">Friend Profile</div>'+
+        '<div class="_sg-hclose" onclick="window._sgClose()">✕</div></div>'+
+      '<div class="_sg-body">'+
+        '<div class="_sg-fpcard">'+
+          avH+
+          '<div class="_sg-fp-name">'+_x(linked.username||'–')+'</div>'+
+          '<div class="_sg-fp-id" onclick="window._sgCopyId(\''+_x(linked.user_code)+'\')">🪪 '+_x(linked.user_code)+'</div>'+
+          '<div class="_sg-fp-status">'+
+            '<span style="font-size:.56rem;color:rgba(16,185,129,.65)">✓ Gmail</span>'+
+            '<span class="'+(on?'_sg-don':'_sg-doff')+'" style="margin-left:4px"></span>'+
+            '<span style="color:'+(on?GL.ok:'rgba(255,255,255,.35)')+'">'+( on?'Online':'Offline')+'</span>'+
+          '</div>'+
+        '</div>'+
+        '<div class="_sg-fp-btns">'+
+          '<button class="_sg-bgold" onclick="window._sgInviteFri(\''+linked.id+'\',\''+_x(linked.username||'')+'\')">📨 Invite</button>'+
+          '<button class="_sg-bgold" style="background:rgba(99,179,237,.14);border-color:rgba(99,179,237,.35);color:rgba(147,210,255,.9)" onclick="window._sgClose();window._sgOpenDM(\''+linked.id+'\')">💬 Chat</button>'+
+        '</div>'+
+        '<button class="_sg-bglass" onclick="window._sgClose()">← ပြန်မည်</button>'+
+      '</div>');
+    return;
+  }
+
+  /* Guest/Gmail friend — use uid if stored */
   var gfri=_getGuestFriends();
-  var g=gfri.find(function(x){return x.user_code===code;})||{user_code:code,username:code,avatar_url:null,uid:null};
-
-  /* Resolve fields — linked Gmail wins over guest cache */
-  var uid=g.uid||(linked&&linked.id)||null;
-  var username=_x((linked&&linked.username)||g.username||'–');
-  var uc=_x((linked&&linked.user_code)||g.user_code||code);
-  var avatarUrl=(linked&&linked.avatar_url)||g.avatar_url||null;
-  var isGmail=!!(uid);
-  var isOnline=!!(uid&&_online.has(uid));
-
-  /* Avatar — same _sg-fp-av / _sg-fp-avfb classes as auth profile */
-  var avH=avatarUrl
-    ?'<img class="_sg-fp-av" src="'+_x(avatarUrl)+'" loading="lazy"'+
-       ' onerror="this.style.display=\'none\';if(this.nextElementSibling)this.nextElementSibling.style.display=\'flex\'">'
-      +'<div class="_sg-fp-avfb" style="display:none">👤</div>'
+  var g=gfri.find(function(x){return x.user_code===code;});if(!g)return;
+  var hasUid=!!(g.uid);
+  var avH=g.avatar_url
+    ?'<img class="_sg-fp-av" src="'+_x(g.avatar_url)+'" loading="lazy">'
     :'<div class="_sg-fp-avfb">👤</div>';
-
-  /* Status — same structure as auth profile */
-  var inMatch=uid&&_friendStatus[uid]==='in_match';
-  var statusColor=isOnline?(inMatch?'rgba(245,158,11,.9)':GL.ok):'rgba(255,255,255,.35)';
-  var statusText=isOnline?(inMatch?'🎮 In Match':'Online'):'Offline';
-  var statusHtml=
-    '<span class="'+(isOnline?'_sg-don':'_sg-doff')+'"></span>'+
-    '<span style="font-size:.64rem;color:'+statusColor+';font-family:\'Outfit\',sans-serif;margin-left:3px">'+statusText+'</span>'+
-    (isGmail
-      ?'<span style="font-size:.52rem;color:rgba(16,185,129,.70);margin-left:5px">✓ Gmail</span>'
-      :'<span class="_sg-gtag" style="margin-left:5px">👤 Guest</span>');
-
-  /* Buttons — identical dimensions to auth profile */
+  var statusHtml=hasUid
+    ?'<span style="font-size:.56rem;color:rgba(16,185,129,.65);font-family:\'Outfit\',sans-serif">✓ Gmail</span>'
+    :'<span class="_sg-gtag">👤 Guest</span>';
   var isAuthViewer=(_kp&&_kp.type==='auth');
-  var inviteBtn=isGmail
-    ?'<button class="_sg-bgold" onclick="window._sgInviteFri(\''+_x(uid)+'\',\''+username+'\')">📨 Invite</button>'
-    :'<button class="_sg-bgold" onclick="window._sgInviteFri(null,\''+username+'\');window._sgClose()">📨 Invite</button>';
-  var chatBtn=isGmail
-    ?'<button class="_sg-bgold" style="background:rgba(99,179,237,.14);border-color:rgba(99,179,237,.35);color:rgba(147,210,255,.9)"'+
-       ' onclick="window._sgClose();window._sgOpenDM(\''+_x(uid)+'\')">💬 Chat</button>'
-    :isAuthViewer
-      ?'<button class="_sg-bgold" style="background:rgba(99,179,237,.10);border-color:rgba(99,179,237,.28);color:rgba(147,210,255,.8)"'+
-         ' onclick="window._sgInviteFri(null,\''+username+'\');window._sgClose()">💬 Chat</button>'
-      :'<button class="_sg-bgold" style="background:rgba(16,185,129,.07);border-color:rgba(16,185,129,.28);color:rgba(110,231,183,.8)"'+
-         ' onclick="window._sgClose();window._sgGoLink()" title="Gmail ချိတ်ဆက်ရင် Chat ရနိုင်သည်">🔗 Gmail ချိတ်ဆက်</button>';
-
+  var inviteBtn=hasUid
+    ?'<button class="_sg-bgold" onclick="window._sgInviteFri(\''+_x(g.uid)+'\',\''+_x(g.username||g.user_code||'')+'\')">📨 Invite</button>'
+    :'<button class="_sg-bgold" onclick="window._sgInviteFri(null,\''+_x(g.username||g.user_code||'')+'\');window._sgClose()">📨 Room Invite</button>';
+  var chatBtn=hasUid
+    /* Has uid → full DM */
+    ?'<button class="_sg-bgold" style="background:rgba(99,179,237,.14);border-color:rgba(99,179,237,.35);color:rgba(147,210,255,.9)" onclick="window._sgClose();window._sgOpenDM(\''+_x(g.uid)+'\')">💬 Chat</button>'
+    : isAuthViewer
+      /* Auth user viewing Guest (no uid) → chat via room */
+      ?'<button class="_sg-bgold" style="background:rgba(99,179,237,.10);border-color:rgba(99,179,237,.28);color:rgba(147,210,255,.8)" onclick="window._sgInviteFri(null,\''+_x(g.username||g.user_code||'')+'\');window._sgClose()">💬 Room Invite</button>'
+      /* Guest user viewing Guest friend → prompt to link Gmail */
+      :'<button class="_sg-bgold" style="background:rgba(16,185,129,.07);border-color:rgba(16,185,129,.28);color:rgba(110,231,183,.8)" onclick="window._sgClose();window._sgGoLink()" title="Gmail ချိတ်ဆက်ရင် Chat ရနိုင်သည်">🔗 Gmail ချိတ်ဆက်</button>';
   _open(
     '<div class="_sg-hdr"><div class="_sg-htitle">Friend Profile</div>'+
       '<div class="_sg-hclose" onclick="window._sgClose()">✕</div></div>'+
     '<div class="_sg-body">'+
       '<div class="_sg-fpcard">'+
         avH+
-        '<div class="_sg-fp-name">'+username+'</div>'+
-        '<div class="_sg-fp-id" onclick="window._sgCopyId(\''+uc+'\')">🪪 '+uc+'</div>'+
+        '<div class="_sg-fp-name">'+_x(g.username||'–')+'</div>'+
+        '<div class="_sg-fp-id" onclick="window._sgCopyId(\''+_x(g.user_code)+'\')">🪪 '+_x(g.user_code)+'</div>'+
         '<div class="_sg-fp-status">'+statusHtml+'</div>'+
       '</div>'+
       '<div class="_sg-fp-btns">'+inviteBtn+chatBtn+'</div>'+
       '<button class="_sg-brem _sg-bsm" style="width:100%;border-radius:10px;padding:9px;margin-top:2px"'+
-        ' data-nm="'+username+'"'+
-        ' onclick="window._sgConfirmDel(\'guest\',\''+_x(code)+'\',this.dataset.nm)">ဖယ်ရှား</button>'+
+        ' data-nm="'+_x(g.username||'–')+'"'+
+        ' onclick="window._sgConfirmDel(\'guest\',\''+_x(code)+'\',this.dataset.nm)">'+
+        'ဖယ်ရှား'+
+      '</button>'+
       '<button class="_sg-bglass" onclick="window._sgClose()">← ပြန်မည်</button>'+
     '</div>');
 };
+
 /* ══ GUEST FRIEND SYSTEM (localStorage) ══ */
 /* ML style: guests can add friends locally, carry over on account link */
 var _GF_KEY='kk_gfri';
@@ -2710,13 +2606,14 @@ function _refreshWidget(){
 async function _openFriends(){
   var user=await _getUser();
   if(!user){
-    /* ── GUEST: same 3-tab Friends UI as Auth ── */
     _open(`
-      <div class="_sg-hdr">
-        <div class="_sg-htitle">Friends</div>
-        <div class="_sg-hclose" onclick="window._sgClose()">✕</div>
-      </div>
+      <div class="_sg-hdr"><div class="_sg-htitle">Friends</div>
+        <div class="_sg-hclose" onclick="window._sgClose()">✕</div></div>
       <div class="_sg-body">
+        <div style="padding:8px 12px;border-radius:10px;background:rgba(212,168,67,.07);border:1px solid rgba(212,168,67,.16);border-top:1px solid rgba(255,255,255,.08);font-size:.68rem;color:rgba(212,168,67,.65);font-family:\'Outfit\',sans-serif;line-height:1.6;backdrop-filter:blur(12px)">
+          👤 Guest ID: <span style="font-family:monospace;color:rgba(240,204,114,.80)">${_x(_kp?.id||'')}</span>
+          &nbsp;·&nbsp;<span onclick="window._sgGoLink()" style="color:rgba(147,190,255,.70);cursor:pointer;text-decoration:underline">Gmail ချိတ်ဆက်မည်</span>
+        </div>
         <div class="_sg-tabs">
           <button class="_sg-tab on" id="_sg-tab-fri" onclick="window._sgSetGuestTab('fri')">👥 သူငယ်ချင်း</button>
           <button class="_sg-tab" id="_sg-tab-add" onclick="window._sgSetGuestTab('add')">➕ ထည့်မည်</button>
@@ -2724,11 +2621,11 @@ async function _openFriends(){
             🔔 ခေါ်ချက်<span class="tab-badge" id="_sg-greq-badge" style="display:none">0</span>
           </button>
         </div>
+        <!-- Friends tab -->
         <div class="_sg-tab-body on" id="_sg-fritab">
-          <div id="_sg-ftab" style="display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(212,168,67,.10) transparent;padding-top:4px">
-            <div style="text-align:center;padding:20px"><span class="_sg-spin"></span></div>
-          </div>
+          <div id="_sg-ftab" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;scrollbar-width:thin;padding-top:4px"></div>
         </div>
+        <!-- Add tab -->
         <div class="_sg-tab-body" id="_sg-addtab">
           <div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">
             <div class="_sg-lbl">Player ID ဖြင့် ရှာမည် (KK… သို့မဟုတ် KKG…)</div>
@@ -2741,6 +2638,7 @@ async function _openFriends(){
             <div class="_sg-msg" id="_sg-addmsg"></div>
           </div>
         </div>
+        <!-- Requests tab -->
         <div class="_sg-tab-body" id="_sg-greqtabwrap">
           <div style="display:flex;flex-direction:column;gap:6px;padding-top:4px">
             <div class="_sg-lbl" style="margin-bottom:4px">📥 ရောက်လာသော ခေါ်ချက်</div>
@@ -2836,12 +2734,9 @@ function _buildLobby(p){
   /* Pre-fill name input from auth session or guest localStorage */
   var ni=$('inp-name');
   if(ni&&!ni.value&&nm)ni.value=nm;
-  /* Badge avatar: auth uses _kp.avatar, guest uses localStorage kk_gav */
-  var _badgeAv = p&&p.type==='auth' ? (p.avatar||null) : (localStorage.getItem('kk_gav')||p?.avatar||null);
-  var avH=_badgeAv
-    ?'<img src="'+_x(_badgeAv)+'" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid '+GL.goldBd+';box-shadow:0 0 8px rgba(212,168,67,.18)" onerror="this.style.display=\'none\'">'
+  var avH=p&&p.avatar
+    ?'<img src="'+_x(p.avatar)+'" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid '+GL.goldBd+';box-shadow:0 0 8px rgba(212,168,67,.18)" onerror="this.style.display=\'none\'">'
     :'<span style="width:32px;height:32px;border-radius:50%;background:'+GL.goldDm+';flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.05rem;border:1px solid '+GL.goldBd+'">👤</span>';
-  /* Status tag: Gmail=green, Guest=same dim-gold style (no big difference) */
   var tag=p&&p.type==='auth'
     ?'<span style="color:'+GL.ok+';font-size:.56rem;font-family:\'Outfit\',sans-serif">✓ Gmail</span>'
     :'<span style="color:rgba(180,148,70,.45);font-size:.56rem;font-family:\'Outfit\',sans-serif">👤 Guest</span>';
@@ -2927,41 +2822,18 @@ function _buildLobby(p){
         if(!_pch)_startPresence(u).then(function(){_renderOnlineCount();_refreshWidget();});
         else{_renderOnlineCount();_refreshWidget();}
       });
+      /* Start invite, DM, and guest-request listeners */
       _startInviteListener(u);
       _startGuestReqListener(u);
     });
   } else {
-    /* Guest: load friends widget data and start guest invite listener */
     var sub=$('_sg-fw-sub');
-    var gfri=_getGuestFriends();
     if(sub){
-      var _gfriDB2=_guestFriDB||[];
-      var tot=gfri.length+_gfriDB2.length;
-      sub.textContent=tot?'သူငယ်ချင်း '+tot+' ဦး':'သူငယ်ချင်း ထည့်မည်';
+      var gfri=_getGuestFriends();
+      sub.textContent=gfri.length?'သူငယ်ချင်း '+gfri.length+' ဦး (Guest)':'သူငယ်ချင်း ထည့်မည်';
     }
-    var pill=$('_sg-fw-pill');if(pill){pill.style.opacity='.5';}
-    var stack=$('_sg-av-stack');
-    if(stack){
-      /* Show guest friends avatars if any */
-      var _gfShown=gfri.slice(0,3);
-      if(_gfShown.length){
-        stack.innerHTML=_gfShown.map(function(g,i){
-          var av=g.avatar_url
-            ?'<img src="'+_x(g.avatar_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" loading="lazy">'
-            :'<span style="font-size:.65rem">👤</span>';
-          return '<div class="_sg-stk-av" style="animation-delay:'+(i*0.06)+'s">'+av+'</div>';
-        }).join('');
-      }else{
-        stack.innerHTML='<div class="_sg-stk-av" style="font-size:.7rem;color:rgba(212,168,67,.38)">👥</div>';
-      }
-    }
-    /* Load guest DB friends in background */
-    _loadGuestFriData().then(function(){
-      var _tot=_getGuestFriends().length+(_guestFriDB||[]).length;
-      var _sub=$('_sg-fw-sub');
-      if(_sub)_sub.textContent=_tot?'သူငယ်ချင်း '+_tot+' ဦး':'သူငယ်ချင်း ထည့်မည်';
-      _startGuestInvListener();
-    });
+    var pill=$('_sg-fw-pill');if(pill){pill.style.opacity='.4';}
+    var stack=$('_sg-av-stack');if(stack)stack.innerHTML='<div class="_sg-stk-av" style="font-size:.7rem;color:rgba(212,168,67,.38)">👥</div>';
   }
 }
 
@@ -3051,26 +2923,12 @@ if(typeof _oAR==='function'){
 /* ═══════════════════════════════ INIT ═════════════════════════════════ */
 /* Diagnostic: prove this file loaded */
 try{console.log('[session-guard v4] loaded. _kp=',_kp?'auth:'+_kp.type:'null');}catch(e){}
-function _getBase(){
-  var _u=window.location.href.split('?')[0].split('#')[0];
-  var _o=window.location.origin;
-  var _p=_u.slice(_o.length);
-  var _last=_p.split('/').pop();
-  if(_last.indexOf('.')>=0){_p=_p.slice(0,_p.lastIndexOf('/')+1);}
-  else if(!_p.endsWith('/'))_p+='/';
-  return _o+_p;
-}
 _css();
 function _doInit(){
-  /* ── Session guard: validate kk_player before allowing lobby access ──
-     Redirects to auth.html if:
-       1. kk_player is missing (fresh tab / cleared data)
-       2. kk_player is malformed (missing type/name fields)
-       3. kk_player is stale (> 7 days — forces re-auth for security)
-     auth.html fast-returns for existing sessions (no visible flash). */
+  /* ── Session guard: redirect to auth.html if no valid session ── */
   function _needsAuth(p){
-    if(!p||!p.type||!p.name)return true;              /* missing required fields */
-    if(p.savedAt&&Date.now()-p.savedAt>7*24*3600*1000)return true; /* > 7 days old */
+    if(!p||!p.type||!p.name)return true;
+    if(p.savedAt&&Date.now()-p.savedAt>7*24*3600*1000)return true;
     return false;
   }
   if(_needsAuth(_kp)){
@@ -3096,16 +2954,14 @@ function _doInit(){
       if(typeof window.joinRoom==='function')window.joinRoom();
     },1200);
   }
-  /* Start invite listener — auth gets DB listener; guest gets invite check */
+  /* Start invite listener + check for missed pending invites */
   if(_kp&&_kp.type==='auth'){
     _getUser().then(function(u){
       if(!u)return;
       _startInviteListener(u);
+      /* Small delay — let the listener subscribe before querying */
       setTimeout(function(){_checkPendingInvites(u);},2500);
     });
-  } else if(_kp) {
-    /* Guest: start guest invite listener for incoming G2G friend requests */
-    _startGuestInvListener();
   }
 }
 if(document.readyState==='loading'){
