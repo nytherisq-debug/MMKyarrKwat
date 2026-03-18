@@ -889,12 +889,13 @@ async function goGame(){
           .upsert({id:_gid, display_name:_gnm, updated_at:new Date().toISOString()},
                   {onConflict:'id', ignoreDuplicates:false});
       }catch(e){ console.warn('guest_profiles upsert:',e); }
+      const _gav = localStorage.getItem('kk_gav') || null;
       player = {
         type      : 'guest',
         id        : _gid,
         uid       : null,
         name      : _gnm,
-        avatar    : null,
+        avatar    : _gav,
         email     : null,
       };
     }
