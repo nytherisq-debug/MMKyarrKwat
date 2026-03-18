@@ -1297,7 +1297,9 @@ window._sgAddFriend=async function(){
   /* ── GUEST MODE ── */
   if(!user||isGuest){
     var myGid=_kp?.id||localStorage.getItem('kk_gid')||'';
-    if(code===myGid){_msg('_sg-addmsg','er','⚠️ ကိုယ့် ID မဖြစ်နိုင်');return;}
+    /* Block self-add: check both _kp.id and stored kk_gid */
+    var _allMyIds=[myGid,localStorage.getItem('kk_gid')||''].filter(Boolean);
+    if(_allMyIds.indexOf(code)>=0){_msg('_sg-addmsg','er','⚠️ ကိုယ့် ID မဖြစ်နိုင်');return;}
     /* Check local list first */
     if(_getGuestFriends().find(function(x){return x.user_code===code;})){
       _msg('_sg-addmsg','info','✓ ရှိပြီးသား သူငယ်ချင်း');return;
@@ -1400,8 +1402,14 @@ window._sgAddFriend=async function(){
       /* Fallback: search guest_profiles (KKG… IDs) */
       var _gpR=await sb.from('guest_profiles').select('id,display_name').eq('id',code).maybeSingle();
       if(_gpR.data){
-        /* Auth adding a guest — store locally with Guest flag */
+        /* Auth adding a guest — store locally BUT only if it's not the device's own guest ID */
+        var _devGid=localStorage.getItem('kk_gid')||'';
         var _gfAdd={user_code:_gpR.data.id,username:_gpR.data.display_name||_gpR.data.id,avatar_url:null,is_guest:true};
+        if(_gpR.data.id===_devGid){
+          /* This guest ID belongs to the current device — don't store (avoids self-loop) */
+          _msg('_sg-addmsg','er','⚠️ ဒီ Device ရဲ့ Guest ID ဖြစ်နေသည်');
+          if(btn&&$('_sg-m')){btn.disabled=false;btn.textContent='ခေါ်မည်';} return;
+        }
         if(_getGuestFriends().find(function(x){return x.user_code===code;})){
           _msg('_sg-addmsg','ok','✓ ရှိပြီးသား သူငယ်ချင်း');
         } else {
@@ -1659,12 +1667,16 @@ function _renderFriendTab(){
   /* ── GUEST MODE ────────────────────────────────────────────────── */
   if(isGuest){
     var myGid2=_kp?.id||localStorage.getItem('kk_gid')||'';
-    var gfri=_getGuestFriends().map(function(x){return Object.assign({},x);});
+    /* Filter out own ID and duplicates before rendering */
+    var gfri=_getGuestFriends()
+      .filter(function(x){return x.user_code&&x.user_code!==myGid2;})
+      .map(function(x){return Object.assign({},x);});
     var dbFriCodes=new Set(gfri.map(function(x){return x.user_code;}));
     _guestFriDB.forEach(function(r){
       var code=(r.from_guest_id===myGid2)?r.to_player_code:r.from_guest_id;
       var nm=(r.from_guest_id===myGid2)?r.to_player_code:(r.from_guest_name||r.from_guest_id);
-      if(code&&!dbFriCodes.has(code)){
+      /* Skip self-entries (own ID on either side) */
+      if(code&&code!==myGid2&&!dbFriCodes.has(code)){
         dbFriCodes.add(code);
         gfri.push({user_code:code,username:nm||code,avatar_url:null,uid:null,_dbId:r.id});
       }
@@ -1715,7 +1727,10 @@ function _renderFriendTab(){
   });
 
   /* Filter localStorage guest friends — remove any already in DB list */
+  var _devGuestId=localStorage.getItem('kk_gid')||'';
   var _gfriAuth=_getGuestFriends().filter(function(g){
+    /* Never show the device's own guest ID in auth user's list */
+    if(_devGuestId&&g.user_code===_devGuestId)return false;
     if(_dbCodes.has(g.user_code))return false;
     if(g.uid&&_dbUids.has(g.uid))return false;
     var linked=_linkedGuestCache[g.user_code];
@@ -2457,13 +2472,20 @@ window._sgOpenGuestFriProfile=function(code){
 
 /* ══ GUEST FRIEND SYSTEM (localStorage) ══ */
 /* ML style: guests can add friends locally, carry over on account link */
-var _GF_KEY='kk_gfri';
-
+/* ── Guest friends are namespaced by current user's identity ──
+   Auth user:  key = 'kk_gfri_' + uid    → unique per Gmail account
+   Guest user: key = 'kk_gfri_' + guestId → unique per guest device ID
+   This prevents cross-contamination when different sessions share localStorage */
+function _gfKey(){
+  if(_kp&&_kp.type==='auth'&&_kp.uid)return'kk_gfri_'+_kp.uid;
+  var gid=(_kp&&_kp.id)||localStorage.getItem('kk_gid')||'';
+  return gid?'kk_gfri_'+gid:'kk_gfri';
+}
 function _getGuestFriends(){
-  try{var r=localStorage.getItem(_GF_KEY);return r?JSON.parse(r):[];}catch(e){return[];}
+  try{var r=localStorage.getItem(_gfKey());return r?JSON.parse(r):[];}catch(e){return[];}
 }
 function _saveGuestFriends(arr){
-  try{localStorage.setItem(_GF_KEY,JSON.stringify(arr));}catch(e){}
+  try{localStorage.setItem(_gfKey(),JSON.stringify(arr));}catch(e){}
 }
 function _addGuestFriend(profile){
   /* profile = {user_code, username, avatar_url, uid?} */
