@@ -777,6 +777,26 @@ function _open(html,onReady){
   var bd=$('_sg-bd');
   bd.innerHTML='<div class="_sg-mw"><div class="_sg-mc" id="_sg-m">'+html+'</div></div>';
   bd.classList.add('on');
+  /* Liquid Glass ripple — fires on every interactive button inside the modal.
+     Uses the confirmed ripple keyframe from 0eb7fa540bde1768.css:
+     @keyframes _sg-ripple{0%{opacity:.7;transform:scale(0)}to{opacity:0;transform:scale(1)}}
+     Buttons already have position:relative;overflow:hidden from _css(). */
+  var mc=$('_sg-m');
+  if(mc){
+    mc.addEventListener('pointerdown',function(ev){
+      var btn=ev.target.closest('._sg-bgold,._sg-bglass,._sg-binv,._sg-bchat,._sg-bsm,._sg-sadd,._sg-dm-send');
+      if(!btn)return;
+      var r=btn.getBoundingClientRect();
+      var el=document.createElement('span');
+      el.className='_sg-ripple-el';
+      var sz=Math.max(r.width,r.height)*2;
+      el.style.width=el.style.height=sz+'px';
+      el.style.left=(ev.clientX-r.left-sz/2)+'px';
+      el.style.top=(ev.clientY-r.top-sz/2)+'px';
+      btn.appendChild(el);
+      setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},580);
+    });
+  }
   if(onReady)setTimeout(function(){onReady($('_sg-m'));},60);
 }
 function _close(){
@@ -2675,7 +2695,7 @@ window._sgSetGuestTab=function(t){
 };
 
 /* ── Premium Friends Widget update ── */
-var _lastWidgetHash='';
+/* _lastWidgetHash declared at top of file — no re-declaration needed here */
 function _refreshWidget(){
   var stack=$('_sg-av-stack');if(!stack)return;
   var myId=_authUser?.id||_kp?.uid||'';
@@ -2706,6 +2726,10 @@ function _refreshWidget(){
 
 /* ── Open Friends Modal ── */
 async function _openFriends(){
+  /* BUG FIX: Invalidate profile cache on every open so username/avatar
+     changes made in another tab or by the Edit modal are reflected
+     immediately. _getProf() will re-fetch from DB when _authProf is null. */
+  _authProf=null;
   var user=await _getUser();
   if(!user){
     _open(`
