@@ -2752,6 +2752,8 @@ async function _openFriends(){
         _ftabHash='';
         await _loadGuestFriData();
         _startGuestInvListener();
+        /* Clear hash right before render (same reason as auth flow above) */
+        _ftabHash='';
         _renderFriendTab();_renderGuestReqTab();_updateGuestReqBadge();
       });
     return;
@@ -2811,6 +2813,13 @@ async function _openFriends(){
       if(!_pch){await _startPresence(user);}
       _startInviteListener(user);
       _startGuestReqListener(user);
+      /* Clear hash immediately before render — presence/status events running
+         during the awaits above can call _renderFriendTab() and update
+         _ftabHash, which would cause the hash-check to skip this render
+         and leave the spinner stuck.  Clearing here is safe because this
+         is a synchronous point: nothing can update _ftabHash between
+         this line and the _renderFriendTab() call below. */
+      _ftabHash='';
       _renderFriendTab();_renderReqTab();_updateReqBadge();
       _checkPendingInvites(user);
       /* Re-fetch in-match statuses fresh */
