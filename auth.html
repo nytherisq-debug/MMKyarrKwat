@@ -348,11 +348,22 @@ let _fwch = null;   /* friendships watch channel      */
 const _online = new Set();
 let _presenceStarted = false;
 let _presenceReady   = false; /* true after first presence sync — prevents login-flood toasts */
+let _flist = [];              /* accepted friendships array */
 
 function SB(){
   if(!_sb) _sb = supabase.createClient(CFG.sbUrl, CFG.sbKey);
   return _sb;
 }
+
+/* ── Stub functions — safe no-ops for removed/stubbed features ── */
+function _stopPresence(){
+  if(_pch){try{SB().removeChannel(_pch);}catch(e){}}_pch=null;
+  if(_fwch){try{SB().removeChannel(_fwch);}catch(e){}}_fwch=null;
+  _presenceStarted=false;_presenceReady=false;
+}
+function _chime(on){}  /* audio chime — no-op, game handles sounds */
+function saveEditName(){}  /* inline name edit — handled by session-guard */
+function addFriend(){}     /* add friend — handled by session-guard */
 
 /* ═══════════════════════════════════════════════
    GUEST PERMANENT ID
@@ -399,8 +410,12 @@ function _randChars(n){
    the async check to decide the correct screen. */
 (function(){
   if(!localStorage.getItem(CFG.LS_MODE)){
+    /* Brand new user: show auth screen immediately */
     document.getElementById('scr-auth').classList.add('on');
   }
+  /* For returning users (guest/auth mode set): the async boot handles showing
+     the correct screen or redirecting. A brief black flash is unavoidable
+     but the async code runs within <300ms on good connections. */
 })();
 
 (async()=>{
@@ -794,8 +809,8 @@ async function _loadProfile(){
 /* ═══════════════════════════════════════════════
    EDIT NAME
 ═══════════════════════════════════════════════ */function cancelEditName(){
-  document.getElementById('edit-row').style.display  = 'none';
-  document.getElementById('name-row').style.display  = 'flex';
+  const er=document.getElementById('edit-row');if(er)er.style.display='none';
+  const nr=document.getElementById('name-row');if(nr)nr.style.display='flex';
 }/* ═══════════════════════════════════════════════
    AVATAR UPLOAD
 ═══════════════════════════════════════════════ */
@@ -865,8 +880,8 @@ let _authCurrentDM = null;  /* uid of open DM thread */
 ═══════════════════════════════════════════════ */
 async function goGame(){
   /* ── Sync player data to sessionStorage for game to consume ── */
+  let player = null;
   try{
-    let player;
     if(_user && _prof){
       /* Authenticated user — validate user_code format before sending to game */
       const _validKK = (c) => typeof c==='string' && /^KK[A-Z0-9]{6}$/.test(c);
@@ -955,8 +970,9 @@ function toast(msg, dur=2800){
 /* Enter key — save name edit */
 document.addEventListener('keydown', e=>{
   if(e.key === 'Enter'){
-    if(document.getElementById('edit-row')?.style.display !== 'none') saveEditName();
-    else if(document.activeElement === document.getElementById('add-inp')) addFriend();
+    const _er=document.getElementById('edit-row');
+    if(_er&&_er.style.display !== 'none') saveEditName();
+    /* add-inp handled by session-guard */
   }
 });
 </script>
