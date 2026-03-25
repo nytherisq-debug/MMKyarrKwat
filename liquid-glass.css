@@ -1,0 +1,1146 @@
+/*
+ * ╔══════════════════════════════════════════════════════════════╗
+ * ║        LIQUID GLASS  —  မြန်မာ ကျားကွက် Premium UI         ║
+ * ║        liquid-glass.css  v1.0                                ║
+ * ║                                                              ║
+ * ║  HOW TO USE:                                                 ║
+ * ║  index.html ထဲ <head> ပိတ်မည့်အပိုင်းမတိုင်ခင် ထည့်ပါ      ║
+ * ║  <link rel="stylesheet" href="liquid-glass.css">             ║
+ * ╚══════════════════════════════════════════════════════════════╝
+ *
+ *  Liquid Glass Design System — core pillars:
+ *    • Multi-layer backdrop-filter (blur + saturate + brightness)
+ *    • Thin specular highlight border at top edge
+ *    • Refraction inner glow (inset box-shadow)
+ *    • Frosted-glass surface tint (rgba white / gold overlay)
+ *    • Subtle depth via layered drop-shadows
+ *    • Micro-lens highlight (radial pseudo-element)
+ *    • Smooth spring transitions on all interactive states
+ */
+
+/* ══════════════════════════════════════════════════════════════
+   LIQUID GLASS DESIGN TOKENS
+══════════════════════════════════════════════════════════════ */
+:root {
+  --lg-surface:        rgba(255,255,255,0.042);
+  --lg-surface-hover:  rgba(255,255,255,0.072);
+  --lg-surface-gold:   rgba(212,168,67,0.055);
+  --lg-surface-gold-h: rgba(212,168,67,0.095);
+
+  --lg-spec-white: rgba(255,255,255,0.22);
+  --lg-spec-gold:  rgba(240,200,90,0.35);
+
+  --lg-refract:      rgba(255,255,255,0.06);
+  --lg-refract-gold: rgba(212,168,67,0.10);
+
+  --lg-blur-sm:  blur(10px) saturate(1.40) brightness(1.02);
+  --lg-blur-md:  blur(18px) saturate(1.55) brightness(1.03);
+  --lg-blur-lg:  blur(28px) saturate(1.70) brightness(1.04);
+  --lg-blur-xl:  blur(40px) saturate(1.80) brightness(1.05);
+
+  --lg-border:        1px solid rgba(255,255,255,0.10);
+  --lg-border-gold:   1px solid rgba(212,168,67,0.22);
+  --lg-border-top:    1px solid rgba(255,255,255,0.24);
+  --lg-border-top-g:  1px solid rgba(240,200,90,0.38);
+
+  --lg-shadow-sm:  0 2px 12px rgba(0,0,0,.38), 0 1px 3px rgba(0,0,0,.30);
+  --lg-shadow-md:  0 4px 24px rgba(0,0,0,.52), 0 2px 8px rgba(0,0,0,.36);
+  --lg-shadow-lg:  0 8px 40px rgba(0,0,0,.65), 0 3px 12px rgba(0,0,0,.44);
+  --lg-shadow-xl:  0 16px 60px rgba(0,0,0,.75), 0 6px 20px rgba(0,0,0,.52);
+
+  --lg-inset-sm:   inset 0 1px 0 rgba(255,255,255,.14), inset 0 -1px 0 rgba(0,0,0,.12);
+  --lg-inset-md:   inset 0 1px 0 rgba(255,255,255,.20), inset 0 -1px 0 rgba(0,0,0,.16), inset 0 0 20px rgba(255,255,255,.04);
+  --lg-inset-gold: inset 0 1px 0 rgba(240,200,90,.22),  inset 0 -1px 0 rgba(100,60,0,.18), inset 0 0 18px rgba(212,168,67,.06);
+
+  --lg-r-xs:   8px;
+  --lg-r-sm:   12px;
+  --lg-r-md:   16px;
+  --lg-r-lg:   22px;
+  --lg-r-xl:   28px;
+  --lg-r-pill: 999px;
+
+  --lg-ease:     cubic-bezier(0.16,1,0.3,1);
+  --lg-t-fast:   all 0.18s var(--lg-ease);
+  --lg-t-normal: all 0.28s var(--lg-ease);
+  --lg-t-slow:   all 0.45s var(--lg-ease);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   KEYFRAMES
+══════════════════════════════════════════════════════════════ */
+@keyframes lg-lens-sweep {
+  0%   { transform:translateX(-150%) skewX(-20deg); opacity:0 }
+  20%  { opacity:.5 }
+  80%  { opacity:.5 }
+  100% { transform:translateX(180%)  skewX(-20deg); opacity:0 }
+}
+@keyframes lg-gold-border-pulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(212,168,67,.20), var(--lg-shadow-lg), var(--lg-inset-gold) }
+  50%     { box-shadow:0 0 20px 2px rgba(212,168,67,.12), var(--lg-shadow-lg), var(--lg-inset-gold) }
+}
+@keyframes lg-breathe {
+  0%,100% { backdrop-filter:blur(18px) saturate(1.55) brightness(1.03) }
+  50%     { backdrop-filter:blur(22px) saturate(1.80) brightness(1.06) }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   1. LOBBY BOX  (.lbox)
+══════════════════════════════════════════════════════════════ */
+.lbox {
+  background:
+    linear-gradient(160deg,
+      rgba(255,255,255,.058) 0%,
+      rgba(255,255,255,.022) 50%,
+      rgba(212,168,67,.032) 100%) !important;
+  backdrop-filter:    var(--lg-blur-xl) !important;
+  -webkit-backdrop-filter: var(--lg-blur-xl) !important;
+  border:        1px solid rgba(255,255,255,.10) !important;
+  border-top:    1px solid rgba(255,255,255,.28) !important;
+  border-bottom: 1px solid rgba(0,0,0,.25) !important;
+  border-radius: var(--lg-r-xl) !important;
+  box-shadow:
+    0 24px 80px rgba(0,0,0,.72),
+    0  8px 24px rgba(0,0,0,.50),
+    0  0   0   0.5px rgba(255,255,255,.06),
+    inset 0  1px  0 rgba(255,255,255,.22),
+    inset 0 -1px  0 rgba(0,0,0,.22),
+    inset 0  0   30px rgba(255,255,255,.035) !important;
+  position:overflow:relative hidden !important;
+  overflow:hidden !important;
+  transition:var(--lg-t-slow) !important;
+}
+.lbox::before {
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.40) 30%,rgba(240,200,90,.55) 50%,rgba(255,255,255,.40) 70%,transparent);
+  pointer-events:none;z-index:10;
+}
+.lbox::after {
+  content:'';position:absolute;top:0;left:-40%;
+  width:35%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.055),rgba(240,200,90,.035),transparent);
+  transform:skewX(-18deg);
+  animation:lg-lens-sweep 6s ease-in-out 2s infinite;
+  pointer-events:none;z-index:9;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   2. GLASS CARDS  (.pc, .ic)
+══════════════════════════════════════════════════════════════ */
+.pc {
+  background:
+    linear-gradient(135deg,
+      rgba(255,255,255,.048) 0%,
+      rgba(255,255,255,.016) 60%,
+      rgba(212,168,67,.024) 100%) !important;
+  backdrop-filter:    var(--lg-blur-md) !important;
+  -webkit-backdrop-filter: var(--lg-blur-md) !important;
+  border:     1px solid rgba(255,255,255,.08) !important;
+  border-top: 1px solid rgba(255,255,255,.18) !important;
+  border-radius:var(--lg-r-md) !important;
+  box-shadow:
+    var(--lg-shadow-md),
+    inset 0  1px 0 rgba(255,255,255,.16),
+    inset 0 -1px 0 rgba(0,0,0,.14),
+    inset 0  0 14px rgba(255,255,255,.025) !important;
+  transition:var(--lg-t-normal) !important;
+  position:relative !important;
+  overflow:hidden !important;
+}
+.pc::before {
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.32) 40%,rgba(240,200,90,.28) 60%,transparent);
+  pointer-events:none;z-index:2;
+}
+.pc:hover {
+  background:
+    linear-gradient(135deg,
+      rgba(255,255,255,.072) 0%,
+      rgba(255,255,255,.028) 60%,
+      rgba(212,168,67,.040) 100%) !important;
+  border-top-color:rgba(255,255,255,.30) !important;
+  box-shadow:
+    var(--lg-shadow-lg),
+    inset 0  1px 0 rgba(255,255,255,.24),
+    inset 0 -1px 0 rgba(0,0,0,.16),
+    inset 0  0 20px rgba(255,255,255,.04) !important;
+}
+.pc.act {
+  background:
+    linear-gradient(135deg,
+      rgba(212,168,67,.08) 0%,
+      rgba(255,255,255,.030) 60%,
+      rgba(212,168,67,.055) 100%) !important;
+  border:     1px solid rgba(212,168,67,.28) !important;
+  border-top: 1px solid rgba(240,200,90,.50) !important;
+  box-shadow:
+    var(--lg-shadow-lg),
+    0 0 20px rgba(212,168,67,.08),
+    inset 0  1px 0 rgba(240,200,90,.28),
+    inset 0 -1px 0 rgba(100,60,0,.18),
+    inset 0  0 18px rgba(212,168,67,.06) !important;
+  animation:lg-gold-border-pulse 3s ease-in-out infinite !important;
+}
+
+.ic {
+  background:
+    linear-gradient(135deg,
+      rgba(255,255,255,.036) 0%,
+      rgba(255,255,255,.012) 100%) !important;
+  backdrop-filter:    var(--lg-blur-sm) !important;
+  -webkit-backdrop-filter: var(--lg-blur-sm) !important;
+  border:     1px solid rgba(255,255,255,.07) !important;
+  border-top: 1px solid rgba(255,255,255,.16) !important;
+  border-radius:var(--lg-r-md) !important;
+  box-shadow:
+    var(--lg-shadow-sm),
+    inset 0 1px 0 rgba(255,255,255,.12),
+    inset 0 0 10px rgba(255,255,255,.018) !important;
+  transition:var(--lg-t-normal) !important;
+  position:relative !important;
+  overflow:hidden !important;
+}
+.ic::before {
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.24),rgba(212,168,67,.20),transparent);
+  pointer-events:none;z-index:2;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   3. PLAYER PROGRESS BARS  (.pbar)
+══════════════════════════════════════════════════════════════ */
+.pbar {
+  background:
+    linear-gradient(135deg,
+      rgba(255,255,255,.038) 0%,
+      rgba(255,255,255,.012) 100%) !important;
+  backdrop-filter:    var(--lg-blur-sm) !important;
+  -webkit-backdrop-filter: var(--lg-blur-sm) !important;
+  border:     1px solid rgba(255,255,255,.07) !important;
+  border-top: 1px solid rgba(255,255,255,.16) !important;
+  border-radius:var(--lg-r-md) !important;
+  box-shadow:
+    0 2px 12px rgba(0,0,0,.40),
+    inset 0 1px 0 rgba(255,255,255,.13),
+    inset 0 0 10px rgba(255,255,255,.02) !important;
+  transition:var(--lg-t-normal) !important;
+}
+.pbar.act {
+  background:
+    linear-gradient(135deg,
+      rgba(212,168,67,.065) 0%,
+      rgba(255,255,255,.022) 100%) !important;
+  border:     1px solid rgba(212,168,67,.22) !important;
+  border-top: 1px solid rgba(240,200,90,.38) !important;
+  box-shadow:
+    0 3px 16px rgba(0,0,0,.45),
+    0 0 14px rgba(212,168,67,.06),
+    inset 0 1px 0 rgba(240,200,90,.22),
+    inset 0 0 14px rgba(212,168,67,.05) !important;
+}
+.pbar.my-turn {
+  background:
+    linear-gradient(135deg,
+      rgba(212,168,67,.095) 0%,
+      rgba(255,255,255,.030) 60%,
+      rgba(212,168,67,.070) 100%) !important;
+  border:     1px solid rgba(212,168,67,.38) !important;
+  border-top: 1px solid rgba(255,220,80,.55) !important;
+  box-shadow:
+    0 0 0 1px rgba(212,168,67,.10),
+    0 4px 20px rgba(0,0,0,.50),
+    0 0 22px rgba(212,168,67,.10),
+    inset 0 1px 0 rgba(255,220,80,.30),
+    inset 0 0 18px rgba(212,168,67,.08) !important;
+  animation:lg-breathe 2.2s ease-in-out infinite, pbar-turn 2.2s linear infinite !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   4. TOP BAR  (.topbar)
+══════════════════════════════════════════════════════════════ */
+.topbar {
+  background:
+    linear-gradient(180deg,
+      rgba(255,255,255,.055) 0%,
+      rgba(255,255,255,.018) 100%) !important;
+  backdrop-filter:    blur(24px) saturate(1.6) brightness(1.04) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.6) brightness(1.04) !important;
+  border-bottom:1px solid rgba(255,255,255,.08) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.10),
+    0 4px 20px rgba(0,0,0,.40),
+    inset 0 1px 0 rgba(255,255,255,.18) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   5. PING PILL  (.ping-pill)
+══════════════════════════════════════════════════════════════ */
+.ping-pill {
+  background:   rgba(255,255,255,.032) !important;
+  backdrop-filter:    blur(12px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(1.4) !important;
+  border:     1px solid rgba(255,255,255,.07) !important;
+  border-top: 1px solid rgba(255,255,255,.14) !important;
+  border-radius:var(--lg-r-pill) !important;
+  box-shadow:0 1px 6px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.12) !important;
+  transition:var(--lg-t-fast) !important;
+}
+.ping-pill.good {
+  border-color:rgba(16,185,129,.28) !important;
+  background:  rgba(16,185,129,.040) !important;
+  box-shadow:0 0 8px rgba(16,185,129,.12), inset 0 1px 0 rgba(52,211,153,.18) !important;
+}
+.ping-pill.warn {
+  border-color:rgba(245,158,11,.30) !important;
+  background:  rgba(245,158,11,.040) !important;
+  box-shadow:0 0 8px rgba(245,158,11,.12), inset 0 1px 0 rgba(252,211,77,.18) !important;
+}
+.ping-pill.bad {
+  border-color:rgba(239,68,68,.32) !important;
+  background:  rgba(239,68,68,.040) !important;
+  box-shadow:0 0 8px rgba(239,68,68,.14), inset 0 1px 0 rgba(252,165,165,.16) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   6. MUSIC BUTTON  (#mbtn)
+══════════════════════════════════════════════════════════════ */
+#mbtn {
+  background:   rgba(255,255,255,.040) !important;
+  backdrop-filter:    blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border:     1px solid rgba(255,255,255,.09) !important;
+  border-top: 1px solid rgba(255,255,255,.20) !important;
+  border-radius:var(--lg-r-sm) !important;
+  box-shadow:0 2px 8px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.16) !important;
+  transition:var(--lg-t-fast) !important;
+}
+#mbtn:hover {
+  background:   rgba(255,255,255,.070) !important;
+  border-color: rgba(255,255,255,.16) !important;
+  box-shadow:0 3px 12px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.22) !important;
+}
+#mbtn.on {
+  background:
+    linear-gradient(135deg,
+      rgba(212,168,67,.12) 0%,
+      rgba(255,255,255,.04) 100%) !important;
+  border-color:     rgba(212,168,67,.35) !important;
+  border-top-color: rgba(240,200,90,.52) !important;
+  box-shadow:
+    0 0 14px rgba(212,168,67,.18),
+    0 2px 8px rgba(0,0,0,.36),
+    inset 0 1px 0 rgba(240,200,90,.28) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   7. PRIMARY GOLD BUTTON  (.bgold)
+══════════════════════════════════════════════════════════════ */
+.bgold {
+  background:
+    linear-gradient(160deg,
+      rgba(240,200,90,.38) 0%,
+      rgba(212,168,67,.28) 50%,
+      rgba(180,130,40,.32) 100%) !important;
+  backdrop-filter:    blur(14px) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.5) !important;
+  border:     1px solid rgba(212,168,67,.55) !important;
+  border-top: 1px solid rgba(255,230,120,.65) !important;
+  border-radius:var(--lg-r-md) !important;
+  box-shadow:
+    0 4px 20px rgba(0,0,0,.55),
+    0 0 18px rgba(212,168,67,.18),
+    inset 0  1px 0 rgba(255,230,100,.45),
+    inset 0 -1px 0 rgba(100,60,0,.30),
+    inset 0  0 14px rgba(212,168,67,.10) !important;
+  text-shadow:0 1px 4px rgba(0,0,0,.55) !important;
+  transition:var(--lg-t-normal) !important;
+  position:relative !important;
+  overflow:hidden !important;
+}
+.bgold::after {
+  content:'';position:absolute;top:0;left:-40%;
+  width:30%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent);
+  transform:skewX(-18deg);
+  transition:left .4s var(--lg-ease);
+  pointer-events:none;
+}
+.bgold:hover {
+  background:
+    linear-gradient(160deg,
+      rgba(255,220,90,.52) 0%,
+      rgba(212,168,67,.40) 50%,
+      rgba(190,140,50,.44) 100%) !important;
+  border-top-color:rgba(255,240,140,.80) !important;
+  box-shadow:
+    0 6px 28px rgba(0,0,0,.60),
+    0 0 26px rgba(212,168,67,.28),
+    inset 0  1px 0 rgba(255,240,120,.55),
+    inset 0 -1px 0 rgba(100,60,0,.35),
+    inset 0  0 18px rgba(212,168,67,.14) !important;
+  transform:translateY(-1px) !important;
+}
+.bgold:hover::after { left:110% }
+.bgold:active {
+  transform:translateY(0px) !important;
+  box-shadow:
+    0 2px 10px rgba(0,0,0,.50),
+    0 0 10px rgba(212,168,67,.14),
+    inset 0 1px 3px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,220,90,.30) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   8. AI / SECONDARY BUTTON  (.bai)
+══════════════════════════════════════════════════════════════ */
+.bai {
+  background:
+    linear-gradient(160deg,
+      rgba(139,92,246,.28) 0%,
+      rgba(109,40,217,.20) 50%,
+      rgba(91,33,182,.24) 100%) !important;
+  backdrop-filter:    blur(14px) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.5) !important;
+  border:     1px solid rgba(167,139,250,.38) !important;
+  border-top: 1px solid rgba(196,181,253,.55) !important;
+  border-radius:var(--lg-r-md) !important;
+  box-shadow:
+    0 4px 20px rgba(0,0,0,.55),
+    0 0 18px rgba(139,92,246,.18),
+    inset 0  1px 0 rgba(196,181,253,.35),
+    inset 0 -1px 0 rgba(60,20,130,.30) !important;
+  transition:var(--lg-t-normal) !important;
+}
+.bai:hover {
+  background:
+    linear-gradient(160deg,
+      rgba(167,139,250,.40) 0%,
+      rgba(139,92,246,.30) 100%) !important;
+  border-top-color:rgba(221,214,254,.70) !important;
+  box-shadow:
+    0 6px 28px rgba(0,0,0,.60),
+    0 0 26px rgba(139,92,246,.28),
+    inset 0 1px 0 rgba(221,214,254,.45) !important;
+  transform:translateY(-1px) !important;
+}
+
+/* Outline / cancel buttons */
+.bout, .bcanc {
+  background:   rgba(255,255,255,.032) !important;
+  backdrop-filter:    blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border:     1px solid rgba(255,255,255,.10) !important;
+  border-top: 1px solid rgba(255,255,255,.20) !important;
+  border-radius:var(--lg-r-sm) !important;
+  box-shadow:0 2px 10px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.14) !important;
+  transition:var(--lg-t-fast) !important;
+}
+.bout:hover, .bcanc:hover {
+  background:   rgba(255,255,255,.060) !important;
+  border-color: rgba(255,255,255,.18) !important;
+  box-shadow:0 3px 14px rgba(0,0,0,.40), inset 0 1px 0 rgba(255,255,255,.22) !important;
+  transform:translateY(-1px) !important;
+}
+
+/* Spectate button */
+.bspec {
+  background:
+    linear-gradient(160deg,
+      rgba(20,184,166,.22) 0%,
+      rgba(15,118,110,.16) 100%) !important;
+  backdrop-filter:    blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border:     1px solid rgba(45,212,191,.32) !important;
+  border-top: 1px solid rgba(94,234,212,.48) !important;
+  border-radius:var(--lg-r-sm) !important;
+  box-shadow:
+    0 3px 14px rgba(0,0,0,.42),
+    0 0 12px rgba(20,184,166,.12),
+    inset 0 1px 0 rgba(94,234,212,.28) !important;
+  transition:var(--lg-t-fast) !important;
+}
+.bspec:hover {
+  background:
+    linear-gradient(160deg,
+      rgba(20,184,166,.35) 0%,
+      rgba(15,118,110,.25) 100%) !important;
+  box-shadow:
+    0 4px 18px rgba(0,0,0,.50),
+    0 0 18px rgba(20,184,166,.22),
+    inset 0 1px 0 rgba(94,234,212,.38) !important;
+  transform:translateY(-1px) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   9. INPUT FIELDS  (.linp, .cinp)
+══════════════════════════════════════════════════════════════ */
+.linp, .cinp {
+  background:   rgba(255,255,255,.045) !important;
+  backdrop-filter:    blur(14px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.4) !important;
+  border:     1px solid rgba(255,255,255,.09) !important;
+  border-top: 1px solid rgba(255,255,255,.18) !important;
+  border-radius:var(--lg-r-sm) !important;
+  box-shadow:
+    0 2px 10px rgba(0,0,0,.30),
+    inset 0  1px 0   rgba(255,255,255,.14),
+    inset 0  2px 8px rgba(0,0,0,.28),
+    inset 0 -1px 0   rgba(0,0,0,.08) !important;
+  color:rgba(240,232,216,.92) !important;
+  transition:var(--lg-t-fast) !important;
+}
+.linp:focus, .cinp:focus {
+  background:   rgba(255,255,255,.070) !important;
+  border:     1px solid rgba(212,168,67,.38) !important;
+  border-top: 1px solid rgba(240,200,90,.55) !important;
+  box-shadow:
+    0 0 0 3px rgba(212,168,67,.10),
+    0 2px 12px rgba(0,0,0,.36),
+    inset 0  1px 0   rgba(240,200,90,.22),
+    inset 0  2px 8px rgba(0,0,0,.20) !important;
+  outline:none !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   10. WAITING BOX  (.wbox)
+══════════════════════════════════════════════════════════════ */
+.wbox {
+  background:
+    linear-gradient(145deg,
+      rgba(255,255,255,.055) 0%,
+      rgba(255,255,255,.020) 60%,
+      rgba(212,168,67,.030) 100%) !important;
+  backdrop-filter:    var(--lg-blur-lg) !important;
+  -webkit-backdrop-filter: var(--lg-blur-lg) !important;
+  border:     1px solid rgba(255,255,255,.10) !important;
+  border-top: 1px solid rgba(255,255,255,.26) !important;
+  border-radius:var(--lg-r-lg) !important;
+  box-shadow:
+    0 16px 55px rgba(0,0,0,.70),
+    0  6px 18px rgba(0,0,0,.48),
+    inset 0  1px 0 rgba(255,255,255,.22),
+    inset 0 -1px 0 rgba(0,0,0,.20),
+    inset 0  0 28px rgba(255,255,255,.028) !important;
+  position:relative !important;
+  overflow:hidden !important;
+}
+.wbox::before {
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.38),rgba(212,168,67,.28),transparent);
+  pointer-events:none;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   11. WIN/LOSE OVERLAY  (.wb)
+══════════════════════════════════════════════════════════════ */
+.wb {
+  backdrop-filter:    var(--lg-blur-lg) !important;
+  -webkit-backdrop-filter: var(--lg-blur-lg) !important;
+  border-radius:var(--lg-r-xl) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   12. REMATCH BOX  (.rr-box)
+══════════════════════════════════════════════════════════════ */
+.rr-box {
+  background:
+    linear-gradient(145deg,
+      rgba(255,255,255,.062) 0%,
+      rgba(255,255,255,.022) 100%) !important;
+  backdrop-filter:    var(--lg-blur-lg) !important;
+  -webkit-backdrop-filter: var(--lg-blur-lg) !important;
+  border:     1px solid rgba(255,255,255,.11) !important;
+  border-top: 1px solid rgba(255,255,255,.28) !important;
+  border-radius:var(--lg-r-lg) !important;
+  box-shadow:
+    0 12px 44px rgba(0,0,0,.68),
+    0  4px 14px rgba(0,0,0,.42),
+    inset 0 1px 0 rgba(255,255,255,.22),
+    inset 0 0 22px rgba(255,255,255,.025) !important;
+}
+.rr-accept {
+  background:
+    linear-gradient(160deg,rgba(16,185,129,.30) 0%,rgba(4,120,87,.22) 100%) !important;
+  backdrop-filter:blur(10px) !important;
+  -webkit-backdrop-filter:blur(10px) !important;
+  border:     1px solid rgba(52,211,153,.38) !important;
+  border-top: 1px solid rgba(110,231,183,.52) !important;
+  border-radius:var(--lg-r-sm) !important;
+  box-shadow:
+    0 3px 14px rgba(0,0,0,.42),
+    0 0 14px rgba(16,185,129,.14),
+    inset 0 1px 0 rgba(110,231,183,.30) !important;
+  transition:var(--lg-t-fast) !important;
+}
+.rr-accept:hover {
+  background:
+    linear-gradient(160deg,rgba(16,185,129,.46) 0%,rgba(4,120,87,.34) 100%) !important;
+  box-shadow:
+    0 4px 18px rgba(0,0,0,.50),
+    0 0 20px rgba(16,185,129,.24),
+    inset 0 1px 0 rgba(110,231,183,.40) !important;
+  transform:translateY(-1px) !important;
+}
+.rr-decline {
+  background:
+    linear-gradient(160deg,rgba(239,68,68,.24) 0%,rgba(185,28,28,.18) 100%) !important;
+  backdrop-filter:blur(10px) !important;
+  -webkit-backdrop-filter:blur(10px) !important;
+  border:     1px solid rgba(252,165,165,.28) !important;
+  border-top: 1px solid rgba(254,202,202,.40) !important;
+  border-radius:var(--lg-r-sm) !important;
+  box-shadow:
+    0 3px 14px rgba(0,0,0,.42),
+    0 0 12px rgba(239,68,68,.12),
+    inset 0 1px 0 rgba(254,202,202,.24) !important;
+  transition:var(--lg-t-fast) !important;
+}
+.rr-decline:hover {
+  background:
+    linear-gradient(160deg,rgba(239,68,68,.38) 0%,rgba(185,28,28,.28) 100%) !important;
+  box-shadow:
+    0 4px 18px rgba(0,0,0,.50),
+    0 0 18px rgba(239,68,68,.20),
+    inset 0 1px 0 rgba(254,202,202,.32) !important;
+  transform:translateY(-1px) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   13. TOAST  (.toast)
+══════════════════════════════════════════════════════════════ */
+.toast {
+  background:
+    linear-gradient(135deg,
+      rgba(255,255,255,.075) 0%,
+      rgba(255,255,255,.038) 100%) !important;
+  backdrop-filter:    blur(20px) saturate(1.6) brightness(1.05) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.6) brightness(1.05) !important;
+  border:     1px solid rgba(255,255,255,.12) !important;
+  border-top: 1px solid rgba(255,255,255,.28) !important;
+  border-radius:var(--lg-r-md) !important;
+  box-shadow:
+    0 8px 32px rgba(0,0,0,.60),
+    0 2px  8px rgba(0,0,0,.38),
+    inset 0 1px 0 rgba(255,255,255,.22),
+    inset 0 0 16px rgba(255,255,255,.035) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   14. DC BANNER  (#opp-dc-banner)
+══════════════════════════════════════════════════════════════ */
+#opp-dc-banner {
+  background:
+    linear-gradient(135deg,
+      rgba(245,158,11,.18) 0%,
+      rgba(255,255,255,.040) 100%) !important;
+  backdrop-filter:    blur(18px) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.5) !important;
+  border:     1px solid rgba(245,158,11,.28) !important;
+  border-top: 1px solid rgba(252,211,77,.40) !important;
+  border-radius:var(--lg-r-md) !important;
+  box-shadow:
+    0 4px 20px rgba(0,0,0,.50),
+    0 0 16px rgba(245,158,11,.10),
+    inset 0 1px 0 rgba(252,211,77,.22) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   15. REJOIN BANNER  (#rejoin-banner)
+══════════════════════════════════════════════════════════════ */
+#rejoin-banner {
+  background:
+    linear-gradient(135deg,
+      rgba(212,168,67,.14) 0%,
+      rgba(255,255,255,.040) 100%) !important;
+  backdrop-filter:    blur(18px) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.5) !important;
+  border:     1px solid rgba(212,168,67,.28) !important;
+  border-top: 1px solid rgba(240,200,90,.42) !important;
+  border-radius:var(--lg-r-md) !important;
+  box-shadow:
+    0 4px 20px rgba(0,0,0,.50),
+    0 0 16px rgba(212,168,67,.10),
+    inset 0 1px 0 rgba(240,200,90,.22) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   16. OPPONENT LEFT  (.ol-box)
+══════════════════════════════════════════════════════════════ */
+.ol-box {
+  background:
+    linear-gradient(145deg,
+      rgba(255,255,255,.055) 0%,
+      rgba(255,255,255,.018) 70%,
+      rgba(239,68,68,.025) 100%) !important;
+  backdrop-filter:    var(--lg-blur-lg) !important;
+  -webkit-backdrop-filter: var(--lg-blur-lg) !important;
+  border:     1px solid rgba(255,255,255,.10) !important;
+  border-top: 1px solid rgba(255,255,255,.26) !important;
+  border-radius:var(--lg-r-xl) !important;
+  box-shadow:
+    0 16px 55px rgba(0,0,0,.68),
+    0  5px 18px rgba(0,0,0,.45),
+    inset 0 1px 0 rgba(255,255,255,.20),
+    inset 0 0 24px rgba(255,255,255,.025) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   17. AI MODAL  (.ai-box, .ai-inner, .ai-diff-btn, .ai-color-btn)
+══════════════════════════════════════════════════════════════ */
+.ai-box {
+  background:
+    linear-gradient(150deg,
+      rgba(139,92,246,.12) 0%,
+      rgba(255,255,255,.030) 50%,
+      rgba(109,40,217,.08) 100%) !important;
+  backdrop-filter:    var(--lg-blur-xl) !important;
+  -webkit-backdrop-filter: var(--lg-blur-xl) !important;
+  border:     1px solid rgba(167,139,250,.22) !important;
+  border-top: 1px solid rgba(221,214,254,.38) !important;
+  border-radius:var(--lg-r-xl) !important;
+  box-shadow:
+    0 20px 65px rgba(0,0,0,.72),
+    0  8px 24px rgba(0,0,0,.52),
+    0  0  30px rgba(139,92,246,.08),
+    inset 0 1px 0 rgba(221,214,254,.22),
+    inset 0 0 28px rgba(139,92,246,.045) !important;
+}
+.ai-inner {
+  background:transparent !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  border-radius:calc(var(--lg-r-xl) - 2px) !important;
+}
+.ai-diff-btn {
+  background:   rgba(255,255,255,.040) !important;
+  backdrop-filter:    blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border:     1px solid rgba(255,255,255,.09) !important;
+  border-top: 1px solid rgba(255,255,255,.18) !important;
+  border-radius:var(--lg-r-md) !important;
+  box-shadow:0 2px 10px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.14) !important;
+  transition:var(--lg-t-fast) !important;
+}
+.ai-diff-btn.sel, .ai-diff-btn:hover {
+  background:
+    linear-gradient(135deg,rgba(212,168,67,.18) 0%,rgba(255,255,255,.060) 100%) !important;
+  border:     1px solid rgba(212,168,67,.42) !important;
+  border-top: 1px solid rgba(240,200,90,.60) !important;
+  box-shadow:
+    0 3px 14px rgba(0,0,0,.40),
+    0 0 14px rgba(212,168,67,.14),
+    inset 0 1px 0 rgba(240,200,90,.30) !important;
+}
+.ai-color-btn {
+  background:   rgba(255,255,255,.035) !important;
+  backdrop-filter:    blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border:     1px solid rgba(255,255,255,.08) !important;
+  border-top: 1px solid rgba(255,255,255,.16) !important;
+  border-radius:var(--lg-r-md) !important;
+  box-shadow:0 2px 8px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.12) !important;
+  transition:var(--lg-t-fast) !important;
+}
+.ai-color-btn.sel, .ai-color-btn:hover {
+  background:
+    linear-gradient(135deg,rgba(212,168,67,.16) 0%,rgba(255,255,255,.050) 100%) !important;
+  border:     1px solid rgba(212,168,67,.38) !important;
+  border-top: 1px solid rgba(240,200,90,.55) !important;
+  box-shadow:
+    0 3px 12px rgba(0,0,0,.38),
+    0 0 12px rgba(212,168,67,.12),
+    inset 0 1px 0 rgba(240,200,90,.26) !important;
+}
+.ai-start {
+  background:
+    linear-gradient(160deg,
+      rgba(240,200,90,.42) 0%,
+      rgba(212,168,67,.30) 50%,
+      rgba(180,130,40,.36) 100%) !important;
+  backdrop-filter:    blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border:     1px solid rgba(212,168,67,.60) !important;
+  border-top: 1px solid rgba(255,230,120,.70) !important;
+  border-radius:var(--lg-r-md) !important;
+  box-shadow:
+    0 4px 20px rgba(0,0,0,.55),
+    0 0 20px rgba(212,168,67,.20),
+    inset 0  1px 0 rgba(255,230,100,.48),
+    inset 0 -1px 0 rgba(100,60,0,.32),
+    inset 0  0 14px rgba(212,168,67,.12) !important;
+  transition:var(--lg-t-normal) !important;
+}
+.ai-start:hover {
+  background:
+    linear-gradient(160deg,
+      rgba(255,220,90,.56) 0%,
+      rgba(212,168,67,.44) 50%,
+      rgba(190,140,50,.48) 100%) !important;
+  box-shadow:
+    0 6px 26px rgba(0,0,0,.60),
+    0 0 28px rgba(212,168,67,.30),
+    inset 0  1px 0 rgba(255,240,120,.58),
+    inset 0 -1px 0 rgba(100,60,0,.36) !important;
+  transform:translateY(-1px) !important;
+}
+.ai-cancel {
+  background:   rgba(255,255,255,.030) !important;
+  backdrop-filter:    blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border:     1px solid rgba(255,255,255,.08) !important;
+  border-top: 1px solid rgba(255,255,255,.16) !important;
+  border-radius:var(--lg-r-sm) !important;
+  box-shadow:0 2px 8px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.12) !important;
+  transition:var(--lg-t-fast) !important;
+}
+.ai-cancel:hover {
+  background:rgba(255,255,255,.055) !important;
+  box-shadow:0 3px 12px rgba(0,0,0,.36), inset 0 1px 0 rgba(255,255,255,.20) !important;
+  transform:translateY(-1px) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   18. CHAT PANEL  (.chat)
+══════════════════════════════════════════════════════════════ */
+.chat {
+  background:
+    linear-gradient(145deg,
+      rgba(255,255,255,.038) 0%,
+      rgba(255,255,255,.012) 100%) !important;
+  backdrop-filter:    var(--lg-blur-md) !important;
+  -webkit-backdrop-filter: var(--lg-blur-md) !important;
+  border:     1px solid rgba(255,255,255,.07) !important;
+  border-top: 1px solid rgba(255,255,255,.16) !important;
+  border-radius:var(--lg-r-md) !important;
+  box-shadow:
+    var(--lg-shadow-md),
+    inset 0 1px 0 rgba(255,255,255,.13),
+    inset 0 0 12px rgba(255,255,255,.018) !important;
+  overflow:hidden !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   19. BOARD FRAME  (.bframe) — liquid gold wood
+══════════════════════════════════════════════════════════════ */
+.bframe {
+  background:
+    linear-gradient(150deg,
+      rgba(22,10,0,.99) 0%,
+      rgba(10,5,0,.99)  50%,
+      rgba(18,8,0,.99)  100%) !important;
+  border:     1.5px solid rgba(212,168,67,.60) !important;
+  border-top: 1.5px solid rgba(240,200,90,.75) !important;
+  border-radius:var(--lg-r-md) !important;
+  padding:14px !important;
+  box-shadow:
+    0 0 0 1px  rgba(212,168,67,.08),
+    0 0 0 5px  rgba(0,0,0,.72),
+    0 0 70px   rgba(212,168,67,.09),
+    0 28px 80px rgba(0,0,0,.96),
+    inset 0 0  50px rgba(0,0,0,.55),
+    inset 0 1px 0  rgba(240,200,90,.30) !important;
+  position:relative !important;
+  isolation:isolate !important;
+}
+.bframe::after {
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,230,100,.65) 30%,rgba(255,255,255,.50) 50%,rgba(255,230,100,.65) 70%,transparent);
+  pointer-events:none;z-index:3;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   20. BOARD CELLS — liquid glass highlights
+══════════════════════════════════════════════════════════════ */
+#board {
+  border-radius:6px !important;
+  overflow:hidden !important;
+  gap:1px !important;
+  padding:1px !important;
+  background:rgba(0,0,0,.30) !important;
+  box-shadow:none !important;
+}
+.cell { border-radius:5px !important; transform:none !important; }
+.cell.dark  { background:rgba(14,7,0,.65) !important; }
+.cell.light { background:rgba(185,140,40,.52) !important; }
+.cell.dark:hover:not(.nc) {
+  background:rgba(212,168,67,.10) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(212,168,67,.18),
+    inset 0 0 6px rgba(212,168,67,.08) !important;
+  transform:none !important;
+}
+.cell.sel {
+  background:
+    linear-gradient(135deg,rgba(212,168,67,.32),rgba(240,200,90,.22)) !important;
+  box-shadow:
+    inset 0 0 0 1.5px rgba(240,200,90,.60),
+    inset 0 0 12px rgba(212,168,67,.20),
+    0 0 8px rgba(212,168,67,.12) !important;
+  transform:none !important;
+}
+.cell.mvto {
+  background:rgba(20,184,166,.22) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(45,212,191,.32),
+    inset 0 0 8px rgba(20,184,166,.12) !important;
+  transform:none !important;
+}
+.cell.cpto {
+  background:rgba(239,68,68,.26) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(252,165,165,.30),
+    inset 0 0 8px rgba(239,68,68,.14) !important;
+  transform:none !important;
+}
+.cell.skipto { background:rgba(180,140,60,.16) !important; transform:none !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   21. GAME PIECES — enhanced liquid glass orbs
+══════════════════════════════════════════════════════════════ */
+.piece.bp {
+  background:
+    radial-gradient(circle at 32% 26%,
+      rgba(200,230,255,.72) 0%,
+      rgba(80,150,255,.54)  22%,
+      rgba(25,75,225,.62)   50%,
+      rgba(10,35,170,.80)   78%,
+      rgba(4,16,120,.94)    100%) !important;
+  border:1.5px solid rgba(120,180,255,.70) !important;
+  box-shadow:
+    inset 0  2px 8px  rgba(180,225,255,.44),
+    inset 0 -2px 10px rgba(0,20,140,.58),
+    inset 0  0  18px  rgba(40,120,255,.14),
+    0 0  16px rgba(40,120,255,.28),
+    0 5px 20px rgba(0,0,0,.78) !important;
+  backdrop-filter:blur(3px) saturate(1.3) !important;
+  -webkit-backdrop-filter:blur(3px) saturate(1.3) !important;
+}
+.piece.wp {
+  background:
+    radial-gradient(circle at 32% 26%,
+      rgba(255,200,185,.72) 0%,
+      rgba(255,90,70,.54)   22%,
+      rgba(215,38,24,.62)   50%,
+      rgba(155,14,14,.80)   78%,
+      rgba(110,5,5,.94)     100%) !important;
+  border:1.5px solid rgba(255,115,92,.70) !important;
+  box-shadow:
+    inset 0  2px 8px  rgba(255,195,170,.44),
+    inset 0 -2px 10px rgba(130,0,0,.58),
+    inset 0  0  18px  rgba(230,50,25,.14),
+    0 0  16px rgba(230,50,25,.28),
+    0 5px 20px rgba(0,0,0,.78) !important;
+  backdrop-filter:blur(3px) saturate(1.3) !important;
+  -webkit-backdrop-filter:blur(3px) saturate(1.3) !important;
+}
+.piece.bp::before,
+.piece.wp::before {
+  content:'' !important;
+  position:absolute !important;
+  top:16% !important; left:20% !important;
+  width:30% !important; height:20% !important;
+  border-radius:50% !important;
+  background:rgba(255,255,255,.52) !important;
+  filter:blur(2.5px) !important;
+  pointer-events:none !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   22. PIECE INDICATOR DOTS  (.pbpc)
+══════════════════════════════════════════════════════════════ */
+.pbpc.b {
+  background:
+    radial-gradient(circle at 35% 30%,
+      rgba(160,230,255,.45),
+      rgba(20,184,166,.55)  45%,
+      rgba(10,100,90,.85)) !important;
+  border:1.5px solid rgba(45,212,191,.58) !important;
+  box-shadow:0 0 10px rgba(20,184,166,.38), inset 0 1px 0 rgba(167,243,208,.28) !important;
+}
+.pbpc.w {
+  background:
+    radial-gradient(circle at 35% 30%,
+      rgba(255,235,150,.45),
+      rgba(245,158,11,.55)  45%,
+      rgba(170,90,0,.85)) !important;
+  border:1.5px solid rgba(245,158,11,.58) !important;
+  box-shadow:0 0 10px rgba(200,130,0,.38), inset 0 1px 0 rgba(252,211,77,.28) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   23. YOUR TURN BADGE  (.your-turn-badge)
+══════════════════════════════════════════════════════════════ */
+.your-turn-badge {
+  background:
+    linear-gradient(135deg,
+      rgba(212,168,67,.22) 0%,
+      rgba(255,255,255,.06) 100%) !important;
+  backdrop-filter:    blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border:     1px solid rgba(212,168,67,.32) !important;
+  border-top: 1px solid rgba(255,220,80,.48) !important;
+  border-radius:var(--lg-r-pill) !important;
+  box-shadow:
+    0 1px 6px rgba(0,0,0,.28),
+    0 0 8px rgba(212,168,67,.10),
+    inset 0 1px 0 rgba(255,220,80,.24) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   24. RESIGN BUTTON  (.brsg)
+══════════════════════════════════════════════════════════════ */
+.brsg {
+  background:
+    linear-gradient(135deg,rgba(239,68,68,.10) 0%,rgba(255,255,255,.020) 100%) !important;
+  backdrop-filter:    blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border:     1px solid rgba(239,68,68,.20) !important;
+  border-top: 1px solid rgba(254,202,202,.28) !important;
+  border-radius:var(--lg-r-sm) !important;
+  box-shadow:0 2px 10px rgba(0,0,0,.30), inset 0 1px 0 rgba(254,202,202,.14) !important;
+  transition:var(--lg-t-fast) !important;
+}
+.brsg:hover {
+  background:
+    linear-gradient(135deg,rgba(239,68,68,.20) 0%,rgba(255,255,255,.040) 100%) !important;
+  border-color:rgba(239,68,68,.38) !important;
+  box-shadow:
+    0 3px 14px rgba(0,0,0,.40),
+    0 0 12px rgba(239,68,68,.12),
+    inset 0 1px 0 rgba(254,202,202,.20) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   25. REMATCH BUTTON  (.brematch)
+══════════════════════════════════════════════════════════════ */
+.brematch {
+  background:
+    linear-gradient(160deg,
+      rgba(20,184,166,.28) 0%,
+      rgba(255,255,255,.040) 50%,
+      rgba(15,118,110,.22) 100%) !important;
+  backdrop-filter:    blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border:     1px solid rgba(45,212,191,.35) !important;
+  border-top: 1px solid rgba(94,234,212,.55) !important;
+  border-radius:var(--lg-r-md) !important;
+  box-shadow:
+    0 4px 18px rgba(0,0,0,.52),
+    0 0 16px rgba(20,184,166,.14),
+    inset 0  1px 0 rgba(94,234,212,.30),
+    inset 0 -1px 0 rgba(0,60,50,.25) !important;
+  transition:var(--lg-t-normal) !important;
+}
+.brematch:hover {
+  background:
+    linear-gradient(160deg,
+      rgba(20,184,166,.42) 0%,
+      rgba(255,255,255,.060) 50%,
+      rgba(15,118,110,.34) 100%) !important;
+  border-top-color:rgba(167,243,208,.65) !important;
+  box-shadow:
+    0 6px 24px rgba(0,0,0,.58),
+    0 0 22px rgba(20,184,166,.22),
+    inset 0 1px 0 rgba(167,243,208,.40) !important;
+  transform:translateY(-1px) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   26. HUFF BARS
+══════════════════════════════════════════════════════════════ */
+.huff-pick-bar {
+  background:
+    linear-gradient(135deg,rgba(212,168,67,.12) 0%,rgba(255,255,255,.025) 100%) !important;
+  backdrop-filter:    blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border-left:   3px solid rgba(212,168,67,.75) !important;
+  border-top:    1px solid rgba(240,200,90,.28) !important;
+  border-right:  1px solid rgba(255,255,255,.06) !important;
+  border-bottom: 1px solid rgba(0,0,0,.12) !important;
+  border-radius:var(--lg-r-sm) !important;
+  box-shadow:
+    0 2px 10px rgba(0,0,0,.32),
+    0 0 10px rgba(212,168,67,.08),
+    inset 0 1px 0 rgba(240,200,90,.16) !important;
+}
+.huff-wait-bar {
+  background:
+    linear-gradient(135deg,rgba(239,68,68,.08) 0%,rgba(255,255,255,.020) 100%) !important;
+  backdrop-filter:    blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border-left:   3px solid rgba(239,68,68,.60) !important;
+  border-top:    1px solid rgba(254,202,202,.22) !important;
+  border-right:  1px solid rgba(255,255,255,.05) !important;
+  border-bottom: 1px solid rgba(0,0,0,.10) !important;
+  border-radius:var(--lg-r-sm) !important;
+  box-shadow:0 2px 10px rgba(0,0,0,.30), inset 0 1px 0 rgba(254,202,202,.12) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   27. REJOIN BUTTONS  (.rjb-yes, .rjb-no)
+══════════════════════════════════════════════════════════════ */
+.rjb-yes {
+  background:
+    linear-gradient(160deg,rgba(212,168,67,.32) 0%,rgba(180,130,40,.24) 100%) !important;
+  backdrop-filter:blur(10px) !important;
+  -webkit-backdrop-filter:blur(10px) !important;
+  border:     1px solid rgba(212,168,67,.48) !important;
+  border-top: 1px solid rgba(255,220,80,.60) !important;
+  border-radius:var(--lg-r-sm) !important;
+  box-shadow:
+    0 3px 12px rgba(0,0,0,.42),
+    0 0 12px rgba(212,168,67,.14),
+    inset 0 1px 0 rgba(255,220,80,.35) !important;
+  transition:var(--lg-t-fast) !important;
+}
+.rjb-no {
+  background:   rgba(255,255,255,.030) !important;
+  backdrop-filter:blur(10px) !important;
+  -webkit-backdrop-filter:blur(10px) !important;
+  border:     1px solid rgba(255,255,255,.08) !important;
+  border-top: 1px solid rgba(255,255,255,.16) !important;
+  border-radius:var(--lg-r-sm) !important;
+  box-shadow:0 2px 8px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.12) !important;
+  transition:var(--lg-t-fast) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   28. SPECTATOR BADGE  (.spectator-badge)
+══════════════════════════════════════════════════════════════ */
+.spectator-badge {
+  background:   rgba(255,255,255,.055) !important;
+  backdrop-filter:    blur(14px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.4) !important;
+  border:     1px solid rgba(255,255,255,.10) !important;
+  border-top: 1px solid rgba(255,255,255,.22) !important;
+  border-radius:var(--lg-r-sm) !important;
+  box-shadow:0 2px 10px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.18) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   29. SCROLLBAR
+══════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar             { width:4px; height:4px }
+::-webkit-scrollbar-track       { background:transparent }
+::-webkit-scrollbar-thumb       {
+  background:rgba(212,168,67,.22);
+  border-radius:2px;
+}
+::-webkit-scrollbar-thumb:hover { background:rgba(212,168,67,.40) }
+*                               { scrollbar-width:thin; scrollbar-color:rgba(212,168,67,.22) transparent }
+
+/* ══════════════════════════════════════════════════════════════
+   30. SAFE AREAS + MOBILE
+══════════════════════════════════════════════════════════════ */
+#game   { padding:8px max(12px,env(safe-area-inset-left)) 8px }
+.topbar { padding:0 max(16px,env(safe-area-inset-right)) 0 max(16px,env(safe-area-inset-left)) }
+
+@media (hover:none) {
+  .pc:hover, .ic:hover, .chat:hover,
+  .bgold:hover, .bai:hover, .bout:hover,
+  .bcanc:hover, .bspec:hover { transform:none !important }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .lbox::after, .bgold::after { animation:none !important }
+  .pbar.my-turn { animation:lg-gold-border-pulse 3s ease-in-out infinite !important }
+}
