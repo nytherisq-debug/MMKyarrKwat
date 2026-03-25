@@ -49,8 +49,8 @@
   --glow-purple:    rgba(160,80,255,0.40);
 
   /* ── Timer tokens ── */
-  --timer-r:      36;                        /* SVG circle radius */
-  --timer-circ:   226.2px;                   /* 2π×36 */
+  --timer-r:      19;                        /* SVG circle radius (matches liquid-glass-timer.js) */
+  --timer-circ:   119.38px;                  /* 2π×19 ≈ 119.38 */
   --timer-gold:   rgba(212,168,67,1);
   --timer-warn:   rgba(245,158,11,1);
   --timer-danger: rgba(239,68,68,1);
