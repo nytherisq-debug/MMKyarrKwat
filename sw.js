@@ -5,7 +5,7 @@
  * Offline fallback → auth.html
  */
 
-const CACHE_VERSION = 'kk-v1';
+const CACHE_VERSION = 'kk-v2';
 const STATIC_ASSETS = [
   './auth.html',
   './index.html',
@@ -13,6 +13,8 @@ const STATIC_ASSETS = [
   './manifest.json',
   './logo.png',
   './background.png',
+  './liquid-glass-2.css',
+  './liquid-glass-timer.js',
 ];
 
 /* ── INSTALL: pre-cache all static assets ── */
