@@ -11,7 +11,7 @@
    Upload ဒီ file ကို GitHub မှာ index.html နှင့် တူညီသော folder ထဲ
    ထည့်ပြီး index.html ထဲ <head> tag ထဲတွင် Google Fonts link အောက်တွင် ဒီ line ထည့်ပါ —
 
-   <link rel="stylesheet" href="liquid-glass.css">
+   <link rel="stylesheet" href="liquid-glass-2.css">
 
    Timer ထည့်ဖို့ </body> မတိုင်မီ ဒီ line ထည့်ပါ —
 
@@ -21,6 +21,12 @@
 /* ────────────────────────────────────────────────────────────────────
    § 1  DESIGN TOKENS  (overrides + new premium tokens)
 ──────────────────────────────────────────────────────────────────── */
+
+/* ── Registered CSS properties (conic-gradient animations) ── */
+@property --ai-angle   { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+@property --pbar-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+@property --tg-angle   { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+
 :root {
   /* ── Blur scale ── */
   --blur-xs:  4px;
@@ -100,7 +106,6 @@ body {
   top: 0; left: 12%; right: 12%; height: 1px !important;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), rgba(212,168,67,0.60), rgba(255,255,255,0.45), transparent) !important;
   pointer-events: none !important;
-  border-radius: 0 0 0 0 !important;
 }
 /* Ambient glow orbs */
 .lobby-orb-1 {
