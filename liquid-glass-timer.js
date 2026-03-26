@@ -361,10 +361,17 @@
       _stopInterval();
       _lastTurnText = '';
       _lastOver     = false;
+      _lastLobby    = true;
       return;
     }
 
-    /* Show timer */
+    /* Just entered game screen — force timer reset on first valid turn text */
+    if (_lastLobby) {
+      _lastLobby    = false;
+      _lastTurnText = '';   /* reset so next check always triggers _resetTimer */
+    }
+
+    /* Show timer (remove hidden) */
     if (_timerEl) _timerEl.classList.remove('hidden');
 
     /* Game just ended */
@@ -380,7 +387,7 @@
     }
     /* Game was over, now it's not (rematch) */
     if (!s.isOver && _lastOver) {
-      _lastOver = false;
+      _lastOver     = false;
       _lastTurnText = '';
       if (_timerEl) _timerEl.classList.remove('game-over');
     }
